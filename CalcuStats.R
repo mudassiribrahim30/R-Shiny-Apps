@@ -5,6 +5,7 @@ library(flextable)
 library(magrittr)
 library(pwr)
 library(e1071)
+library(tidyverse)
 
 counter_file <- "counter.rds"
 if (!file.exists(counter_file)) saveRDS(0, counter_file)
@@ -48,7 +49,8 @@ ui <- navbarPage(
                  p("For a single population, enter the total size below."),
                  p("For multiple populations, click 'Add Stratum' to create additional groups.")
                ),
-               downloadButton("downloadWord", "Download as Word", class = "btn-success")
+               downloadButton("downloadWord", "Download as Word", class = "btn-success"),
+               downloadButton("downloadSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
                width = 8,
@@ -91,7 +93,8 @@ ui <- navbarPage(
                numericInput("p", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
                numericInput("z", "Z-score (Z)", value = 1.96),
                numericInput("e_c", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
-               numericInput("N_c", "Population Size (optional)", value = NULL, min = 1)
+               numericInput("N_c", "Population Size (optional)", value = NULL, min = 1),
+               downloadButton("downloadCochranSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
                width = 8,
@@ -132,7 +135,8 @@ ui <- navbarPage(
                  condition = "input.testType == 'Multiple Linear Regression'",
                  numericInput("predictors", "Number of Predictors", value = 2, min = 1)
                ),
-               actionButton("runPower", "Run Power Analysis", class = "btn-primary")
+               actionButton("runPower", "Run Power Analysis", class = "btn-primary"),
+               downloadButton("downloadPowerSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
                width = 8,
@@ -148,7 +152,8 @@ ui <- navbarPage(
                width = 4,
                tags$textarea(id = "dataInput", rows = 10, cols = 30,
                             placeholder = "Paste a column of data (with header) from Excel or statistical software..."),
-               actionButton("runDesc", "Get Descriptive Statistics", class = "btn-primary")
+               actionButton("runDesc", "Get Descriptive Statistics", class = "btn-primary"),
+               downloadButton("downloadDescSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
                width = 8,
@@ -322,7 +327,7 @@ server <- function(input, output, session) {
     filename = function() paste("Sample_Size_Report_", Sys.Date(), ".docx", sep = ""),
     content = function(file) {
       doc <- read_docx() %>%
-        body_add_par("StatMystery unlocked with Mudasir", style = "heading 1") %>%
+        body_add_par("CalcuStats", style = "heading 1") %>%
         body_add_par("Sample Size Calculation (Taro Yamane Method)", style = "heading 2") %>%
         body_add_par(paste("Total Population:", totalPopulation()), style = "Normal") %>%
         body_add_par(paste("Margin of Error:", input$e), style = "Normal") %>%
@@ -337,6 +342,37 @@ server <- function(input, output, session) {
         body_add_par("Interpretation", style = "heading 2") %>%
         body_add_par(interpretationText(), style = "Normal")
       print(doc, target = file)
+    }
+  )
+  
+  output$downloadSteps <- downloadHandler(
+    filename = function() paste("Taro_Yamane_Calculation_Steps_", Sys.Date(), ".txt", sep = ""),
+    content = function(file) {
+      steps <- c(
+        "Taro Yamane Sample Size Calculation Steps",
+        "========================================",
+        "",
+        paste("Total Population (N):", totalPopulation()),
+        paste("Margin of Error (e):", input$e),
+        paste("Non-response Rate:", input$non_response, "%"),
+        "",
+        "1. Basic Yamane Formula Calculation:",
+        paste("Formula: n = N / (1 + N*e²)"),
+        paste("Calculation: ", totalPopulation(), " / (1 + ", totalPopulation(), "*", input$e, "²)"),
+        paste("Denominator: 1 + ", totalPopulation(), "*", input$e^2, " = ", 1 + totalPopulation() * input$e^2),
+        paste("Raw sample size: ", totalPopulation(), " / ", (1 + totalPopulation() * input$e^2), " = ", totalPopulation() / (1 + totalPopulation() * input$e^2)),
+        paste("Rounded sample size: ", sampleSize()),
+        "",
+        "2. Non-response Adjustment:",
+        paste("Adjusted sample size = ", sampleSize(), " / (1 - ", input$non_response/100, ")"),
+        paste("Calculation: ", sampleSize(), " / ", (1 - input$non_response/100), " = ", sampleSize() / (1 - input$non_response/100)),
+        paste("Final adjusted sample size: ", adjustedSampleSize()),
+        "",
+        "3. Proportional Allocation:",
+        capture.output(print(allocationData()))
+      )
+      
+      writeLines(steps, file)
     }
   )
   
@@ -392,6 +428,78 @@ server <- function(input, output, session) {
     calculation_steps
   })
   
+  output$downloadCochranSteps <- downloadHandler(
+    filename = function() {
+      paste("Cochran_Calculation_Steps_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      res <- cochranSampleSize()
+      p <- input$p
+      z <- input$z
+      e <- input$e_c
+      N <- input$N_c
+      
+      steps <- c(
+        "Cochran Sample Size Calculation Steps",
+        "====================================",
+        "",
+        paste("Estimated Proportion (p):", p),
+        paste("Z-score (Z):", z),
+        paste("Margin of Error (e):", e),
+        if (!is.null(N) && !is.na(N) && N > 0) paste("Population Size (N):", N) else "Population Size: Infinite",
+        "",
+        "1. Basic Cochran Formula Calculation:",
+        paste("Formula: n₀ = (Z² × p × (1-p)) / e²"),
+        paste("Calculation: (", z, "² × ", p, " × ", (1-p), ") / ", e, "²"),
+        paste("Numerator: ", z^2, " × ", p, " × ", (1-p), " = ", (z^2 * p * (1 - p))),
+        paste("Denominator: ", e, "² = ", e^2),
+        paste("Initial sample size (n₀): ", (z^2 * p * (1 - p)), " / ", e^2, " = ", res$initial)
+      )
+      
+      if (res$finite_correction_applied) {
+        steps <- c(steps,
+          "",
+          "2. Finite Population Correction:",
+          paste("Formula: n = n₀ / (1 + (n₀ - 1)/N)"),
+          paste("Calculation: ", res$initial, " / (1 + (", res$initial, " - 1)/", N, ")"),
+          paste("Denominator: 1 + (", res$initial, " - 1)/", N, " = ", (1 + (res$initial - 1)/N)),
+          paste("Corrected sample size: ", res$initial, " / ", (1 + (res$initial - 1)/N), " = ", res$corrected),
+          "",
+          paste("Final sample size: ", ceiling(res$corrected))
+        )
+      } else {
+        steps <- c(steps,
+          "",
+          "2. No finite population correction applied (infinite population assumed)",
+          "",
+          paste("Final sample size: ", ceiling(res$initial))
+        )
+      }
+      
+      interpretation <- paste(
+        "Assuming a population proportion of", p,
+        ", a confidence level corresponding to Z =", z,
+        " (", round(pnorm(z) * 200 - 100, 1), "% confidence),",
+        " and a margin of error of", e,
+        ", the required sample size is", ceiling(res$corrected), "."
+      )
+      
+      if (res$finite_correction_applied) {
+        interpretation <- paste0(interpretation,
+          " This includes a finite population correction for N = ", N, "."
+        )
+      } else {
+        interpretation <- paste0(interpretation,
+          " No finite population correction was applied (assumes infinite population)."
+        )
+      }
+      
+      steps <- c(steps, "", "Interpretation:", interpretation)
+      
+      writeLines(steps, file)
+    }
+  )
+  
   output$cochranSample <- renderText({
     res <- cochranSampleSize()
     if (res$finite_correction_applied) {
@@ -430,6 +538,8 @@ server <- function(input, output, session) {
     interpretation
   })
   
+  powerResult <- reactiveVal()
+  
   observeEvent(input$runPower, {
     result <- switch(input$testType,
                      "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "two.sample"),
@@ -443,8 +553,70 @@ server <- function(input, output, session) {
                      "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize, sig.level = input$alpha, power = input$power),
                      "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize, sig.level = input$alpha, power = input$power)
     )
+    powerResult(result)
     output$powerResult <- renderPrint({ result })
   })
+  
+  output$downloadPowerSteps <- downloadHandler(
+    filename = function() paste("Power_Analysis_Steps_", Sys.Date(), ".txt", sep = ""),
+    content = function(file) {
+      req(powerResult())
+      result <- powerResult()
+      
+      test_info <- switch(input$testType,
+        "Independent t-test" = "Independent samples t-test",
+        "Paired t-test" = "Paired samples t-test",
+        "One-sample t-test" = "One-sample t-test",
+        "One-Way ANOVA" = "One-Way ANOVA",
+        "Two-Way ANOVA" = "Two-Way ANOVA",
+        "Proportion" = "Test of proportion",
+        "Correlation" = "Correlation test",
+        "Chi-squared" = "Chi-squared test",
+        "Simple Linear Regression" = "Simple Linear Regression",
+        "Multiple Linear Regression" = "Multiple Linear Regression"
+      )
+      
+      formula_text <- switch(input$testType,
+        "Independent t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'two.sample')",
+        "Paired t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'paired')",
+        "One-sample t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'one.sample')",
+        "One-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 1)",
+        "Two-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 2)",
+        "Proportion" = "pwr.p.test(h = effect_size, sig.level = alpha, power = power)",
+        "Correlation" = "pwr.r.test(r = effect_size, sig.level = alpha, power = power)",
+        "Chi-squared" = "pwr.chisq.test(w = effect_size, sig.level = alpha, power = power, df = 1)",
+        "Simple Linear Regression" = "pwr.f2.test(u = 1, f2 = effect_size, sig.level = alpha, power = power)",
+        "Multiple Linear Regression" = paste0("pwr.f2.test(u = ", input$predictors, ", f2 = effect_size, sig.level = alpha, power = power)")
+      )
+      
+      steps <- c(
+        "Power Analysis Calculation Steps",
+        "===============================",
+        "",
+        paste("Test Type:", test_info),
+        paste("Effect Size:", input$effectSize),
+        paste("Significance Level (alpha):", input$alpha),
+        paste("Desired Power:", input$power),
+        if (input$testType == "Multiple Linear Regression") paste("Number of Predictors:", input$predictors) else "",
+        "",
+        "R Function Used:",
+        formula_text,
+        "",
+        "Results:",
+        capture.output(print(result)),
+        "",
+        "Interpretation:",
+        paste("For a", test_info, "with an effect size of", input$effectSize, ","),
+        paste("a significance level of", input$alpha, ","),
+        paste("and desired power of", input$power, ","),
+        paste("the required sample size is", result$n, ".")
+      )
+      
+      writeLines(steps, file)
+    }
+  )
+  
+  descResult <- reactiveVal()
   
   observeEvent(input$runDesc, {
     req(input$dataInput)
@@ -480,6 +652,8 @@ server <- function(input, output, session) {
       )
       desc$total <- sum(values)
       
+      descResult(list(type = "numeric", header = header, results = desc))
+      
       output$descResult <- renderPrint({
         cat(paste("Descriptive Statistics for:", header, "\n"))
         cat("(Numeric Data)\n\n")
@@ -506,6 +680,8 @@ server <- function(input, output, session) {
         Cumulative_Frequency = max(cum_freq)
       ))
       
+      descResult(list(type = "categorical", header = header, results = df, missing = n_miss))
+      
       output$descResult <- renderPrint({
         cat(paste("Descriptive Statistics for:", header, "\n"))
         cat("(Categorical Data)\n\n")
@@ -514,6 +690,56 @@ server <- function(input, output, session) {
       })
     }
   })
+  
+  output$downloadDescSteps <- downloadHandler(
+    filename = function() paste("Descriptive_Stats_Steps_", Sys.Date(), ".txt", sep = ""),
+    content = function(file) {
+      req(descResult())
+      result <- descResult()
+      
+      if (result$type == "numeric") {
+        steps <- c(
+          "Descriptive Statistics Calculation Steps (Numeric Data)",
+          "======================================================",
+          "",
+          paste("Variable Name:", result$header),
+          "",
+          "Calculated Statistics:",
+          paste("Mean:", result$results$Mean),
+          paste("Standard Deviation:", result$results$SD),
+          paste("Minimum:", result$results$Min),
+          paste("Maximum:", result$results$Max),
+          paste("Median:", result$results$Median),
+          paste("Mode:", result$results$Mode),
+          paste("Skewness:", result$results$Skewness),
+          paste("Kurtosis:", result$results$Kurtosis),
+          paste("Total:", result$results$total),
+          paste("Missing Values:", result$results$Missing),
+          paste("Shapiro-Wilk p-value:", result$results$Shapiro_Wilk_p),
+          "",
+          "Interpretation:",
+          ifelse(result$results$Shapiro_Wilk_p > 0.05, 
+                 "The data appears to be normally distributed", 
+                 "The data does not appear to be normally distributed"),
+          paste("(Shapiro-Wilk test p-value:", result$results$Shapiro_Wilk_p, ")")
+        )
+      } else {
+        steps <- c(
+          "Descriptive Statistics Calculation Steps (Categorical Data)",
+          "==========================================================",
+          "",
+          paste("Variable Name:", result$header),
+          "",
+          "Frequency Table:",
+          capture.output(print(result$results)),
+          "",
+          paste("Missing Values:", result$missing)
+        )
+      }
+      
+      writeLines(steps, file)
+    }
+  )
 }
 
 shinyApp(ui = ui, server = server)
