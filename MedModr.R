@@ -4,61 +4,248 @@ library(semPlot)
 library(ggplot2)
 library(readr)
 library(readxl)
+library(haven)
 library(DT)
+library(colourpicker)
 library(officer)
 library(flextable)
 library(shinythemes)
+library(shinyjs)
 
 app_name <- "MedModr"
 app_version <- "1.1.0"
 
 ui <- fluidPage(
+  useShinyjs(),
   theme = shinytheme("cosmo"),
-  titlePanel(
-    div(
-      img(src = "https://i.imgur.com/xyZQl9E.png", height = 60, style = "margin-right:15px;"),
-      span(app_name, style = "vertical-align:middle; font-weight:bold; font-size:28px;")
-    )
-  ),
-  
-  # Custom CSS
   tags$head(
     tags$style(HTML("
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@600&display=swap');
+      
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f7fa;
+      }
+      
+      .app-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 32px;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #3498db;
+        background: linear-gradient(90deg, #3498db, #9b59b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      }
+      
+      .navbar {
+        background-color: #2c3e50 !important;
+        border-color: #2c3e50 !important;
+      }
+      
+      .sidebar {
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-right: 15px;
+      }
+      
+      .main-panel {
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+      
       #fitText, #summaryText, #effectsText {
-        font-size: 16px !important;
-        line-height: 1.5 !important;
-      }
-      .shiny-html-output {
-        font-size: 16px !important;
-      }
-      .well {
-        background-color: #f9f9f9;
-        border-radius: 8px;
-      }
-      .btn-primary {
-        background-color: #428bca;
-        border-color: #357ebd;
-      }
-      .btn-primary:hover {
-        background-color: #3276b1;
-        border-color: #285e8e;
-      }
-      .tab-content {
+        font-family: 'Roboto', sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        resize: horizontal;
+        min-height: 100px;
+        width: 100%;
+        border: 1px solid #e0e0e0;
         padding: 15px;
-        border-left: 1px solid #ddd;
-        border-right: 1px solid #ddd;
-        border-bottom: 1px solid #ddd;
-        border-radius: 0 0 4px 4px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+      }
+      
+      .results-table {
+        font-family: 'Roboto', sans-serif;
+        font-size: 14px;
+        width: 100%;
+      }
+      
+      .well {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      
+      .btn-primary {
+        background-color: #3498db;
+        border-color: #2980b9;
+        color: white;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-primary:hover {
+        background-color: #2980b9;
+        border-color: #2472a4;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(41, 128, 185, 0.2);
+      }
+      
+      .btn-success {
+        background-color: #2ecc71;
+        border-color: #27ae60;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-success:hover {
+        background-color: #27ae60;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(46, 204, 113, 0.2);
+      }
+      
+      .btn-info {
+        background-color: #9b59b6;
+        border-color: #8e44ad;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-info:hover {
+        background-color: #8e44ad;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(155, 89, 182, 0.2);
+      }
+      
+      .tab-content {
+        padding: 20px;
+        border-left: 1px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        border-radius: 0 0 8px 8px;
+        background-color: #ffffff;
+      }
+      
+      .nav-tabs > li > a {
+        color: #7f8c8d;
+        font-weight: 500;
+        border-radius: 6px 6px 0 0;
+      }
+      
+      .nav-tabs > li.active > a,
+      .nav-tabs > li.active > a:hover,
+      .nav-tabs > li.active > a:focus {
+        color: #3498db;
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-bottom-color: transparent;
+      }
+      
+      .diagram-controls {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+      }
+      
+      .interpretation-box {
+        background-color: #e8f4fc;
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+      }
+      
+      .instruction-box {
+        background-color: #f0f8ff;
+        border-left: 4px solid #9b59b6;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      
+      h3, h4 {
+        font-weight: 500;
+        color: #2c3e50;
+      }
+      
+      h3 {
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+      }
+      
+      h4 {
+        color: #34495e;
+      }
+      
+      .analysis-step {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+      }
+      
+      .analysis-step h5 {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-top: 0;
+      }
+      
+      select, input, textarea {
+        border-radius: 6px !important;
+        border: 1px solid #e0e0e0 !important;
+      }
+      
+      .file-input {
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 1px dashed #bdc3c7;
+      }
+      
+      .shiny-input-container {
+        margin-bottom: 15px;
+      }
+      
+      .data-summary {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
       }
     "))
+  ),
+  
+  titlePanel(
+    div(
+      class = "app-title", app_name)
   ),
   
   sidebarLayout(
     sidebarPanel(
       width = 4,
       h4("Data Input", icon("database")),
-      fileInput("datafile", "Upload your data (CSV, XLSX, or XLS):", 
-                accept = c(".csv", ".xlsx", ".xls")),
+      fileInput("datafile", "Upload your data (CSV, XLSX, Stata, or SPSS):", 
+                accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".zsav", ".por")),
       
       uiOutput("var_preview"),
       
@@ -151,6 +338,29 @@ ui <- fluidPage(
       width = 8,
       tabsetPanel(
         tabPanel("Diagram", 
+                 div(class = "diagram-controls",
+                     h4("Diagram Formatting Options"),
+                     fluidRow(
+                       column(4,
+                              selectInput("diagram_layout", "Layout:",
+                                          choices = c("tree", "circle", "spring", "tree2", "tree3"),
+                                          selected = "tree"),
+                              sliderInput("node_size", "Node Size:", 
+                                          min = 5, max = 20, value = 10, step = 1)
+                       ),
+                       column(4,
+                              sliderInput("edge_label_size", "Edge Label Size:", 
+                                          min = 0.5, max = 2, value = 1.2, step = 0.1),
+                              sliderInput("arrow_size", "Arrow Size:", 
+                                          min = 0.5, max = 2, value = 1, step = 0.1)
+                       ),
+                       column(4,
+                              colourpicker::colourInput("man_color", "Observed Variable Color:", value = "lightyellow"),
+                              colourpicker::colourInput("lat_color", "Latent Variable Color:", value = "skyblue")
+                       )
+                     )
+                 ),
+                 
                  plotOutput("semPlot", height = "600px"),
                  h4("Diagram Interpretation:"),
                  tags$ul(
@@ -163,11 +373,17 @@ ui <- fluidPage(
                  )),
         tabPanel("Results", 
                  h3("Model Fit Indices", icon("check-circle")),
-                 verbatimTextOutput("fitText"),
-                 h3("Parameter Estimates", icon("table")),
-                 verbatimTextOutput("summaryText"),
+                 div(verbatimTextOutput("fitText"), style = "resize: both; overflow: auto;"),
+                 
+                 h3("Parameter Estimates Table", icon("table")),
+                 DTOutput("estimatesTable"),
+                 
                  h3("Effects Analysis", icon("project-diagram")),
-                 verbatimTextOutput("effectsText"),
+                 div(verbatimTextOutput("effectsText"), style = "resize: both; overflow: auto;"),
+                 
+                 h3("Mediation Interpretation", icon("comment")),
+                 uiOutput("mediationInterpretation"),
+                 
                  h4("Results Interpretation:"),
                  tags$ul(
                    tags$li("Check model fit indices first (CFI > .90, RMSEA < .08 indicate good fit)"),
@@ -184,6 +400,84 @@ ui <- fluidPage(
                  br(),
                  h4("Data Summary"),
                  verbatimTextOutput("data_summary")),
+        tabPanel("How to Run Analysis",
+                 div(class = "well",
+                     h3("Step-by-Step Analysis Guide", "v", app_version)),
+                 
+                 div(class = "instruction-box",
+                     h4("How to perform simple mediation:"),
+                     div(class = "analysis-step",
+                         h5("Step 1: Use this syntax:"),
+                         verbatimTextOutput("simple_mediation_howto1")),
+                     div(class = "analysis-step",
+                         h5("Step 2: Replace variables in the syntax"),
+                         p("Copy this syntax into the Model Specification Box, replace only X, Y, and M with your variables"),
+                         tags$ul(
+                           tags$li("X = Independent Variable"),
+                           tags$li("M = Mediator Variable"),
+                           tags$li("Y = Dependent Variable")
+                         ),
+                         h5("Example:"),
+                         verbatimTextOutput("simple_mediation_example")),
+                     div(class = "analysis-step",
+                         h5("Step 3: Add indirect effect syntax"),
+                         p("Copy and add this syntax to your model:"),
+                         verbatimTextOutput("simple_mediation_indirect")),
+                     div(class = "analysis-step",
+                         h5("Step 4: Run analysis"),
+                         p("Click 'Run Analysis' button to get results"))
+                 ),
+                 
+                 div(class = "instruction-box",
+                     h4("How to perform serial mediation:"),
+                     div(class = "analysis-step",
+                         h5("Step 1: Use this syntax:"),
+                         verbatimTextOutput("serial_mediation_howto1")),
+                     div(class = "analysis-step",
+                         h5("Step 2: Replace variables in the syntax"),
+                         p("Copy this syntax into the Model Specification Box, replace X, Y, M1, and M2 with your variables"),
+                         tags$ul(
+                           tags$li("X = Independent Variable"),
+                           tags$li("M1 = Mediator 1"),
+                           tags$li("M2 = Mediator 2"),
+                           tags$li("Y = Dependent Variable")
+                         ),
+                         h5("Example:"),
+                         verbatimTextOutput("serial_mediation_example")),
+                     div(class = "analysis-step",
+                         h5("Step 3: Add indirect effects syntax"),
+                         p("Copy and add this syntax to your model:"),
+                         verbatimTextOutput("serial_mediation_indirect")),
+                     div(class = "analysis-step",
+                         h5("Step 4: Run analysis"),
+                         p("Click 'Run Analysis' button to get results"))
+                 ),
+                 
+                 div(class = "instruction-box",
+                     h4("How to perform moderation:"),
+                     div(class = "analysis-step",
+                         h5("Step 1: Use this syntax:"),
+                         verbatimTextOutput("moderation_howto1")),
+                     div(class = "analysis-step",
+                         h5("Step 2: Replace variables in the syntax"),
+                         p("Copy this syntax into the Model Specification Box, replace X, Y, W, and XW with your variables"),
+                         tags$ul(
+                           tags$li("X = Independent Variable"),
+                           tags$li("W = Moderator Variable"),
+                           tags$li("XW = Interaction Term (X × W)"),
+                           tags$li("Y = Dependent Variable")
+                         ),
+                         h5("Example:"),
+                         verbatimTextOutput("moderation_example")),
+                     div(class = "analysis-step",
+                         h5("Step 3: Add simple slopes syntax"),
+                         p("Copy and add this syntax to your model:"),
+                         verbatimTextOutput("moderation_slopes")),
+                     div(class = "analysis-step",
+                         h5("Step 4: Run analysis"),
+                         p("Click 'Run Analysis' button to get results"))
+                 )
+        ),
         tabPanel("About",
                  div(class = "well",
                      h4(app_name, "v", app_version),
@@ -212,15 +506,22 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # Read data
+  # Read data with support for larger files
   data <- reactive({
     req(input$datafile)
     ext <- tools::file_ext(input$datafile$name)
+    
     tryCatch({
       if (ext == "csv") {
-        read_csv(input$datafile$datapath)
+        read_csv(input$datafile$datapath, guess_max = 10000)
+      } else if (ext %in% c("xlsx", "xls")) {
+        read_excel(input$datafile$datapath, guess_max = 10000)
+      } else if (ext %in% c("dta")) {
+        read_dta(input$datafile$datapath)
+      } else if (ext %in% c("sav", "zsav", "por")) {
+        read_sav(input$datafile$datapath)
       } else {
-        read_excel(input$datafile$datapath)
+        stop("Unsupported file format")
       }
     }, error = function(e) {
       showNotification(paste("Error reading file:", e$message), type = "error", duration = 10)
@@ -231,18 +532,31 @@ server <- function(input, output, session) {
   # Variable preview
   output$var_preview <- renderUI({
     req(data())
-    var_names <- names(data())
+    df <- data()
+    var_names <- names(df)
+    if(ncol(df) > 500) {
+      showNotification("Warning: Dataset has more than 500 variables. Only the first 500 will be used.", 
+                       type = "warning", duration = 10)
+      var_names <- var_names[1:500]
+    }
+    
     if(length(var_names) > 15) {
       var_text <- paste0(paste(var_names[1:15], collapse = ", "), ", ... (+", length(var_names)-15, " more)")
     } else {
       var_text <- paste(var_names, collapse = ", ")
     }
-    HTML(paste0("<strong>Variables in dataset (", ncol(data()), "):</strong><br>", var_text))
+    
+    HTML(paste0("<strong>Variables in dataset (", ncol(df), "):</strong><br>", var_text,
+                "<br><strong>Observations:</strong> ", nrow(df)))
   })
   
   output$var_table <- renderDT({
     req(data())
-    datatable(data(), 
+    df <- data()
+    if(ncol(df) > 500) {
+      df <- df[, 1:500]  # Limit to first 500 variables
+    }
+    datatable(df, 
               options = list(
                 scrollX = TRUE,
                 pageLength = 10,
@@ -253,6 +567,10 @@ server <- function(input, output, session) {
   output$data_summary <- renderPrint({
     req(data())
     df <- data()
+    if(ncol(df) > 500) {
+      df <- df[, 1:500]  # Limit to first 500 variables
+    }
+    
     cat("DATA SUMMARY\n")
     cat("------------\n")
     cat("Number of observations:", nrow(df), "\n")
@@ -283,21 +601,69 @@ server <- function(input, output, session) {
   
   # Syntax examples
   output$simple_mediation_syntax <- renderText({
-    "M ~ a*X\nY ~ b*M + cp*X\n\n# Define effects\nindirect := a*b\ntotal := cp + (a*b)\n# Proportion mediated\nprop_mediated := (a*b)/total"
+    "M ~ a*X\nY ~ b*M + cp*X\n\n# Define effects\nindirect := a*b\ntotal := cp + (a*b)\n# Standardized indirect effect\nstd.indirect := std(a)*std(b)\n# Proportion mediated\nprop_mediated := (a*b)/total"
   })
   
   output$serial_mediation_syntax <- renderText({
-    "M1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b*M2 + cp*X\n\n# Define effects\nindirect1 := a1*a2*b  # via M1 and M2\nindirect2 := a1*d*b   # via M1 only\ntotal := cp + (a1*a2*b) + (a1*d*b)"
+    "M1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b*M2 + cp*X\n\n# Define effects\nindirect1 := a1*a2*b  # via M1 and M2\nindirect2 := a1*d*b   # via M1 only\ntotal := cp + (a1*a2*b) + (a1*d*b)\n# Standardized effects\nstd.indirect1 := std(a1)*std(a2)*std(b)\nstd.indirect2 := std(a1)*std(d)*std(b)"
   })
   
   output$moderation_syntax <- renderText({
     "# Note: You must create the interaction term in your data first\n# (e.g., data$XW <- data$X * data$W)\n\nY ~ b1*X + b2*W + b3*XW\n\n# Define simple slopes\nlowW := b1 + b3*(-1)\navgW := b1 + b3*(0)\nhighW := b1 + b3*(1)"
   })
   
-  # Model estimation
+  # How-to guide outputs
+  output$simple_mediation_howto1 <- renderText({
+    "M ~ a*X\nY ~ b*M + cp*X"
+  })
+  
+  output$simple_mediation_example <- renderText({
+    "Anxiety ~ a*Stress_Composite\nAcademic_Performance ~ b*Anxiety + c*Stress_Composite"
+  })
+  
+  output$simple_mediation_indirect <- renderText({
+    "indirect := a*b"
+  })
+  
+  output$serial_mediation_howto1 <- renderText({
+    "M1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b*M2 + cp*X"
+  })
+  
+  output$serial_mediation_example <- renderText({
+    "Anxiety ~ a1*Stress_Composite\nSupport_Composite ~ a2*Anxiety + d*Stress_Composite\nAcademic_Performance ~ b*Support_Composite + cp*Stress_Composite"
+  })
+  
+  output$serial_mediation_indirect <- renderText({
+    "indirect1 := a1*a2*b\nindirect2 := a1*d*b"
+  })
+  
+  output$moderation_howto1 <- renderText({
+    "Y ~ b1*X + b2*W + b3*XW"
+  })
+  
+  output$moderation_example <- renderText({
+    "Academic_Performance ~ b1*Stress_Composite + b2*Coping_Construct + b3*Interaction"
+  })
+  
+  output$moderation_slopes <- renderText({
+    "lowW := b1 + b3*(-1)\navgW := b1 + b3*(0)\nhighW := b1 + b3*(1)"
+  })
+  
+  # Model estimation with data size limits
   model_fit <- eventReactive(input$run, {
     req(input$model_syntax, data())
     df <- na.omit(data())
+    
+    # Apply size limits
+    if(nrow(df) > 10000) {
+      showNotification("Warning: Dataset has more than 10,000 observations. Only the first 10,000 will be used.", 
+                       type = "warning", duration = 10)
+      df <- df[1:10000, ]
+    }
+    
+    if(ncol(df) > 500) {
+      df <- df[, 1:500]  # Limit to first 500 variables
+    }
     
     # For moderation analysis, check if interaction term exists
     if(input$analysis_type == "Moderation") {
@@ -362,7 +728,8 @@ server <- function(input, output, session) {
     }
   })
   
-  output$summaryText <- renderPrint({
+  # Create formatted estimates table with SE
+  output$estimatesTable <- renderDT({
     req(model_fit())
     
     if(input$use_bootstrap) {
@@ -377,22 +744,48 @@ server <- function(input, output, session) {
                                ci = TRUE)
     }
     
-    pe <- pe[pe$op != ":=", ]  # Exclude defined parameters
+    # Filter to show only relevant paths
+    pe <- pe[pe$op %in% c("~", ":="), ]
     
-    cat("STANDARDIZED PARAMETER ESTIMATES:\n\n")
-    print(pe[, c("lhs", "op", "rhs", "est", "se", "z", "pvalue", "ci.lower", "ci.upper", "std.all")], 
-          row.names = FALSE)
+    # Create pathway description
+    pe$Pathway <- ifelse(pe$op == "~", 
+                         paste(pe$lhs, "<-", pe$rhs),
+                         paste(pe$lhs, ":=", pe$rhs))
     
-    cat("\nInterpretation:\n")
-    cat("- 'est' = unstandardized coefficient\n")
-    cat("- 'std.all' = standardized coefficient (effect size)\n")
-    cat("- p < .05 indicates statistical significance\n")
-    cat("- 95% CIs that don't include 0 indicate significance\n")
-    if(input$use_bootstrap) {
-      cat("- Standard errors and CIs are based on bootstrap\n")
-    } else {
-      cat("- Standard errors and CIs are model-based\n")
-    }
+    # Select and rename columns (now including SE)
+    table_data <- pe[, c("Pathway", "est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")]
+    names(table_data) <- c("Pathway", "Estimate", "Std. Estimate", "SE", "p-value", "CI Lower", "CI Upper")
+    
+    # Format p-values and numbers
+    table_data$`p-value` <- format.pval(table_data$`p-value`, digits = 3, eps = 0.001)
+    table_data[, c("Estimate", "Std. Estimate", "SE", "CI Lower", "CI Upper")] <- 
+      round(table_data[, c("Estimate", "Std. Estimate", "SE", "CI Lower", "CI Upper")], 3)
+    
+    # Create datatable
+    datatable(
+      table_data,
+      rownames = FALSE,
+      extensions = 'Buttons',
+      options = list(
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel', 'pdf'),
+        pageLength = 10,
+        scrollX = TRUE,
+        autoWidth = TRUE,
+        columnDefs = list(
+          list(width = '200px', targets = 0),
+          list(className = 'dt-center', targets = 1:6)
+        )
+      ),
+      class = 'stripe hover'
+    ) %>% 
+      formatStyle(
+        'p-value',
+        backgroundColor = styleInterval(
+          c(0.001, 0.01, 0.05), 
+          c('#FF6B6B', '#FFA3A3', '#FFD6A5', '#C8E7A5')
+        )
+      )
   })
   
   output$effectsText <- renderPrint({
@@ -410,68 +803,20 @@ server <- function(input, output, session) {
                                ci = TRUE)
     }
     
-    # Direct effects
-    direct <- subset(pe, op == "~")
-    if (nrow(direct) > 0) {
-      cat("DIRECT EFFECTS:\n\n")
-      print(direct[, c("lhs", "op", "rhs", "est", "se", "pvalue", "std.all")], 
-            row.names = FALSE)
-    }
-    
     # Defined effects (indirect, total, etc.)
     defined <- subset(pe, op == ":=")
     if (nrow(defined) > 0) {
-      cat("\nDEFINED EFFECTS:\n\n")
+      cat("DEFINED EFFECTS:\n\n")
       print(defined[, c("lhs", "op", "rhs", "est", "se", "pvalue", "ci.lower", "ci.upper")], 
             row.names = FALSE)
       
-      # Interpretation for mediation
+      # Add standardized indirect effects
       if (any(grepl("indirect", defined$lhs))) {
-        indirect <- defined[grepl("indirect", defined$lhs), ]
-        if (nrow(indirect) > 0 && indirect$pvalue[1] < 0.05) {
-          cat(sprintf("\n- Significant indirect effect (%.3f, p = %.3f)\n", indirect$est[1], indirect$pvalue[1]))
-          if ("total" %in% defined$lhs) {
-            total <- defined[defined$lhs == "total", "est"]
-            prop <- indirect$est[1]/total
-            cat(sprintf("- Proportion mediated: %.1f%%\n", prop*100))
-          }
-        } else if (nrow(indirect) > 0) {
-          cat("\n- Non-significant indirect effect\n")
-        }
-      }
-      
-      # Interpretation for serial mediation
-      if (input$analysis_type == "Serial Mediation" && any(grepl("indirect1|indirect2", defined$lhs))) {
-        if ("indirect1" %in% defined$lhs) {
-          indirect1 <- defined[defined$lhs == "indirect1", ]
-          cat(sprintf("\nSerial Mediation via M1 and M2: %.3f (p = %.3f)\n", 
-                      indirect1$est, indirect1$pvalue))
-        }
-        if ("indirect2" %in% defined$lhs) {
-          indirect2 <- defined[defined$lhs == "indirect2", ]
-          cat(sprintf("Serial Mediation via M1 only: %.3f (p = %.3f)\n", 
-                      indirect2$est, indirect2$pvalue))
-        }
-        if ("total" %in% defined$lhs) {
-          total <- defined[defined$lhs == "total", ]
-          cat(sprintf("Total effect: %.3f (p = %.3f)\n", total$est, total$pvalue))
-        }
-      }
-      
-      # Interpretation for moderation
-      if (any(grepl("lowW|avgW|highW", defined$lhs))) {
-        cat("\nModeration Interpretation (Simple Slopes):\n")
-        if ("lowW" %in% defined$lhs) {
-          low <- defined[defined$lhs == "lowW", ]
-          cat(sprintf("- Effect at low W (-1 SD): %.3f, p = %.3f\n", low$est, low$pvalue))
-        }
-        if ("avgW" %in% defined$lhs) {
-          avg <- defined[defined$lhs == "avgW", ]
-          cat(sprintf("- Effect at mean W: %.3f, p = %.3f\n", avg$est, avg$pvalue))
-        }
-        if ("highW" %in% defined$lhs) {
-          high <- defined[defined$lhs == "highW", ]
-          cat(sprintf("- Effect at high W (+1 SD): %.3f, p = %.3f\n", high$est, high$pvalue))
+        std_effects <- defined[grepl("std.", defined$lhs, fixed = TRUE), ]
+        if (nrow(std_effects) > 0) {
+          cat("\nSTANDARDIZED EFFECTS:\n\n")
+          print(std_effects[, c("lhs", "op", "rhs", "est", "se", "pvalue", "ci.lower", "ci.upper")], 
+                row.names = FALSE)
         }
       }
     } else {
@@ -484,23 +829,89 @@ server <- function(input, output, session) {
     }
   })
   
+  # Mediation interpretation
+  output$mediationInterpretation <- renderUI({
+    req(model_fit())
+    
+    if(input$analysis_type %in% c("Simple Mediation", "Serial Mediation")) {
+      pe <- parameterEstimates(model_fit())
+      
+      # Get direct and indirect effects
+      direct_effect <- pe[pe$lhs == "cp" | pe$rhs == "cp", "est"]
+      indirect_effect <- pe[pe$lhs == "indirect", "est"]
+      indirect_effect_p <- pe[pe$lhs == "indirect", "pvalue"]
+      total_effect <- pe[pe$lhs == "total", "est"]
+      
+      if(length(direct_effect) == 0 || length(indirect_effect) == 0 || length(total_effect) == 0) {
+        return(NULL)
+      }
+      
+      # Calculate proportion mediated
+      prop_mediated <- indirect_effect / total_effect
+      
+      # Determine mediation type
+      mediation_type <- ifelse(
+        abs(direct_effect) < 0.05 && indirect_effect_p < 0.05, 
+        "Full Mediation",
+        ifelse(
+          indirect_effect_p < 0.05,
+          "Partial Mediation",
+          "No Mediation"
+        )
+      )
+      
+      # Create interpretation text
+      interpretation <- if(mediation_type == "Full Mediation") {
+        paste0(
+          "The analysis suggests <strong>full mediation</strong> (indirect effect p = ", 
+          format.pval(indirect_effect_p, digits = 3), 
+          "). The direct effect is non-significant while the indirect effect is significant, ",
+          "indicating that the mediator completely explains the relationship between X and Y."
+        )
+      } else if(mediation_type == "Partial Mediation") {
+        paste0(
+          "The analysis suggests <strong>partial mediation</strong> (indirect effect p = ", 
+          format.pval(indirect_effect_p, digits = 3), 
+          "). Both direct and indirect effects are significant, ",
+          "indicating that the mediator partially explains the relationship between X and Y."
+        )
+      } else {
+        paste0(
+          "The analysis suggests <strong>no mediation</strong> (indirect effect p = ", 
+          format.pval(indirect_effect_p, digits = 3), 
+          "). The indirect effect is not statistically significant."
+        )
+      }
+      
+      # Create HTML output
+      div(class = "interpretation-box",
+          h4("Mediation Analysis Results:"),
+          p(HTML(interpretation)),
+          p(paste("Proportion mediated:", round(prop_mediated, 3)))
+      )
+    } else {
+      return(NULL)
+    }
+  })
+  
   output$semPlot <- renderPlot({
     req(model_fit())
     semPaths(model_fit(), 
              what = "std", 
-             layout = "tree", 
+             layout = input$diagram_layout,
              style = "lisrel",
              residuals = FALSE, 
-             edge.label.cex = 1.2, 
-             sizeMan = 8,
-             sizeLat = 10,
-             color = list(lat = "skyblue", man = "lightyellow"),
+             edge.label.cex = input$edge_label_size,
+             sizeMan = input$node_size,
+             sizeLat = input$node_size,
+             color = list(lat = input$lat_color, man = input$man_color),
              edge.color = "black",
              node.width = 1.5, 
              node.height = 1.5,
              fade = FALSE,
              edge.label.position = 0.6,
-             rotation = 2)
+             rotation = 2,
+             asize = input$arrow_size)
   })
   
   output$download_report <- downloadHandler(
@@ -512,75 +923,177 @@ server <- function(input, output, session) {
         return()
       }
       
-      # Model fit
-      fit_measures <- fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr"))
-      fit_text <- sprintf("Chi-square(%.0f) = %.3f, p = %.3f\nCFI = %.3f\nTLI = %.3f\nRMSEA = %.3f\nSRMR = %.3f",
-                          fit_measures["df"], fit_measures["chisq"], fit_measures["pvalue"],
-                          fit_measures["cfi"], fit_measures["tli"],
-                          fit_measures["rmsea"], fit_measures["srmr"])
+      # Create a new Word document
+      doc <- read_docx() 
       
-      # Parameter estimates
+      # Add title and basic info
+      doc <- doc %>%
+        body_add_par(app_name, style = "heading 1") %>%
+        body_add_par(paste("Analysis Report -", Sys.Date()), style = "heading 2") %>%
+        body_add_par("Analysis Settings", style = "heading 3") %>%
+        body_add_par(paste("Analysis type:", input$analysis_type), style = "Normal") %>%
+        body_add_par(paste("Bootstrap samples:", ifelse(input$use_bootstrap, input$bootstrap_samples, "Not used")), 
+                     style = "Normal") %>%
+        body_add_par("Model Syntax", style = "heading 3") %>%
+        body_add_par(input$model_syntax, style = "Normal") %>%
+        body_add_par("Model Fit Indices", style = "heading 3")
+      
+      # Add model fit indices
+      fit_measures <- fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr"))
+      fit_text <- data.frame(
+        Index = c("Chi-square", "df", "p-value", "CFI", "TLI", "RMSEA", "SRMR"),
+        Value = c(
+          sprintf("%.3f", fit_measures["chisq"]),
+          sprintf("%.0f", fit_measures["df"]),
+          format.pval(fit_measures["pvalue"], digits = 3),
+          sprintf("%.3f", fit_measures["cfi"]),
+          sprintf("%.3f", fit_measures["tli"]),
+          sprintf("%.3f", fit_measures["rmsea"]),
+          sprintf("%.3f", fit_measures["srmr"])
+        )
+      )
+      
+      ft <- flextable(fit_text) %>%
+        theme_box() %>%
+        autofit()
+      doc <- body_add_flextable(doc, ft)
+      
+      # Add parameter estimates (now with SE)
       if(input$use_bootstrap) {
         pe <- parameterEstimates(fit, standardized = TRUE, ci = TRUE, boot.ci.type = "perc")
       } else {
         pe <- parameterEstimates(fit, standardized = TRUE, ci = TRUE)
       }
       
-      direct <- subset(pe, op == "~")
-      direct_text <- capture.output(print(direct[, c("lhs", "op", "rhs", "est", "se", "pvalue", "std.all")], 
-                                          row.names = FALSE))
+      pe <- pe[pe$op %in% c("~", ":="), ]
+      pe$Pathway <- ifelse(pe$op == "~", 
+                           paste(pe$lhs, "<-", pe$rhs),
+                           paste(pe$lhs, ":=", pe$rhs))
       
-      # Effects
+      # Select and rename columns (including SE)
+      table_data <- pe[, c("Pathway", "est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")]
+      names(table_data) <- c("Pathway", "Estimate", "Std. Estimate", "SE", "p-value", "CI Lower", "CI Upper")
+      
+      # Format p-values
+      table_data$`p-value` <- format.pval(table_data$`p-value`, digits = 3, eps = 0.001)
+      
+      # Add parameter estimates table
+      doc <- doc %>%
+        body_add_par("Parameter Estimates", style = "heading 3")
+      
+      ft <- flextable(table_data) %>%
+        theme_box() %>%
+        autofit() %>%
+        colformat_num(col_keys = c("Estimate", "Std. Estimate", "SE", "CI Lower", "CI Upper"), digits = 3) %>%
+        bg(j = "p-value", 
+           bg = ifelse(table_data$`p-value` < 0.001, "#FF6B6B",
+                       ifelse(table_data$`p-value` < 0.01, "#FFA3A3",
+                              ifelse(table_data$`p-value` < 0.05, "#FFD6A5", "#C8E7A5"))))
+      
+      doc <- body_add_flextable(doc, ft)
+      
+      # Add effects analysis
       defined <- subset(pe, op == ":=")
-      effects_text <- if (nrow(defined) > 0) {
-        capture.output(print(defined[, c("lhs", "op", "rhs", "est", "se", "pvalue", "ci.lower", "ci.upper")], 
-                             row.names = FALSE))
-      } else {
-        "No additional effects defined in the model."
+      if (nrow(defined) > 0) {
+        doc <- doc %>%
+          body_add_par("Defined Effects", style = "heading 3")
+        
+        effects_data <- defined[, c("lhs", "est", "se", "pvalue", "ci.lower", "ci.upper")]
+        names(effects_data) <- c("Effect", "Estimate", "SE", "p-value", "CI Lower", "CI Upper")
+        effects_data$`p-value` <- format.pval(effects_data$`p-value`, digits = 3)
+        
+        ft <- flextable(effects_data) %>%
+          theme_box() %>%
+          autofit() %>%
+          colformat_num(col_keys = c("Estimate", "SE", "CI Lower", "CI Upper"), digits = 3) %>%
+          bg(j = "p-value", 
+             bg = ifelse(effects_data$`p-value` < 0.001, "#FF6B6B",
+                         ifelse(effects_data$`p-value` < 0.01, "#FFA3A3",
+                                ifelse(effects_data$`p-value` < 0.05, "#FFD6A5", "#C8E7A5"))))
+        
+        doc <- body_add_flextable(doc, ft)
       }
       
-      # Create plot for report
+      # Add mediation interpretation if applicable
+      if(input$analysis_type %in% c("Simple Mediation", "Serial Mediation")) {
+        direct_effect <- pe[pe$lhs == "cp" | pe$rhs == "cp", "est"]
+        indirect_effect <- pe[pe$lhs == "indirect", "est"]
+        indirect_effect_p <- pe[pe$lhs == "indirect", "pvalue"]
+        total_effect <- pe[pe$lhs == "total", "est"]
+        
+        if(length(direct_effect) > 0 && length(indirect_effect) > 0 && length(total_effect) > 0) {
+          prop_mediated <- indirect_effect / total_effect
+          
+          mediation_type <- ifelse(
+            abs(direct_effect) < 0.05 && indirect_effect_p < 0.05, 
+            "Full Mediation",
+            ifelse(
+              indirect_effect_p < 0.05,
+              "Partial Mediation",
+              "No Mediation"
+            )
+          )
+          
+          interpretation <- if(mediation_type == "Full Mediation") {
+            paste0(
+              "The analysis suggests FULL MEDIATION (indirect effect p = ", 
+              format.pval(indirect_effect_p, digits = 3), 
+              "). The direct effect is non-significant while the indirect effect is significant, ",
+              "indicating that the mediator completely explains the relationship between X and Y."
+            )
+          } else if(mediation_type == "Partial Mediation") {
+            paste0(
+              "The analysis suggests PARTIAL MEDIATION (indirect effect p = ", 
+              format.pval(indirect_effect_p, digits = 3), 
+              "). Both direct and indirect effects are significant, ",
+              "indicating that the mediator partially explains the relationship between X and Y."
+            )
+          } else {
+            paste0(
+              "The analysis suggests NO MEDIATION (indirect effect p = ", 
+              format.pval(indirect_effect_p, digits = 3), 
+              "). The indirect effect is not statistically significant."
+            )
+          }
+          
+          doc <- doc %>%
+            body_add_par("Mediation Interpretation", style = "heading 3") %>%
+            body_add_par(interpretation, style = "Normal") %>%
+            body_add_par(paste("Proportion mediated:", round(prop_mediated, 3)), style = "Normal")
+        }
+      }
+      
+      # Add path diagram
       plot_file <- tempfile(fileext = ".png")
       png(plot_file, width = 800, height = 600)
-      semPaths(fit, what = "std", layout = "tree", style = "lisrel",
-               residuals = FALSE, edge.label.cex = 1.0, sizeMan = 6, sizeLat = 8,
-               color = list(lat = "skyblue", man = "lightyellow"),
-               edge.color = "black", fade = FALSE)
+      semPaths(fit, what = "std", layout = input$diagram_layout, style = "lisrel",
+               residuals = FALSE, edge.label.cex = 1.0, 
+               sizeMan = input$node_size, sizeLat = input$node_size,
+               color = list(lat = input$lat_color, man = input$man_color),
+               edge.color = "black", fade = FALSE, asize = input$arrow_size)
       dev.off()
       
-      doc <- read_docx() %>%
-        body_add_par(app_name, style = "heading 1") %>%
-        body_add_par("Analysis Results", style = "heading 2") %>%
-        
-        body_add_par("Analysis Settings", style = "heading 3") %>%
-        body_add_par(sprintf("Analysis type: %s", input$analysis_type), style = "Normal") %>%
-        body_add_par(sprintf("Bootstrap samples: %d", ifelse(input$use_bootstrap, input$bootstrap_samples, 0)), style = "Normal") %>%
-        
-        body_add_par("Model Fit Indices", style = "heading 3") %>%
-        body_add_par(fit_text, style = "Normal") %>%
-        
-        body_add_par("Parameter Estimates", style = "heading 3") %>%
-        body_add_par(paste(direct_text, collapse = "\n"), style = "Normal") %>%
-        
-        body_add_par("Defined Effects", style = "heading 3") %>%
-        body_add_par(paste(effects_text, collapse = "\n"), style = "Normal") %>%
-        
+      doc <- doc %>%
         body_add_par("Path Diagram", style = "heading 3") %>%
         body_add_img(plot_file, width = 6, height = 4.5) %>%
         
-        body_add_par("Interpretation Notes", style = "heading 3") %>%
-        body_add_par(sprintf("1. Bootstrap CIs %s", 
-                             ifelse(input$use_bootstrap, 
-                                    sprintf("enabled (%d samples)", input$bootstrap_samples),
-                                    "not used")), 
+        body_add_par("Notes", style = "heading 3") %>%
+        body_add_par("1. All estimates are based on maximum likelihood estimation.", style = "Normal") %>%
+        body_add_par(paste("2. Bootstrap confidence intervals", 
+                           ifelse(input$use_bootstrap, 
+                                  paste("were used with", input$bootstrap_samples, "samples."),
+                                  "were not used.")), 
                      style = "Normal") %>%
-        body_add_par("2. Check model fit indices first (CFI > .90, RMSEA < .08 indicate acceptable fit)", style = "Normal") %>%
-        body_add_par("3. Significant indirect effects (p < .05) indicate mediation", style = "Normal") %>%
-        body_add_par("4. Standardized coefficients (std.all) show effect sizes", style = "Normal") %>%
+        body_add_par("3. Standardized estimates (std.all) represent completely standardized solutions.", 
+                     style = "Normal") %>%
+        body_add_par("4. p-values < .05 are considered statistically significant.", 
+                     style = "Normal") %>%
         
         body_add_par("Generated by MedModr", style = "Normal") %>%
-        body_add_par(paste("Date:", Sys.Date()), style = "Normal")
+        body_add_par(paste("Version:", app_version), style = "Normal") %>%
+        body_add_par(paste("Date:", format(Sys.Date(), "%B %d, %Y")), style = "Normal")
       
+      # Save the document
       print(doc, target = file)
     }
   )
@@ -592,15 +1105,16 @@ server <- function(input, output, session) {
       png(file, width = 1000, height = 800)
       semPaths(model_fit(), 
                what = "std", 
-               layout = "tree", 
+               layout = input$diagram_layout,
                style = "lisrel",
                residuals = FALSE, 
-               edge.label.cex = 1.2, 
-               sizeMan = 8, 
-               sizeLat = 10,
-               color = list(lat = "skyblue", man = "lightyellow"),
+               edge.label.cex = input$edge_label_size,
+               sizeMan = input$node_size,
+               sizeLat = input$node_size,
+               color = list(lat = input$lat_color, man = input$man_color),
                edge.color = "black",
-               fade = FALSE)
+               fade = FALSE,
+               asize = input$arrow_size)
       dev.off()
     }
   )
