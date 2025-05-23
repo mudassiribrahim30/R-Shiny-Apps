@@ -8,8 +8,8 @@ library(tidyverse)
 library(officer)
 library(flextable)
 library(lm.beta)
-library(readxl)  # Add this line to load the readxl package
-library(haven)   # Add this for read_dta() function
+library(readxl)
+library(haven)
 
 ui <- fluidPage(
   tags$head(
@@ -86,15 +86,15 @@ ui <- fluidPage(
         style = "color: #7f8c8d; font-style: italic; text-align: center;")
     )
   ),
-
+  
   sidebarLayout(
     sidebarPanel(
       div(class = "well-panel",
-        h4("Data Input"),
-        fileInput("datafile", "Upload File (CSV, Excel, Stata)", 
-                  accept = c(".csv", ".xlsx", ".xls", ".dta"),
-                  buttonLabel = "Browse...",
-                  placeholder = "No file selected")
+          h4("Data Input"),
+          fileInput("datafile", "Upload File (CSV, Excel, Stata, SPSS)", 
+                    accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".zsav", ".por"),
+                    buttonLabel = "Browse...",
+                    placeholder = "No file selected")
       ),
       
       uiOutput("varselect_ui"),
@@ -102,27 +102,27 @@ ui <- fluidPage(
       uiOutput("ref_cat_ui"),
       
       div(class = "well-panel",
-        h4("Model Settings"),
-        selectInput("package", "Select Package", 
-                   choices = c("robustbase", "MASS"),
-                   width = "100%"),
-        
-        conditionalPanel(
-          condition = "input.package == 'robustbase'",
-          selectInput("method_robustbase", "Select Method (lmrob)",
-                      choices = c("MM", "M", "S"), selected = "MM",
-                      width = "100%")
-        ),
-        
-        conditionalPanel(
-          condition = "input.package == 'MASS'",
-          selectInput("method_mass", "Select Method (rlm)",
-                      choices = c("M", "MM"), selected = "M",
-                      width = "100%")
-        ),
-        
-        numericInput("decimal_places", "Decimal Places", 
-                     value = 4, min = 1, max = 6, width = "100%")
+          h4("Model Settings"),
+          selectInput("package", "Select Package", 
+                      choices = c("robustbase", "MASS"),
+                      width = "100%"),
+          
+          conditionalPanel(
+            condition = "input.package == 'robustbase'",
+            selectInput("method_robustbase", "Select Method (lmrob)",
+                        choices = c("MM", "M", "S"), selected = "MM",
+                        width = "100%")
+          ),
+          
+          conditionalPanel(
+            condition = "input.package == 'MASS'",
+            selectInput("method_mass", "Select Method (rlm)",
+                        choices = c("M", "MM"), selected = "M",
+                        width = "100%")
+          ),
+          
+          numericInput("decimal_places", "Decimal Places", 
+                       value = 4, min = 1, max = 6, width = "100%")
       ),
       
       actionButton("run_analysis", "Run Analysis", 
@@ -149,12 +149,12 @@ ui <- fluidPage(
         tabPanel("Download APA Table", 
                  icon = icon("file-download"),
                  downloadButton("download_apa", "Download APA Table",
-                               class = "btn btn-success")),
+                                class = "btn btn-success")),
         tabPanel("About",
                  icon = icon("info-circle"),
                  div(class = "about-section",
                      h3("About Robust Regressor"),
-                     p("This application provides robust regression analysis capabilities using two popular R packages:"),
+                     p("Robust Regressor is a user-friendly Shiny application designed for performing robust regression analysis. It leverages two widely used R packages (MASS and robustbase) to provide reliable estimates that are resistant to outliers and data irregularities."),
                      
                      h4("When to Use Robust Regression vs Ordinary Least Squares (OLS)"),
                      p("Robust regression should be used when:"),
@@ -209,7 +209,10 @@ server <- function(input, output, session) {
                  xlsx = read_excel(input$datafile$datapath),
                  xls = read_excel(input$datafile$datapath),
                  dta = read_dta(input$datafile$datapath),
-                 validate("Unsupported file type. Please upload CSV, Excel or Stata files.")
+                 sav = read_sav(input$datafile$datapath),
+                 zsav = read_sav(input$datafile$datapath),
+                 por = read_por(input$datafile$datapath),
+                 validate("Unsupported file type. Please upload CSV, Excel, Stata or SPSS files.")
     )
     
     validate(
@@ -228,11 +231,11 @@ server <- function(input, output, session) {
     vars <- names(dataset())
     tagList(
       div(class = "well-panel",
-        h4("Variable Selection"),
-        selectInput("depvar", "Dependent Variable", 
-                   choices = vars, width = "100%"),
-        selectInput("indepvars", "Independent Variable(s)", 
-                   choices = vars, multiple = TRUE, width = "100%")
+          h4("Variable Selection"),
+          selectInput("depvar", "Dependent Variable", 
+                      choices = vars, width = "100%"),
+          selectInput("indepvars", "Independent Variable(s)", 
+                      choices = vars, multiple = TRUE, width = "100%")
       )
     )
   })
@@ -264,10 +267,10 @@ server <- function(input, output, session) {
         
         div(class = "ref-cat-box",
             selectInput(paste0("ref_", var), 
-                       label = paste("Reference Category for", var), 
-                       choices = choices,
-                       selected = choices[1],
-                       width = "100%")
+                        label = paste("Reference Category for", var), 
+                        choices = choices,
+                        selected = choices[1],
+                        width = "100%")
         )
       })
       
@@ -488,18 +491,18 @@ server <- function(input, output, session) {
       sig_values <- unique(df$Significance)[str_detect(unique(df$Significance), "Significant")]
       dt <- dt %>%
         formatStyle('Significance',
-                   backgroundColor = styleEqual(
-                     sig_values,
-                     rep('#e6ffe6', length(sig_values))
-                   ))
+                    backgroundColor = styleEqual(
+                      sig_values,
+                      rep('#e6ffe6', length(sig_values))
+                    ))
     } else {
       sig_values <- unique(df$Significance)[str_detect(unique(df$Significance), "Likely Significant")]
       dt <- dt %>%
         formatStyle('Significance',
-                   backgroundColor = styleEqual(
-                     sig_values,
-                     rep('#e6ffe6', length(sig_values))
-                   ))
+                    backgroundColor = styleEqual(
+                      sig_values,
+                      rep('#e6ffe6', length(sig_values))
+                    ))
     }
     
     dt
@@ -575,33 +578,50 @@ server <- function(input, output, session) {
         select(Term, Estimate, Std_Estimate, Std.Error, Lower_CI, Upper_CI, Significance)
       
       # Create a flextable for better Word formatting
-      ft <- flextable::flextable(df) %>%
-        flextable::set_header_labels(
-          Term = "Term",
-          Estimate = "Unstandardized Estimate",
-          Std_Estimate = "Standardized Estimate",
+      ft <- flextable(apa_table) %>%
+        set_header_labels(
+          Predictor = "Predictor",
+          b = "b",
           SE = "SE",
-          Lower_CI = "Lower 95% CI",
-          Upper_CI = "Upper 95% CI",
-          Significance = if (input$package == "robustbase") "p-value" else "t-value"
+          CI = "95% CI",
+          β = "β",
+          p = "p-value"
         ) %>%
-        flextable::theme_booktabs() %>%
-        flextable::autofit()
+        add_header_row(
+          values = c("", "Unstandardized", "", "Standardized", ""),
+          colwidths = c(1, 2, 1, 1, 1)
+        ) %>%
+        theme_apa() %>%
+        align(align = "center", part = "all") %>%
+        align(j = 1, align = "left", part = "body") %>%
+        fontsize(size = 11, part = "all") %>%
+        autofit()
       
-      # Create a temp file for the flextable
-      tmp <- tempfile(fileext = ".docx")
-      doc <- officer::read_docx() %>%
-        officer::body_add_par("Robust Regression Results", style = "heading 1") %>%
-        officer::body_add_par(paste("Method:", 
-                                   if (input$package == "robustbase") 
-                                     paste("robustbase", input$method_robustbase) 
-                                   else 
-                                     paste("MASS", input$method_mass)), 
-                             style = "Normal") %>%
-        officer::body_add_flextable(ft)
+      # Create a Word document
+      doc <- read_docx() %>%
+        body_add_par("Robust Regression Results", style = "heading 1") %>%
+        body_add_par("", style = "Normal") %>%  # Add empty line
+        body_add_par(paste("Dependent Variable:", input$depvar), style = "Normal") %>%
+        body_add_par(paste("Method:", 
+                           ifelse(input$package == "robustbase", 
+                                  paste("robustbase -", input$method_robustbase),
+                                  paste("MASS -", input$method_mass))), 
+                     style = "Normal") %>%
+        body_add_par("", style = "Normal") %>%  # Add empty line
+        body_add_flextable(ft) %>%
+        body_add_par("", style = "Normal") %>%  # Add empty line
+        body_add_par(paste("Note. b = unstandardized coefficient; β = standardized coefficient;",
+                           "CI = confidence interval; SE = standard error."), 
+                     style = "Normal") %>%
+        body_add_par(paste("Analysis performed on", Sys.Date()), 
+                     style = "Normal")
       
-      print(doc, target = tmp)
-      file.copy(tmp, file)
+      # Save the document to a temporary file
+      temp_doc <- tempfile(fileext = ".docx")
+      print(doc, target = temp_doc)
+      
+      # Copy the file to the download location
+      file.copy(temp_doc, file)
     }
   )
 }
