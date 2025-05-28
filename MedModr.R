@@ -13,7 +13,7 @@ library(shinythemes)
 library(shinyjs)
 
 app_name <- "MedModr"
-app_version <- "1.1.0"
+app_version <- "1.2.0"
 
 ui <- fluidPage(
   useShinyjs(),
@@ -265,6 +265,9 @@ ui <- fluidPage(
         helpText("Note: Bootstrapping will take longer but provides more robust results.")
       ),
       
+      # New UI element for covariates selection
+      uiOutput("covariate_ui"),
+      
       conditionalPanel(
         condition = "input.analysis_type == 'Simple Mediation'",
         h4("Simple Mediation Guide:", icon("info-circle")),
@@ -290,8 +293,10 @@ ui <- fluidPage(
           tags$li("Y = Dependent Variable"),
           tags$li("a1 = X → M1 path"),
           tags$li("a2 = M1 → M2 path"),
-          tags$li("b = M2 → Y path"),
-          tags$li("c' = Direct effect of X → Y")
+          tags$li("b1 = M1 → Y path"),
+          tags$li("b2 = M2 → Y path"),
+          tags$li("d = X → M2 path (direct)"),
+          tags$li("c = Direct effect of X → Y")
         ),
         h4("Example Syntax:"),
         verbatimTextOutput("serial_mediation_syntax"),
@@ -390,7 +395,7 @@ ui <- fluidPage(
                    tags$li(paste("Bootstrap CIs are", 
                                  textOutput("bootstrap_status", inline = TRUE))),
                    tags$li("For mediation: Significant indirect effect (a*b) indicates mediation"),
-                   tags$li("For serial mediation: Check all indirect paths (a1*a2*b)"),
+                   tags$li("For serial mediation: Check all indirect paths (a1*a2*b2)"),
                    tags$li("For moderation: Significant interaction term (X:W) indicates moderation"),
                    tags$li("p-values < .05 are typically considered statistically significant"),
                    tags$li("Standardized coefficients (std.all) show effect sizes")
@@ -488,7 +493,8 @@ ui <- fluidPage(
                        tags$li("Moderation analysis with interaction terms"),
                        tags$li("Bootstrap confidence intervals"),
                        tags$li("Interactive path diagrams"),
-                       tags$li("Professional report generation")
+                       tags$li("Professional report generation"),
+                       tags$li("Adjust for confounding variables")
                      ),
                      h5("Developed by:"),
                      p("Mudasir Mohammed Ibrahim"),
@@ -527,6 +533,22 @@ server <- function(input, output, session) {
       showNotification(paste("Error reading file:", e$message), type = "error", duration = 10)
       return(NULL)
     })
+  })
+  
+  # Render UI for covariate selection
+  output$covariate_ui <- renderUI({
+    req(data())
+    df <- data()
+    var_names <- names(df)
+    
+    # Exclude potential key variables from covariates
+    potential_keys <- c("X", "Y", "M", "M1", "M2", "W", "XW", "X_W", "interaction")
+    covariate_choices <- setdiff(var_names, potential_keys)
+    
+    selectizeInput("covariates", "Select Covariates to Adjust For:",
+                   choices = covariate_choices,
+                   multiple = TRUE,
+                   options = list(placeholder = 'Select variables to adjust for'))
   })
   
   # Variable preview
@@ -601,11 +623,11 @@ server <- function(input, output, session) {
   
   # Syntax examples
   output$simple_mediation_syntax <- renderText({
-    "M ~ a*X\nY ~ b*M + cp*X\n\n# Define effects\nindirect := a*b\ntotal := cp + (a*b)\n# Standardized indirect effect\nstd.indirect := std(a)*std(b)\n# Proportion mediated\nprop_mediated := (a*b)/total"
+    "M ~ a*X\nY ~ b*M + cp*X\n\n# Define effects\nindirect := a*b #Mediating effect\ntotal := cp + (a*b) #Total effect\n# Standardized indirect effect (Ignore, computed automatically)\nstd.indirect := std(a)*std(b)\n# Proportion mediated\nprop_mediated := (a*b)/total"
   })
   
   output$serial_mediation_syntax <- renderText({
-    "M1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b*M2 + cp*X\n\n# Define effects\nindirect1 := a1*a2*b  # via M1 and M2\nindirect2 := a1*d*b   # via M1 only\ntotal := cp + (a1*a2*b) + (a1*d*b)\n# Standardized effects\nstd.indirect1 := std(a1)*std(a2)*std(b)\nstd.indirect2 := std(a1)*std(d)*std(b)"
+    "Y ~ c*X\nM1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b1*M1 + b2*M2\n\n# Define effects\nindirect1 := a1 * b1 #Simple mediation (for M1 only)\nindirect2 := a1 * a2 * b2 #Serial mediation (through M1 then M2)\nindirect3 := d * b2 #Simple mediation (for M2 only)\n\ntotal_indirect_effect := indirect1 + indirect2 + indirect3 #Total indirect effect\ntotal_effect := c + total_indirect_effect #Total effect"
   })
   
   output$moderation_syntax <- renderText({
@@ -614,7 +636,7 @@ server <- function(input, output, session) {
   
   # How-to guide outputs
   output$simple_mediation_howto1 <- renderText({
-    "M ~ a*X\nY ~ b*M + cp*X"
+    "M ~ a*X\nY ~ b*M + c*X"
   })
   
   output$simple_mediation_example <- renderText({
@@ -626,15 +648,15 @@ server <- function(input, output, session) {
   })
   
   output$serial_mediation_howto1 <- renderText({
-    "M1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b*M2 + cp*X"
+    "Y ~ c*X\nM1 ~ a1*X\nM2 ~ a2*M1 + d*X\nY ~ b1*M1 + b2*M2"
   })
   
   output$serial_mediation_example <- renderText({
-    "Anxiety ~ a1*Stress_Composite\nSupport_Composite ~ a2*Anxiety + d*Stress_Composite\nAcademic_Performance ~ b*Support_Composite + cp*Stress_Composite"
+    "Life_Satisfaction ~ c*Career_calling\nAcademic_Motivation ~ a1*Career_calling\nStudy_Engagement ~ a2*Academic_Mot + d*Career_calling\nLife_Satisfaction ~ b1*Academic_Motivation + b2*Study_Engagement"
   })
   
   output$serial_mediation_indirect <- renderText({
-    "indirect1 := a1*a2*b\nindirect2 := a1*d*b"
+    "indirect2 := a1 * a2 * b2"
   })
   
   output$moderation_howto1 <- renderText({
@@ -684,17 +706,37 @@ server <- function(input, output, session) {
       }
     }
     
+    # Add covariates to model syntax if specified
+    model_syntax <- input$model_syntax
+    if(!is.null(input$covariates) && length(input$covariates) > 0) {
+      # Add covariates to each regression equation
+      cov_str <- paste(input$covariates, collapse = " + ")
+      
+      # Find all regression equations
+      equations <- strsplit(model_syntax, "\n")[[1]]
+      reg_equations <- grep("~", equations, value = TRUE)
+      
+      # Add covariates to each regression equation
+      for(eq in reg_equations) {
+        # Skip if already contains covariates
+        if(!grepl(paste(input$covariates, collapse = "|"), eq)) {
+          new_eq <- paste0(eq, " + ", cov_str)
+          model_syntax <- gsub(eq, new_eq, model_syntax, fixed = TRUE)
+        }
+      }
+    }
+    
     tryCatch({
       if(input$use_bootstrap) {
         # Run with bootstrap
-        sem(model = input$model_syntax, 
+        sem(model = model_syntax, 
             data = df, 
             std.lv = TRUE,
             se = "bootstrap", 
             bootstrap = input$bootstrap_samples)
       } else {
         # Run without bootstrap
-        sem(model = input$model_syntax, 
+        sem(model = model_syntax, 
             data = df, 
             std.lv = TRUE)
       }
@@ -725,6 +767,12 @@ server <- function(input, output, session) {
     
     if(input$use_bootstrap) {
       cat(sprintf("\nBootstrap Results (based on %d samples):\n", input$bootstrap_samples))
+    }
+    
+    # Show if covariates were included
+    if(!is.null(input$covariates) && length(input$covariates) > 0) {
+      cat("\nCovariates adjusted for in the analysis:\n")
+      cat(paste(input$covariates, collapse = ", "), "\n")
     }
   })
   
@@ -1061,6 +1109,13 @@ server <- function(input, output, session) {
             body_add_par(interpretation, style = "Normal") %>%
             body_add_par(paste("Proportion mediated:", round(prop_mediated, 3)), style = "Normal")
         }
+      }
+      
+      # Add covariates information if specified
+      if(!is.null(input$covariates) && length(input$covariates) > 0) {
+        doc <- doc %>%
+          body_add_par("Covariates Adjusted For", style = "heading 3") %>%
+          body_add_par(paste(input$covariates, collapse = ", "), style = "Normal")
       }
       
       # Add path diagram
