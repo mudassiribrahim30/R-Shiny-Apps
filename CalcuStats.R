@@ -40,7 +40,7 @@ ui <- navbarPage(
              sidebarPanel(
                width = 4,
                numericInput("e", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
-               numericInput("non_response", "Non-response Rate (%)", value = 10, min = 0, max = 100, step = 1),
+               numericInput("non_response", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
                actionButton("addStratum", "Add Stratum", class = "btn-primary"),
                actionButton("removeStratum", "Remove Last Stratum", class = "btn-warning"),
                uiOutput("stratumInputs"),
