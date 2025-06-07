@@ -83,6 +83,15 @@ A flexible app designed to help students, researchers, and instructors generate 
 •	Export results and datasets in Word or Excel formats
 •	Supports CSV, Excel, SPSS, and Stata input/output
 ________________________________________
+11. CleanMyData
+🔗 Launch CleanMyData App
+An intuitive tool for fast and efficient data cleaning and transformation. Ideal for researchers, analysts, and students:
+• Import/export datasets in CSV, Excel, SPSS, and Stata formats
+• Handle missing data and detect outliers
+• Recode, filter, sort, and create dummy variables
+• Reorder columns and calculate row/column sums
+• Live data editing and interactive visualization
+________________________________________
 
 📧 Contact
 Developed by Mudasir Mohammed Ibrahim
