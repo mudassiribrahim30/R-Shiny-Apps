@@ -6,6 +6,12 @@ library(magrittr)
 library(pwr)
 library(e1071)
 library(tidyverse)
+library(DiagrammeR)
+library(rsvg)
+library(htmltools)
+library(shinyjs)
+library(colourpicker)
+library(V8)
 
 counter_file <- "counter.rds"
 if (!file.exists(counter_file)) saveRDS(0, counter_file)
@@ -34,6 +40,7 @@ ui <- navbarPage(
       "Developed by Mudasir Mohammed Ibrahim (Registered Nurse, BSc, Dip)"
     )
   ),
+  useShinyjs(),
   
   tabPanel("Proportional Allocation",
            sidebarLayout(
@@ -49,7 +56,55 @@ ui <- navbarPage(
                  p("For a single population, enter the total size below."),
                  p("For multiple populations, click 'Add Stratum' to create additional groups.")
                ),
-               downloadButton("downloadCustomWord", "Download as Word", class = "btn-success"),
+               conditionalPanel(
+                 condition = "output.stratumCount_custom > 1",
+                 checkboxInput("showFlowchart_custom", "Generate Flow Chart Diagram", FALSE),
+                 conditionalPanel(
+                   condition = "input.showFlowchart_custom",
+                   selectInput("flowchartLayout_custom", "Layout Style:",
+                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                   colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
+                   colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
+                   sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 8, max = 24, value = 14),
+                   sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                   sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                   selectInput("nodeShape_custom", "Node Shape", 
+                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                               selected = "rectangle"),
+                   sliderInput("arrowSize_custom", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                   actionButton("updateFlowchart_custom", "Update Diagram", class = "btn-primary"),
+                   br(), br(),
+                   h4("Diagram Editor"),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                     h5("Text Editing"),
+                     textInput("nodeText_custom", "Current Text:", ""),
+                     textInput("newText_custom", "New Text (use -> for replacement):", ""),
+                     actionButton("editNodeText_custom", "Update Text", class = "btn-info"),
+                     actionButton("deleteText_custom", "Delete Text", class = "btn-danger"),
+                     actionButton("resetDiagramText_custom", "Reset All Text", class = "btn-warning")
+                   ),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px;",
+                     h5("Font Size Controls"),
+                     sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
+                                 min = 8, max = 24, value = 14),
+                     sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
+                                 min = 8, max = 24, value = 12),
+                     actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-primary")
+                   ),
+                   br(), br(),
+                   h4("Download Diagram"),
+                   div(style = "display: inline-block;", 
+                       downloadButton("downloadFlowchartPNG_custom", "PNG (High Quality)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartSVG_custom", "SVG (Vector)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartPDF_custom", "PDF (Vector)", class = "btn-success"))
+                 )
+               ),
+               downloadButton("downloadCustomWord", "Download as Word", class = "btn-primary"),
                downloadButton("downloadCustomSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
@@ -77,7 +132,18 @@ ui <- navbarPage(
                verbatimTextOutput("adjustedSampleSizeCustom"),
                h4("Proportional Allocation"),
                tableOutput("allocationTableCustom"),
-               textOutput("interpretationTextCustom")
+               textOutput("interpretationTextCustom"),
+               conditionalPanel(
+                 condition = "input.showFlowchart_custom && output.stratumCount_custom > 1",
+                 h4("Stratification Flow Chart"),
+                 grVizOutput("flowchart_custom", width = "100%", height = "500px"),
+                 div(id = "diagramEditor_custom",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     h4("Interactive Diagram Editor"),
+                     p("Click on nodes or edges in the diagram to edit them."),
+                     uiOutput("nodeEdgeEditorUI_custom")
+                 )
+               )
              )
            )
   ),
@@ -96,7 +162,55 @@ ui <- navbarPage(
                  p("For a single population, enter the total size below."),
                  p("For multiple populations, click 'Add Stratum' to create additional groups.")
                ),
-               downloadButton("downloadWord", "Download as Word", class = "btn-success"),
+               conditionalPanel(
+                 condition = "output.stratumCount > 1",
+                 checkboxInput("showFlowchart", "Generate Flow Chart Diagram", FALSE),
+                 conditionalPanel(
+                   condition = "input.showFlowchart",
+                   selectInput("flowchartLayout", "Layout Style:",
+                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                   colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
+                   colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
+                   sliderInput("nodeFontSize", "Default Node Font Size", min = 8, max = 24, value = 14),
+                   sliderInput("edgeFontSize", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                   sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                   selectInput("nodeShape", "Node Shape", 
+                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                               selected = "rectangle"),
+                   sliderInput("arrowSize", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                   actionButton("updateFlowchart", "Update Diagram", class = "btn-primary"),
+                   br(), br(),
+                   h4("Diagram Editor"),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                     h5("Text Editing"),
+                     textInput("nodeText", "Current Text:", ""),
+                     textInput("newText", "New Text (use -> for replacement):", ""),
+                     actionButton("editNodeText", "Update Text", class = "btn-info"),
+                     actionButton("deleteText", "Delete Text", class = "btn-danger"),
+                     actionButton("resetDiagramText", "Reset All Text", class = "btn-warning")
+                   ),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px;",
+                     h5("Font Size Controls"),
+                     sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
+                                 min = 8, max = 24, value = 14),
+                     sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
+                                 min = 8, max = 24, value = 12),
+                     actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-primary")
+                   ),
+                   br(), br(),
+                   h4("Download Diagram"),
+                   div(style = "display: inline-block;", 
+                       downloadButton("downloadFlowchartPNG", "PNG (High Quality)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartSVG", "SVG (Vector)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartPDF", "PDF (Vector)", class = "btn-success"))
+                 )
+               ),
+               downloadButton("downloadWord", "Download as Word", class = "btn-primary"),
                downloadButton("downloadSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
@@ -126,7 +240,18 @@ ui <- navbarPage(
                p("The proportional allocation formula is:"),
                p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>")),
                tableOutput("allocationTable"),
-               textOutput("interpretationText")
+               textOutput("interpretationText"),
+               conditionalPanel(
+                 condition = "input.showFlowchart && output.stratumCount > 1",
+                 h4("Stratification Flow Chart"),
+                 grVizOutput("flowchart", width = "100%", height = "500px"),
+                 div(id = "diagramEditor",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     h4("Interactive Diagram Editor"),
+                     p("Click on nodes or edges in the diagram to edit them."),
+                     uiOutput("nodeEdgeEditorUI")
+                 )
+               )
              )
            )
   ),
@@ -143,7 +268,55 @@ ui <- navbarPage(
                actionButton("addStratum_c", "Add Stratum", class = "btn-primary"),
                actionButton("removeStratum_c", "Remove Last Stratum", class = "btn-warning"),
                uiOutput("stratumInputs_c"),
-               downloadButton("downloadCochranWord", "Download as Word", class = "btn-success"),
+               conditionalPanel(
+                 condition = "output.stratumCount_c > 1",
+                 checkboxInput("showFlowchart_c", "Generate Flow Chart Diagram", FALSE),
+                 conditionalPanel(
+                   condition = "input.showFlowchart_c",
+                   selectInput("flowchartLayout_c", "Layout Style:",
+                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                   colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
+                   colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
+                   sliderInput("nodeFontSize_c", "Default Node Font Size", min = 8, max = 24, value = 14),
+                   sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                   sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                   selectInput("nodeShape_c", "Node Shape", 
+                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                               selected = "rectangle"),
+                   sliderInput("arrowSize_c", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                   actionButton("updateFlowchart_c", "Update Diagram", class = "btn-primary"),
+                   br(), br(),
+                   h4("Diagram Editor"),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                     h5("Text Editing"),
+                     textInput("nodeText_c", "Current Text:", ""),
+                     textInput("newText_c", "New Text (use -> for replacement):", ""),
+                     actionButton("editNodeText_c", "Update Text", class = "btn-info"),
+                     actionButton("deleteText_c", "Delete Text", class = "btn-danger"),
+                     actionButton("resetDiagramText_c", "Reset All Text", class = "btn-warning")
+                   ),
+                   div(
+                     style = "border: 1px solid #ddd; padding: 10px;",
+                     h5("Font Size Controls"),
+                     sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
+                                 min = 8, max = 24, value = 14),
+                     sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
+                                 min = 8, max = 24, value = 12),
+                     actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-primary")
+                   ),
+                   br(), br(),
+                   h4("Download Diagram"),
+                   div(style = "display: inline-block;", 
+                       downloadButton("downloadFlowchartPNG_c", "PNG (High Quality)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartSVG_c", "SVG (Vector)", class = "btn-success")),
+                   div(style = "display: inline-block; margin-left: 5px;", 
+                       downloadButton("downloadFlowchartPDF_c", "PDF (Vector)", class = "btn-success"))
+                 )
+               ),
+               downloadButton("downloadCochranWord", "Download as Word", class = "btn-primary"),
                downloadButton("downloadCochranSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
@@ -170,7 +343,18 @@ ui <- navbarPage(
                p("The proportional allocation formula is:"),
                p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>")),
                tableOutput("cochranAllocationTable"),
-               textOutput("cochranInterpretation")
+               textOutput("cochranInterpretation"),
+               conditionalPanel(
+                 condition = "input.showFlowchart_c && output.stratumCount_c > 1",
+                 h4("Stratification Flow Chart"),
+                 grVizOutput("flowchart_c", width = "100%", height = "500px"),
+                 div(id = "diagramEditor_c",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     h4("Interactive Diagram Editor"),
+                     p("Click on nodes or edges in the diagram to edit them."),
+                     uiOutput("nodeEdgeEditorUI_c")
+                 )
+               )
              )
            )
   ),
@@ -233,13 +417,17 @@ ui <- navbarPage(
   )
 )
 
-server <- function(input, output, session) {  
-  output$greetingTextCustom <- renderText({
-    paste(getGreeting(), "Welcome to CalcuStats.")
-  })
-  
+server <- function(input, output, session) {
   # Custom Proportional Allocation section variables
-  rv_custom <- reactiveValues(stratumCount = 1)
+  rv_custom <- reactiveValues(
+    stratumCount = 1,
+    selectedNode = NULL,
+    selectedEdge = NULL,
+    nodeTexts = list(),
+    edgeTexts = list(),
+    nodeFontSizes = list(),
+    edgeFontSizes = list()
+  )
   
   observeEvent(input$addStratum_custom, { rv_custom$stratumCount <- rv_custom$stratumCount + 1 })
   observeEvent(input$removeStratum_custom, { if (rv_custom$stratumCount > 1) rv_custom$stratumCount <- rv_custom$stratumCount - 1 })
@@ -264,6 +452,11 @@ server <- function(input, output, session) {
       )
     })
   })
+  
+  output$stratumCount_custom <- reactive({
+    rv_custom$stratumCount
+  })
+  outputOptions(output, "stratumCount_custom", suspendWhenHidden = FALSE)
   
   totalPopulation_custom <- reactive({
     sum(sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]]), na.rm = TRUE)
@@ -351,6 +544,336 @@ server <- function(input, output, session) {
   output$allocationTableCustom <- renderTable({ allocationData_custom() })
   output$interpretationTextCustom <- renderText({ interpretationText_custom() })
   
+  generateDotCode_custom <- function() {
+    if (rv_custom$stratumCount <= 1) return("")
+    
+    strata <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]])
+    pops <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
+    alloc <- allocationData_custom()
+    total_sample <- sum(alloc$Proportional_Sample[1:rv_custom$stratumCount])
+    
+    nodes <- paste0("node", 1:(rv_custom$stratumCount + 3))
+    node_labels <- c(paste0("Total Population\nN = ", totalPopulation_custom()), 
+                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv_custom$stratumCount]),
+                     paste0("Total Sample\nn = ", total_sample))
+    
+    for (i in seq_along(nodes)) {
+      if (!is.null(rv_custom$nodeTexts[[nodes[i]]])) {
+        node_labels[i] <- rv_custom$nodeTexts[[nodes[i]]]
+      }
+    }
+    
+    edge_labels <- sapply(1:rv_custom$stratumCount, function(i) {
+      edge_name <- paste0("edge", i)
+      if (!is.null(rv_custom$edgeTexts[[edge_name]])) {
+        return(rv_custom$edgeTexts[[edge_name]])
+      } else {
+        return(paste0("", alloc$Proportional_Sample[i]))
+      }
+    })
+    
+    # Get font sizes for nodes and edges
+    node_font_sizes <- sapply(nodes, function(n) {
+      rv_custom$nodeFontSizes[[n]] %||% input$nodeFontSize_custom
+    })
+    
+    edge_font_sizes <- sapply(paste0("edge", 1:rv_custom$stratumCount), function(e) {
+      rv_custom$edgeFontSizes[[e]] %||% input$edgeFontSize_custom
+    })
+    
+    dot_code <- paste0(
+      "digraph flowchart {
+        rankdir=TB;
+        layout=\"", input$flowchartLayout_custom, "\";
+        node [fontname=Arial, shape=\"", input$nodeShape_custom, "\", style=filled, fillcolor='", input$nodeColor_custom, "', 
+              width=", input$nodeWidth_custom, ", height=", input$nodeHeight_custom, "];
+        edge [color='", input$edgeColor_custom, "', arrowsize=", input$arrowSize_custom, "];
+        
+        // Nodes with custom font sizes
+        '", nodes[1], "' [label='", node_labels[1], "', id='", nodes[1], "', fontsize=", node_font_sizes[1], "];
+        '", nodes[length(nodes)], "' [label='", node_labels[length(node_labels)], "', id='", nodes[length(nodes)], "', fontsize=", node_font_sizes[length(nodes)], "];
+      ",
+      paste0(sapply(1:rv_custom$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' [label='", node_labels[i+1], "', id='", nodes[i+1], "', fontsize=", node_font_sizes[i+1], "];")
+      }), collapse = "\n"),
+      "
+        
+        // Edges with custom font sizes
+        '", nodes[1], "' -> {",
+      paste0("'", nodes[2:(rv_custom$stratumCount+1)], "'", collapse = " "),
+      "} [label='', id='stratification_edges', fontsize=", input$edgeFontSize_custom, "];
+      ",
+      paste0(sapply(1:rv_custom$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' -> '", nodes[length(nodes)], "' [label='", edge_labels[i], "', id='edge", i, "', fontsize=", edge_font_sizes[i], "];")
+      }), collapse = "\n"),
+      "
+      }"
+    )
+    
+    return(dot_code)
+  }
+  
+  output$flowchart_custom <- renderGrViz({
+    if (!input$showFlowchart_custom || rv_custom$stratumCount <= 1) return()
+    
+    dot_code <- generateDotCode_custom()
+    grViz(dot_code)
+  })
+  
+  # JavaScript for handling clicks on nodes and edges
+  jsCode_custom <- '
+  $(document).ready(function() {
+    document.getElementById("flowchart_custom").addEventListener("click", function(event) {
+      var target = event.target;
+      if (target.tagName === "text") {
+        target = target.parentNode;
+      }
+      
+      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
+        var nodeId = target.getAttribute("id");
+        Shiny.setInputValue("selected_node_custom", nodeId);
+      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
+        var pathId = target.getAttribute("id");
+        Shiny.setInputValue("selected_edge_custom", pathId);
+      }
+    });
+  });
+  '
+  
+  observe({
+    session$sendCustomMessage(type='jsCode', list(value = jsCode_custom))
+  })
+  
+  observeEvent(input$selected_node_custom, {
+    rv_custom$selectedNode <- input$selected_node_custom
+    rv_custom$selectedEdge <- NULL
+    
+    if (!is.null(rv_custom$nodeTexts[[rv_custom$selectedNode]])) {
+      updateTextInput(session, "nodeText_custom", value = rv_custom$nodeTexts[[rv_custom$selectedNode]])
+    } else {
+      node_index <- as.numeric(gsub("node", "", rv_custom$selectedNode))
+      if (node_index == 1) {
+        updateTextInput(session, "nodeText_custom", value = paste0("Total Population\nN = ", totalPopulation_custom()))
+      } else if (node_index == rv_custom$stratumCount + 2) {
+        alloc <- allocationData_custom()
+        total_sample <- sum(alloc$Proportional_Sample[1:rv_custom$stratumCount])
+        updateTextInput(session, "nodeText_custom", 
+                        value = paste0("Total Sample\nn = ", total_sample))
+      } else {
+        stratum_num <- node_index - 1
+        strata <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]])
+        pops <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
+        alloc <- allocationData_custom()
+        updateTextInput(session, "nodeText_custom", 
+                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
+      }
+    }
+    
+    # Update font size slider for selected node
+    if (!is.null(rv_custom$nodeFontSizes[[rv_custom$selectedNode]])) {
+      updateSliderInput(session, "selectedNodeFontSize_custom", 
+                        value = rv_custom$nodeFontSizes[[rv_custom$selectedNode]])
+    } else {
+      updateSliderInput(session, "selectedNodeFontSize_custom", value = input$nodeFontSize_custom)
+    }
+  })
+  
+  observeEvent(input$selected_edge_custom, {
+    rv_custom$selectedEdge <- input$selected_edge_custom
+    rv_custom$selectedNode <- NULL
+    
+    if (!is.null(rv_custom$edgeTexts[[rv_custom$selectedEdge]])) {
+      updateTextInput(session, "nodeText_custom", value = rv_custom$edgeTexts[[rv_custom$selectedEdge]])
+    } else {
+      edge_num <- as.numeric(gsub("edge", "", rv_custom$selectedEdge))
+      alloc <- allocationData_custom()
+      updateTextInput(session, "nodeText_custom", 
+                      value = paste0("", alloc$Proportional_Sample[edge_num]))
+    }
+    
+    # Update font size slider for selected edge
+    if (!is.null(rv_custom$edgeFontSizes[[rv_custom$selectedEdge]])) {
+      updateSliderInput(session, "selectedEdgeFontSize_custom", 
+                        value = rv_custom$edgeFontSizes[[rv_custom$selectedEdge]])
+    } else {
+      updateSliderInput(session, "selectedEdgeFontSize_custom", value = input$edgeFontSize_custom)
+    }
+  })
+  
+  observeEvent(input$editNodeText_custom, {
+    if (input$newText_custom == "") return()
+    
+    if (!is.null(rv_custom$selectedNode)) {
+      if (grepl("->", input$newText_custom)) {
+        # Handle replacement pattern
+        parts <- strsplit(input$newText_custom, "->")[[1]]
+        old_text <- trimws(parts[1])
+        new_text <- trimws(parts[2])
+        current_text <- rv_custom$nodeTexts[[rv_custom$selectedNode]] %||% input$nodeText_custom
+        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
+        rv_custom$nodeTexts[[rv_custom$selectedNode]] <- updated_text
+      } else {
+        # Direct text replacement
+        rv_custom$nodeTexts[[rv_custom$selectedNode]] <- input$newText_custom
+      }
+    } else if (!is.null(rv_custom$selectedEdge)) {
+      if (grepl("->", input$newText_custom)) {
+        # Handle replacement pattern
+        parts <- strsplit(input$newText_custom, "->")[[1]]
+        old_text <- trimws(parts[1])
+        new_text <- trimws(parts[2])
+        current_text <- rv_custom$edgeTexts[[rv_custom$selectedEdge]] %||% input$nodeText_custom
+        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
+        rv_custom$edgeTexts[[rv_custom$selectedEdge]] <- updated_text
+      } else {
+        # Direct text replacement
+        rv_custom$edgeTexts[[rv_custom$selectedEdge]] <- input$newText_custom
+      }
+    }
+    
+    updateTextInput(session, "newText_custom", value = "")
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$deleteText_custom, {
+    if (!is.null(rv_custom$selectedNode)) {
+      if (grepl("->", input$newText_custom)) {
+        # Handle deletion pattern
+        parts <- strsplit(input$newText_custom, "->")[[1]]
+        text_to_delete <- trimws(parts[1])
+        current_text <- rv_custom$nodeTexts[[rv_custom$selectedNode]] %||% input$nodeText_custom
+        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
+        rv_custom$nodeTexts[[rv_custom$selectedNode]] <- updated_text
+      } else {
+        # Delete entire text
+        rv_custom$nodeTexts[[rv_custom$selectedNode]] <- NULL
+      }
+    } else if (!is.null(rv_custom$selectedEdge)) {
+      if (grepl("->", input$newText_custom)) {
+        # Handle deletion pattern
+        parts <- strsplit(input$newText_custom, "->")[[1]]
+        text_to_delete <- trimws(parts[1])
+        current_text <- rv_custom$edgeTexts[[rv_custom$selectedEdge]] %||% input$nodeText_custom
+        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
+        rv_custom$edgeTexts[[rv_custom$selectedEdge]] <- updated_text
+      } else {
+        # Delete entire text
+        rv_custom$edgeTexts[[rv_custom$selectedEdge]] <- NULL
+      }
+    }
+    
+    updateTextInput(session, "newText_custom", value = "")
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$applyFontSizes_custom, {
+    if (!is.null(rv_custom$selectedNode)) {
+      rv_custom$nodeFontSizes[[rv_custom$selectedNode]] <- input$selectedNodeFontSize_custom
+    } else if (!is.null(rv_custom$selectedEdge)) {
+      rv_custom$edgeFontSizes[[rv_custom$selectedEdge]] <- input$selectedEdgeFontSize_custom
+    }
+    
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetDiagramText_custom, {
+    rv_custom$nodeTexts <- list()
+    rv_custom$edgeTexts <- list()
+    rv_custom$nodeFontSizes <- list()
+    rv_custom$edgeFontSizes <- list()
+    updateTextInput(session, "nodeText_custom", value = "")
+    updateTextInput(session, "newText_custom", value = "")
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  output$nodeEdgeEditorUI_custom <- renderUI({
+    if (!is.null(rv_custom$selectedNode)) {
+      tagList(
+        p(strong("Editing Node:"), rv_custom$selectedNode),
+        textInput("nodeText_custom", "Node Text:", value = rv_custom$nodeTexts[[rv_custom$selectedNode]] %||% ""),
+        actionButton("editNodeText_custom", "Update Node Text", class = "btn-info"),
+        actionButton("resetNodeText_custom", "Reset This Text", class = "btn-warning")
+      )
+    } else if (!is.null(rv_custom$selectedEdge)) {
+      tagList(
+        p(strong("Editing Edge:"), rv_custom$selectedEdge),
+        textInput("nodeText_custom", "Edge Label:", value = rv_custom$edgeTexts[[rv_custom$selectedEdge]] %||% ""),
+        actionButton("editNodeText_custom", "Update Edge Label", class = "btn-info"),
+        actionButton("resetEdgeText_custom", "Reset This Text", class = "btn-warning")
+      )
+    } else {
+      p("Click on a node or edge in the diagram to edit it.")
+    }
+  })
+  
+  observeEvent(input$resetNodeText_custom, {
+    rv_custom$nodeTexts[[rv_custom$selectedNode]] <- NULL
+    rv_custom$nodeFontSizes[[rv_custom$selectedNode]] <- NULL
+    updateTextInput(session, "nodeText_custom", value = "")
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetEdgeText_custom, {
+    rv_custom$edgeTexts[[rv_custom$selectedEdge]] <- NULL
+    rv_custom$edgeFontSizes[[rv_custom$selectedEdge]] <- NULL
+    updateTextInput(session, "nodeText_custom", value = "")
+    output$flowchart_custom <- renderGrViz({
+      dot_code <- generateDotCode_custom()
+      grViz(dot_code)
+    })
+  })
+  
+  output$downloadFlowchartPNG_custom <- downloadHandler(
+    filename = function() {
+      paste("proportional_allocation_flowchart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_custom()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_png(tmp_file, file, width = 3000, height = 2000)
+      unlink(tmp_file)
+    }
+  )
+  
+  output$downloadFlowchartSVG_custom <- downloadHandler(
+    filename = function() {
+      paste("proportional_allocation_flowchart_", Sys.Date(), ".svg", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_custom()
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(file)
+    }
+  )
+  
+  output$downloadFlowchartPDF_custom <- downloadHandler(
+    filename = function() {
+      paste("proportional_allocation_flowchart_", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_custom()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_pdf(tmp_file, file)
+      unlink(tmp_file)
+    }
+  )
+  
   output$downloadCustomWord <- downloadHandler(
     filename = function() paste("Proportional_Allocation_Report_", Sys.Date(), ".docx", sep = ""),
     content = function(file) {
@@ -400,7 +923,15 @@ server <- function(input, output, session) {
   )
   
   # Taro Yamane section variables
-  rv <- reactiveValues(stratumCount = 1)
+  rv <- reactiveValues(
+    stratumCount = 1,
+    selectedNode = NULL,
+    selectedEdge = NULL,
+    nodeTexts = list(),
+    edgeTexts = list(),
+    nodeFontSizes = list(),
+    edgeFontSizes = list()
+  )
   
   observeEvent(input$addStratum, { rv$stratumCount <- rv$stratumCount + 1 })
   observeEvent(input$removeStratum, { if (rv$stratumCount > 1) rv$stratumCount <- rv$stratumCount - 1 })
@@ -425,6 +956,11 @@ server <- function(input, output, session) {
       )
     })
   })
+  
+  output$stratumCount <- reactive({
+    rv$stratumCount
+  })
+  outputOptions(output, "stratumCount", suspendWhenHidden = FALSE)
   
   totalPopulation <- reactive({
     sum(sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]]), na.rm = TRUE)
@@ -540,6 +1076,335 @@ server <- function(input, output, session) {
   output$allocationTable <- renderTable({ allocationData() })
   output$interpretationText <- renderText({ interpretationText() })
   
+  generateDotCode_yamane <- function() {
+    if (rv$stratumCount <= 1) return("")
+    
+    strata <- sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]])
+    pops <- sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
+    alloc <- allocationData()
+    total_sample <- sum(alloc$Proportional_Sample[1:rv$stratumCount])
+    
+    nodes <- paste0("node", 1:(rv$stratumCount + 3))
+    node_labels <- c(paste0("Total Population\nN = ", totalPopulation()), 
+                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv$stratumCount]),
+                     paste0("Total Sample\nn = ", total_sample))
+    
+    for (i in seq_along(nodes)) {
+      if (!is.null(rv$nodeTexts[[nodes[i]]])) {
+        node_labels[i] <- rv$nodeTexts[[nodes[i]]]
+      }
+    }
+    
+    edge_labels <- sapply(1:rv$stratumCount, function(i) {
+      edge_name <- paste0("edge", i)
+      if (!is.null(rv$edgeTexts[[edge_name]])) {
+        return(rv$edgeTexts[[edge_name]])
+      } else {
+        return(paste0("", alloc$Proportional_Sample[i]))
+      }
+    })
+    
+    # Get font sizes for nodes and edges
+    node_font_sizes <- sapply(nodes, function(n) {
+      rv$nodeFontSizes[[n]] %||% input$nodeFontSize
+    })
+    
+    edge_font_sizes <- sapply(paste0("edge", 1:rv$stratumCount), function(e) {
+      rv$edgeFontSizes[[e]] %||% input$edgeFontSize
+    })
+    
+    dot_code <- paste0(
+      "digraph flowchart {
+        rankdir=TB;
+        layout=\"", input$flowchartLayout, "\";
+        node [fontname=Arial, shape=\"", input$nodeShape, "\", style=filled, fillcolor='", input$nodeColor, "', 
+              width=", input$nodeWidth, ", height=", input$nodeHeight, "];
+        edge [color='", input$edgeColor, "', arrowsize=", input$arrowSize, "];
+        
+        // Nodes with custom font sizes
+        '", nodes[1], "' [label='", node_labels[1], "', id='", nodes[1], "', fontsize=", node_font_sizes[1], "];
+        '", nodes[length(nodes)], "' [label='", node_labels[length(node_labels)], "', id='", nodes[length(nodes)], "', fontsize=", node_font_sizes[length(nodes)], "];
+      ",
+      paste0(sapply(1:rv$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' [label='", node_labels[i+1], "', id='", nodes[i+1], "', fontsize=", node_font_sizes[i+1], "];")
+      }), collapse = "\n"),
+      "
+        
+        // Edges with custom font sizes
+        '", nodes[1], "' -> {",
+      paste0("'", nodes[2:(rv$stratumCount+1)], "'", collapse = " "),
+      "} [label='', id='stratification_edges', fontsize=", input$edgeFontSize, "];
+      ",
+      paste0(sapply(1:rv$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' -> '", nodes[length(nodes)], "' [label='", edge_labels[i], "', id='edge", i, "', fontsize=", edge_font_sizes[i], "];")
+      }), collapse = "\n"),
+      "
+      }"
+    )
+    
+    return(dot_code)
+  }
+  
+  output$flowchart <- renderGrViz({
+    if (!input$showFlowchart || rv$stratumCount <= 1) return()
+    
+    dot_code <- generateDotCode_yamane()
+    grViz(dot_code)
+  })
+  
+  jsCode_yamane <- '
+  $(document).ready(function() {
+    document.getElementById("flowchart").addEventListener("click", function(event) {
+      var target = event.target;
+      if (target.tagName === "text") {
+        target = target.parentNode;
+      }
+      
+      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
+        var nodeId = target.getAttribute("id");
+        Shiny.setInputValue("selected_node", nodeId);
+      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
+        var pathId = target.getAttribute("id");
+        Shiny.setInputValue("selected_edge", pathId);
+      }
+    });
+  });
+  '
+  
+  observe({
+    session$sendCustomMessage(type='jsCode', list(value = jsCode_yamane))
+  })
+  
+  observeEvent(input$selected_node, {
+    rv$selectedNode <- input$selected_node
+    rv$selectedEdge <- NULL
+    
+    if (!is.null(rv$nodeTexts[[rv$selectedNode]])) {
+      updateTextInput(session, "nodeText", value = rv$nodeTexts[[rv$selectedNode]])
+    } else {
+      node_index <- as.numeric(gsub("node", "", rv$selectedNode))
+      if (node_index == 1) {
+        updateTextInput(session, "nodeText", value = paste0("Total Population\nN = ", totalPopulation()))
+      } else if (node_index == rv$stratumCount + 2) {
+        alloc <- allocationData()
+        total_sample <- sum(alloc$Proportional_Sample[1:rv$stratumCount])
+        updateTextInput(session, "nodeText", 
+                        value = paste0("Total Sample\nn = ", total_sample))
+      } else {
+        stratum_num <- node_index - 1
+        strata <- sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]])
+        pops <- sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
+        alloc <- allocationData()
+        updateTextInput(session, "nodeText", 
+                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
+      }
+    }
+    
+    # Update font size slider for selected node
+    if (!is.null(rv$nodeFontSizes[[rv$selectedNode]])) {
+      updateSliderInput(session, "selectedNodeFontSize", 
+                        value = rv$nodeFontSizes[[rv$selectedNode]])
+    } else {
+      updateSliderInput(session, "selectedNodeFontSize", value = input$nodeFontSize)
+    }
+  })
+  
+  observeEvent(input$selected_edge, {
+    rv$selectedEdge <- input$selected_edge
+    rv$selectedNode <- NULL
+    
+    if (!is.null(rv$edgeTexts[[rv$selectedEdge]])) {
+      updateTextInput(session, "nodeText", value = rv$edgeTexts[[rv$selectedEdge]])
+    } else {
+      edge_num <- as.numeric(gsub("edge", "", rv$selectedEdge))
+      alloc <- allocationData()
+      updateTextInput(session, "nodeText", 
+                      value = paste0("", alloc$Proportional_Sample[edge_num]))
+    }
+    
+    # Update font size slider for selected edge
+    if (!is.null(rv$edgeFontSizes[[rv$selectedEdge]])) {
+      updateSliderInput(session, "selectedEdgeFontSize", 
+                        value = rv$edgeFontSizes[[rv$selectedEdge]])
+    } else {
+      updateSliderInput(session, "selectedEdgeFontSize", value = input$edgeFontSize)
+    }
+  })
+  
+  observeEvent(input$editNodeText, {
+    if (input$newText == "") return()
+    
+    if (!is.null(rv$selectedNode)) {
+      if (grepl("->", input$newText)) {
+        # Handle replacement pattern
+        parts <- strsplit(input$newText, "->")[[1]]
+        old_text <- trimws(parts[1])
+        new_text <- trimws(parts[2])
+        current_text <- rv$nodeTexts[[rv$selectedNode]] %||% input$nodeText
+        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
+        rv$nodeTexts[[rv$selectedNode]] <- updated_text
+      } else {
+        # Direct text replacement
+        rv$nodeTexts[[rv$selectedNode]] <- input$newText
+      }
+    } else if (!is.null(rv$selectedEdge)) {
+      if (grepl("->", input$newText)) {
+        # Handle replacement pattern
+        parts <- strsplit(input$newText, "->")[[1]]
+        old_text <- trimws(parts[1])
+        new_text <- trimws(parts[2])
+        current_text <- rv$edgeTexts[[rv$selectedEdge]] %||% input$nodeText
+        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
+        rv$edgeTexts[[rv$selectedEdge]] <- updated_text
+      } else {
+        # Direct text replacement
+        rv$edgeTexts[[rv$selectedEdge]] <- input$newText
+      }
+    }
+    
+    updateTextInput(session, "newText", value = "")
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$deleteText, {
+    if (!is.null(rv$selectedNode)) {
+      if (grepl("->", input$newText)) {
+        # Handle deletion pattern
+        parts <- strsplit(input$newText, "->")[[1]]
+        text_to_delete <- trimws(parts[1])
+        current_text <- rv$nodeTexts[[rv$selectedNode]] %||% input$nodeText
+        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
+        rv$nodeTexts[[rv$selectedNode]] <- updated_text
+      } else {
+        # Delete entire text
+        rv$nodeTexts[[rv$selectedNode]] <- NULL
+      }
+    } else if (!is.null(rv$selectedEdge)) {
+      if (grepl("->", input$newText)) {
+        # Handle deletion pattern
+        parts <- strsplit(input$newText, "->")[[1]]
+        text_to_delete <- trimws(parts[1])
+        current_text <- rv$edgeTexts[[rv$selectedEdge]] %||% input$nodeText
+        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
+        rv$edgeTexts[[rv$selectedEdge]] <- updated_text
+      } else {
+        # Delete entire text
+        rv$edgeTexts[[rv$selectedEdge]] <- NULL
+      }
+    }
+    
+    updateTextInput(session, "newText", value = "")
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$applyFontSizes, {
+    if (!is.null(rv$selectedNode)) {
+      rv$nodeFontSizes[[rv$selectedNode]] <- input$selectedNodeFontSize
+    } else if (!is.null(rv$selectedEdge)) {
+      rv$edgeFontSizes[[rv$selectedEdge]] <- input$selectedEdgeFontSize
+    }
+    
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetDiagramText, {
+    rv$nodeTexts <- list()
+    rv$edgeTexts <- list()
+    rv$nodeFontSizes <- list()
+    rv$edgeFontSizes <- list()
+    updateTextInput(session, "nodeText", value = "")
+    updateTextInput(session, "newText", value = "")
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  output$nodeEdgeEditorUI <- renderUI({
+    if (!is.null(rv$selectedNode)) {
+      tagList(
+        p(strong("Editing Node:"), rv$selectedNode),
+        textInput("nodeText", "Node Text:", value = rv$nodeTexts[[rv$selectedNode]] %||% ""),
+        actionButton("editNodeText", "Update Node Text", class = "btn-info"),
+        actionButton("resetNodeText", "Reset This Text", class = "btn-warning")
+      )
+    } else if (!is.null(rv$selectedEdge)) {
+      tagList(
+        p(strong("Editing Edge:"), rv$selectedEdge),
+        textInput("nodeText", "Edge Label:", value = rv$edgeTexts[[rv$selectedEdge]] %||% ""),
+        actionButton("editNodeText", "Update Edge Label", class = "btn-info"),
+        actionButton("resetEdgeText", "Reset This Text", class = "btn-warning")
+      )
+    } else {
+      p("Click on a node or edge in the diagram to edit it.")
+    }
+  })
+  
+  observeEvent(input$resetNodeText, {
+    rv$nodeTexts[[rv$selectedNode]] <- NULL
+    rv$nodeFontSizes[[rv$selectedNode]] <- NULL
+    updateTextInput(session, "nodeText", value = "")
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetEdgeText, {
+    rv$edgeTexts[[rv$selectedEdge]] <- NULL
+    rv$edgeFontSizes[[rv$selectedEdge]] <- NULL
+    updateTextInput(session, "nodeText", value = "")
+    output$flowchart <- renderGrViz({
+      dot_code <- generateDotCode_yamane()
+      grViz(dot_code)
+    })
+  })
+  
+  output$downloadFlowchartPNG <- downloadHandler(
+    filename = function() {
+      paste("taro_yamane_flowchart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_yamane()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_png(tmp_file, file, width = 3000, height = 2000)
+      unlink(tmp_file)
+    }
+  )
+  
+  output$downloadFlowchartSVG <- downloadHandler(
+    filename = function() {
+      paste("taro_yamane_flowchart_", Sys.Date(), ".svg", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_yamane()
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(file)
+    }
+  )
+  
+  output$downloadFlowchartPDF <- downloadHandler(
+    filename = function() {
+      paste("taro_yamane_flowchart_", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_yamane()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_pdf(tmp_file, file)
+      unlink(tmp_file)
+    }
+  )
+  
   output$downloadWord <- downloadHandler(
     filename = function() paste("Sample_Size_Report_", Sys.Date(), ".docx", sep = ""),
     content = function(file) {
@@ -547,6 +1412,8 @@ server <- function(input, output, session) {
         body_add_par("CalcuStats", style = "heading 1") %>%
         body_add_par("Sample Size Calculation (Taro Yamane Method)", style = "heading 2") %>%
         body_add_par(paste("Total Population:", totalPopulation()), style = "Normal") %>%
+        body_add_par(paste("Margin of Error:", input$e), style = "Normal") %>%
+        
         body_add_par(paste("Margin of Error:", input$e), style = "Normal") %>%
         body_add_par(paste("Non-response Rate:", input$non_response, "%"), style = "Normal") %>%
         body_add_par(paste("Initial Sample Size:", sampleSize()), style = "Normal") %>%
@@ -563,7 +1430,9 @@ server <- function(input, output, session) {
   )
   
   output$downloadSteps <- downloadHandler(
-    filename = function() paste("Taro_Yamane_Calculation_Steps_", Sys.Date(), ".txt", sep = ""),
+    filename = function() {
+      paste("Taro_Yamane_Calculation_Steps_", Sys.Date(), ".txt", sep = "")
+    },
     content = function(file) {
       steps <- c(
         "Taro Yamane Sample Size Calculation Steps",
@@ -574,27 +1443,40 @@ server <- function(input, output, session) {
         paste("Non-response Rate:", input$non_response, "%"),
         "",
         "1. Basic Yamane Formula Calculation:",
-        paste("Formula: n = N / (1 + N*e²)"),
-        paste("Calculation: ", totalPopulation(), " / (1 + ", totalPopulation(), "*", input$e, "²)"),
+        "Formula: n = N / (1 + N*e²)",
+        paste("Calculation: ", totalPopulation(), " / (1 + ", totalPopulation(), "*", input$e, "^2)"),
         paste("Denominator: 1 + ", totalPopulation(), "*", input$e^2, " = ", 1 + totalPopulation() * input$e^2),
-        paste("Raw sample size: ", totalPopulation(), " / ", (1 + totalPopulation() * input$e^2), " = ", totalPopulation() / (1 + totalPopulation() * input$e^2)),
+        paste("Raw sample size: ", totalPopulation(), " / ", (1 + totalPopulation() * input$e^2), 
+              " = ", round(totalPopulation() / (1 + totalPopulation() * input$e^2), 2)),
         paste("Rounded sample size: ", sampleSize()),
         "",
         "2. Non-response Adjustment:",
-        paste("Adjusted sample size = ", sampleSize(), " / (1 - ", input$non_response/100, ")"),
-        paste("Calculation: ", sampleSize(), " / ", (1 - input$non_response/100), " = ", sampleSize() / (1 - input$non_response/100)),
+        paste("Adjusted sample size = ", sampleSize(), " / (1 - ", input$non_response / 100, ")"),
+        paste("Calculation: ", sampleSize(), " / ", (1 - input$non_response / 100), 
+              " = ", round(sampleSize() / (1 - input$non_response / 100), 2)),
         paste("Final adjusted sample size: ", adjustedSampleSize()),
         "",
-        "3. Proportional Allocation:",
-        capture.output(print(allocationData()))
+        "3. Proportional Allocation:"
       )
       
-      writeLines(steps, file)
+      # Append the output from allocationData() as character lines
+      allocation_lines <- capture.output(print(allocationData()))
+      full_output <- c(steps, allocation_lines)
+      
+      # Write to file
+      writeLines(full_output, file)
     }
   )
   
+  
   # Cochran section variables
-  rv_c <- reactiveValues(stratumCount = 1)
+  rv_c <- reactiveValues(
+    stratumCount = 1,
+    selectedNode = NULL,
+    selectedEdge = NULL,
+    nodeTexts = list(),
+    edgeTexts = list()
+  )
   
   observeEvent(input$addStratum_c, { rv_c$stratumCount <- rv_c$stratumCount + 1 })
   observeEvent(input$removeStratum_c, { if (rv_c$stratumCount > 1) rv_c$stratumCount <- rv_c$stratumCount - 1 })
@@ -619,6 +1501,11 @@ server <- function(input, output, session) {
       )
     })
   })
+  
+  output$stratumCount_c <- reactive({
+    rv_c$stratumCount
+  })
+  outputOptions(output, "stratumCount_c", suspendWhenHidden = FALSE)
   
   totalPopulation_c <- reactive({
     sum(sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]]), na.rm = TRUE)
@@ -818,6 +1705,233 @@ server <- function(input, output, session) {
     cochranInterpretationText()
   })
   
+  generateDotCode_cochran <- function() {
+    if (rv_c$stratumCount <= 1) return("")
+    
+    strata <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]])
+    pops <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
+    alloc <- cochranAllocationData()
+    total_sample <- sum(alloc$Proportional_Sample[1:rv_c$stratumCount])
+    
+    nodes <- paste0("node", 1:(rv_c$stratumCount + 3))
+    node_labels <- c(paste0("Total Population\nN = ", ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)), 
+                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv_c$stratumCount]),
+                     paste0("Total Sample\nn = ", total_sample))
+    
+    for (i in seq_along(nodes)) {
+      if (!is.null(rv_c$nodeTexts[[nodes[i]]])) {
+        node_labels[i] <- rv_c$nodeTexts[[nodes[i]]]
+      }
+    }
+    
+    edge_labels <- sapply(1:rv_c$stratumCount, function(i) {
+      edge_name <- paste0("edge", i)
+      if (!is.null(rv_c$edgeTexts[[edge_name]])) {
+        return(rv_c$edgeTexts[[edge_name]])
+      } else {
+        return(paste0("", alloc$Proportional_Sample[i]))
+      }
+    })
+    
+    dot_code <- paste0(
+      "digraph flowchart {
+        rankdir=TB;
+        layout=\"", input$flowchartLayout_c, "\";
+        node [fontname=Arial, shape=\"", input$nodeShape_c, "\", style=filled, fillcolor='", input$nodeColor_c, "', 
+              width=", input$nodeWidth_c, ", height=", input$nodeHeight_c, ", fontsize=", input$nodeFontSize_c, "];
+        edge [color='", input$edgeColor_c, "', fontsize=", input$edgeFontSize_c, ", arrowsize=", input$arrowSize_c, "];
+        
+        // Nodes
+        '", nodes[1], "' [label='", node_labels[1], "', id='", nodes[1], "'];
+        '", nodes[length(nodes)], "' [label='", node_labels[length(node_labels)], "', id='", nodes[length(nodes)], "'];
+      ",
+      paste0(sapply(1:rv_c$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' [label='", node_labels[i+1], "', id='", nodes[i+1], "'];")
+      }), collapse = "\n"),
+      "
+        
+        // Edges
+        '", nodes[1], "' -> {",
+      paste0("'", nodes[2:(rv_c$stratumCount+1)], "'", collapse = " "),
+      "} [label='', id='stratification_edges'];
+      ",
+      paste0(sapply(1:rv_c$stratumCount, function(i) {
+        paste0("'", nodes[i+1], "' -> '", nodes[length(nodes)], "' [label='", edge_labels[i], "', id='edge", i, "'];")
+      }), collapse = "\n"),
+      "
+      }"
+    )
+    
+    return(dot_code)
+  }
+  
+  output$flowchart_c <- renderGrViz({
+    if (!input$showFlowchart_c || rv_c$stratumCount <= 1) return()
+    
+    dot_code <- generateDotCode_cochran()
+    grViz(dot_code)
+  })
+  
+  jsCode_cochran <- '
+  $(document).ready(function() {
+    document.getElementById("flowchart_c").addEventListener("click", function(event) {
+      var target = event.target;
+      if (target.tagName === "text") {
+        target = target.parentNode;
+      }
+      
+      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
+        var nodeId = target.getAttribute("id");
+        Shiny.setInputValue("selected_node_c", nodeId);
+      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
+        var pathId = target.getAttribute("id");
+        Shiny.setInputValue("selected_edge_c", pathId);
+      }
+    });
+  });
+  '
+  
+  observe({
+    session$sendCustomMessage(type='jsCode', list(value = jsCode_cochran))
+  })
+  
+  observeEvent(input$selected_node_c, {
+    rv_c$selectedNode <- input$selected_node_c
+    rv_c$selectedEdge <- NULL
+    
+    if (!is.null(rv_c$nodeTexts[[rv_c$selectedNode]])) {
+      updateTextInput(session, "nodeText_c", value = rv_c$nodeTexts[[rv_c$selectedNode]])
+    } else {
+      node_index <- as.numeric(gsub("node", "", rv_c$selectedNode))
+      if (node_index == 1) {
+        updateTextInput(session, "nodeText_c", value = paste0("Total Population\nN = ", ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)))
+      } else if (node_index == rv_c$stratumCount + 2) {
+        alloc <- cochranAllocationData()
+        total_sample <- sum(alloc$Proportional_Sample[1:rv_c$stratumCount])
+        updateTextInput(session, "nodeText_c", 
+                        value = paste0("Total Sample\nn = ", total_sample))
+      } else {
+        stratum_num <- node_index - 1
+        strata <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]])
+        pops <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
+        alloc <- cochranAllocationData()
+        updateTextInput(session, "nodeText_c", 
+                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
+      }
+    }
+  })
+  
+  observeEvent(input$selected_edge_c, {
+    rv_c$selectedEdge <- input$selected_edge_c
+    rv_c$selectedNode <- NULL
+    
+    if (!is.null(rv_c$edgeTexts[[rv_c$selectedEdge]])) {
+      updateTextInput(session, "nodeText_c", value = rv_c$edgeTexts[[rv_c$selectedEdge]])
+    } else {
+      edge_num <- as.numeric(gsub("edge", "", rv_c$selectedEdge))
+      alloc <- cochranAllocationData()
+      updateTextInput(session, "nodeText_c", 
+                      value = paste0("", alloc$Proportional_Sample[edge_num]))
+    }
+  })
+  
+  observeEvent(input$editNodeText_c, {
+    if (!is.null(rv_c$selectedNode)) {
+      rv_c$nodeTexts[[rv_c$selectedNode]] <- input$nodeText_c
+    } else if (!is.null(rv_c$selectedEdge)) {
+      rv_c$edgeTexts[[rv_c$selectedEdge]] <- input$nodeText_c
+    }
+    
+    output$flowchart_c <- renderGrViz({
+      dot_code <- generateDotCode_cochran()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetDiagramText_c, {
+    rv_c$nodeTexts <- list()
+    rv_c$edgeTexts <- list()
+    updateTextInput(session, "nodeText_c", value = "")
+    output$flowchart_c <- renderGrViz({
+      dot_code <- generateDotCode_cochran()
+      grViz(dot_code)
+    })
+  })
+  
+  output$nodeEdgeEditorUI_c <- renderUI({
+    if (!is.null(rv_c$selectedNode)) {
+      tagList(
+        p(strong("Editing Node:"), rv_c$selectedNode),
+        textInput("nodeText_c", "Node Text:", value = rv_c$nodeTexts[[rv_c$selectedNode]] %||% ""),
+        actionButton("editNodeText_c", "Update Node Text", class = "btn-info"),
+        actionButton("resetNodeText_c", "Reset This Text", class = "btn-warning")
+      )
+    } else if (!is.null(rv_c$selectedEdge)) {
+      tagList(
+        p(strong("Editing Edge:"), rv_c$selectedEdge),
+        textInput("nodeText_c", "Edge Label:", value = rv_c$edgeTexts[[rv_c$selectedEdge]] %||% ""),
+        actionButton("editNodeText_c", "Update Edge Label", class = "btn-info"),
+        actionButton("resetEdgeText_c", "Reset This Text", class = "btn-warning")
+      )
+    } else {
+      p("Click on a node or edge in the diagram to edit it.")
+    }
+  })
+  
+  observeEvent(input$resetNodeText_c, {
+    rv_c$nodeTexts[[rv_c$selectedNode]] <- NULL
+    updateTextInput(session, "nodeText_c", value = "")
+    output$flowchart_c <- renderGrViz({
+      dot_code <- generateDotCode_cochran()
+      grViz(dot_code)
+    })
+  })
+  
+  observeEvent(input$resetEdgeText_c, {
+    rv_c$edgeTexts[[rv_c$selectedEdge]] <- NULL
+    updateTextInput(session, "nodeText_c", value = "")
+    output$flowchart_c <- renderGrViz({
+      dot_code <- generateDotCode_cochran()
+      grViz(dot_code)
+    })
+  })
+  
+  output$downloadFlowchartPNG_c <- downloadHandler(
+    filename = function() {
+      paste("cochran_flowchart_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_cochran()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_png(tmp_file, file, width = 3000, height = 2000)
+      unlink(tmp_file)
+    }
+  )
+  
+  output$downloadFlowchartSVG_c <- downloadHandler(
+    filename = function() {
+      paste("cochran_flowchart_", Sys.Date(), ".svg", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_cochran()
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(file)
+    }
+  )
+  
+  output$downloadFlowchartPDF_c <- downloadHandler(
+    filename = function() {
+      paste("cochran_flowchart_", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      dot_code <- generateDotCode_cochran()
+      tmp_file <- tempfile(fileext = ".svg")
+      DiagrammeRsvg::export_svg(grViz(dot_code)) %>% writeLines(tmp_file)
+      rsvg::rsvg_pdf(tmp_file, file)
+      unlink(tmp_file)
+    }
+  )
+  
   output$downloadCochranWord <- downloadHandler(
     filename = function() paste("Cochran_Sample_Size_Report_", Sys.Date(), ".docx", sep = ""),
     content = function(file) {
@@ -925,14 +2039,15 @@ server <- function(input, output, session) {
                  paste("Calculation: ", ceiling(res$corrected), " / ", (1 - input$non_response_c/100), " = ", ceiling(res$corrected) / (1 - input$non_response_c/100)),
                  paste("Final adjusted sample size: ", adjustedCochranSampleSize())
       )
-      
       if (!is.null(alloc)) {
-        steps <- c(steps,
-                   "",
-                   "4. Proportional Allocation:",
-                   capture.output(print(alloc))
+        steps <- c(
+          steps,
+          "",
+          "4. Proportional Allocation:",
+          capture.output(print(alloc))
         )
       }
+      
       
       interpretation <- cochranInterpretationText()
       
@@ -1146,6 +2261,14 @@ server <- function(input, output, session) {
       writeLines(steps, file)
     }
   )
+  
+  output$greetingText <- renderText({
+    getGreeting()
+  })
+  
+  output$greetingTextCustom <- renderText({
+    getGreeting()
+  })
 }
 
 shinyApp(ui = ui, server = server)
