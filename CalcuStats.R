@@ -34,10 +34,10 @@ ui <- navbarPage(
   theme = shinytheme("cosmo"),
   footer = div(
     style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #ddd;",
-    HTML("<p>For suggestions or support, contact <a href='mailto:mudassiribrahim30@gmail.com'>mudassiribrahim30@gmail.com</a></p>"),
+    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved.</a></p>"),
     div(
       style = "margin-top: 10px; font-size: 0.9em; color: #555;",
-      "Developed by Mudasir Mohammed Ibrahim (Registered Nurse, BSc, Dip)"
+      "Your Companion for Sample Size Calculation and Descriptive Analytics"
     )
   ),
   useShinyjs(),
@@ -402,6 +402,92 @@ ui <- navbarPage(
            )
   ),
   
+  tabPanel("How to Use App",
+           fluidPage(
+             div(
+               style = "padding: 20px; max-width: 1000px; margin: 0 auto;",
+               h2("How to Use CalcuStats", style = "color: #1A5276; text-align: center;"),
+               h3("Welcome to CalcuStats!"),
+               p("This application provides several tools for statistical calculations including sample size determination, power analysis, and descriptive statistics."),
+               
+               h3("Features Overview"),
+               tags$ul(
+                 tags$li(strong("Proportional Allocation:"), "Allocate a specified sample size proportionally across strata."),
+                 tags$li(strong("Taro Yamane:"), "Calculate sample size using the Taro Yamane formula for finite populations."),
+                 tags$li(strong("Cochran Formula:"), "Calculate sample size using Cochran's formula for proportions."),
+                 tags$li(strong("Power Analysis:"), "Determine required sample size for various statistical tests."),
+                 tags$li(strong("Descriptive Statistics:"), "Compute basic statistics for your data.")
+               ),
+               
+               h3("Detailed Instructions"),
+               h4("Proportional Allocation"),
+               tags$ol(
+                 tags$li("Enter your desired sample size in the 'Your Sample Size (n)' field."),
+                 tags$li("Adjust the non-response rate if needed."),
+                 tags$li("Add strata (population groups) using the 'Add Stratum' button."),
+                 tags$li("For each stratum, provide a name and population size."),
+                 tags$li("The app will automatically calculate the proportional allocation."),
+                 tags$li("For multiple strata, you can generate a flow chart diagram."),
+                 tags$li("Download results as a Word document or calculation steps.")
+               ),
+               
+               h4("Taro Yamane Method"),
+               tags$ol(
+                 tags$li("Enter your margin of error (e.g., 0.05 for 5%)."),
+                 tags$li("Adjust the non-response rate if needed."),
+                 tags$li("Add strata as needed and provide population sizes."),
+                 tags$li("The app calculates the required sample size using the formula: n = N / (1 + N*e²)"),
+                 tags$li("Results show the proportional allocation across strata."),
+                 tags$li("Flow chart visualization is available for multiple strata.")
+               ),
+               
+               h4("Cochran Formula"),
+               tags$ol(
+                 tags$li("Enter the estimated proportion (p) - use 0.5 for maximum variability."),
+                 tags$li("Set the Z-score (1.96 for 95% confidence)."),
+                 tags$li("Enter your desired margin of error."),
+                 tags$li("Optionally provide the population size for finite correction."),
+                 tags$li("Add strata if needed for proportional allocation."),
+                 tags$li("The app calculates the sample size using Cochran's formula.")
+               ),
+               
+               h4("Power Analysis"),
+               tags$ol(
+                 tags$li("Select your statistical test type."),
+                 tags$li("Enter the effect size (Cohen's d for t-tests, f for ANOVA, etc.)."),
+                 tags$li("Set your significance level (alpha, typically 0.05)."),
+                 tags$li("Enter your desired power (typically 0.8 or 0.9)."),
+                 tags$li("Click 'Run Power Analysis' to see results."),
+                 tags$li("For regression, specify number of predictors if needed.")
+               ),
+               
+               h4("Descriptive Statistics"),
+               tags$ol(
+                 tags$li("Paste your data (one column with header) into the text area."),
+                 tags$li("Click 'Get Descriptive Statistics'."),
+                 tags$li("The app will compute mean, SD, min, max, etc. for numeric data."),
+                 tags$li("For categorical data, it provides frequency tables.")
+               ),
+               
+               h3("Tips"),
+               tags$ul(
+                 tags$li("For proportional allocation, remember to account for non-response if applicable."),
+                 tags$li("In the flow chart editor, click on nodes or edges to edit them."),
+                 tags$li("Use the download buttons to save your results for reporting."),
+                 tags$li("For large populations, Taro Yamane provides a quick estimate."),
+                 tags$li("Cochran's formula is best when working with proportions.")
+               ),
+               
+               h3("Need Help?"),
+               p("For any questions or suggestions, please contact ", 
+                 tags$a(href="mailto:mudassiribrahim30@gmail.com", "mudassiribrahim30@gmail.com"), "."),
+               
+               h3("About"),
+               p("CalcuStats was developed by Mudasir Mohammed Ibrahim (Registered Nurse, BSc, Dip) to assist researchers with statistical calculations and descriptive statistics.")
+             )
+           )
+  ),
+  
   tabPanel("Usage",
            fluidPage(
              div(
@@ -417,6 +503,7 @@ ui <- navbarPage(
   )
 )
 
+# The server function remains exactly the same as in your original code
 server <- function(input, output, session) {
   # Custom Proportional Allocation section variables
   rv_custom <- reactiveValues(
