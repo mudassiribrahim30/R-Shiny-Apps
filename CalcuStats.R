@@ -33,8 +33,9 @@ ui <- navbarPage(
   title = div(icon("chart-bar"), "CalcuStats"),
   theme = shinytheme("cosmo"),
   footer = div(
-    style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #ddd;",
-    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved.</a></p>"),
+    style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #ddd; font-size: 14px;",
+    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
+         <a href='https://github.com/mudassiribrahim30' target='_blank'>GitHub Profile</a></p>"),
     div(
       style = "margin-top: 10px; font-size: 0.9em; color: #555;",
       "Your Companion for Sample Size Calculation and Descriptive Analytics"
@@ -52,7 +53,7 @@ ui <- navbarPage(
                actionButton("removeStratum_custom", "Remove Last Stratum", class = "btn-warning"),
                uiOutput("stratumInputs_custom"),
                div(
-                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;",
+                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 14px;",
                  p("For a single population, enter the total size below."),
                  p("For multiple populations, click 'Add Stratum' to create additional groups.")
                ),
@@ -65,8 +66,8 @@ ui <- navbarPage(
                                choices = c("dot", "neato", "twopi", "circo", "fdp")),
                    colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
                    colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 8, max = 24, value = 14),
-                   sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 12, max = 24, value = 16),
+                   sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 10, max = 20, value = 14),
                    sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
                    sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
                    selectInput("nodeShape_custom", "Node Shape", 
@@ -89,9 +90,9 @@ ui <- navbarPage(
                      style = "border: 1px solid #ddd; padding: 10px;",
                      h5("Font Size Controls"),
                      sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
-                                 min = 8, max = 24, value = 14),
+                                 min = 12, max = 24, value = 16),
                      sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
-                                 min = 8, max = 24, value = 12),
+                                 min = 10, max = 20, value = 14),
                      actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-primary")
                    ),
                    br(), br(),
@@ -110,9 +111,9 @@ ui <- navbarPage(
              mainPanel(
                width = 8,
                h3("Proportional Allocation for Specified Sample Size"),
-               h4(textOutput("greetingTextCustom"), style = "color: #1A5276; font-weight: bold;"),
+               h4(textOutput("greetingTextCustom"), style = "color: #1A5276; font-weight: bold; font-size: 18px;"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px;",
+                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
                  HTML("
             <strong>Proportional Allocation Formula:</strong><br>
             <em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em><br>
@@ -126,19 +127,19 @@ ui <- navbarPage(
           ")
                ),
                fluidRow(
-                 column(6, verbatimTextOutput("totalPopCustom")),
-                 column(6, verbatimTextOutput("sampleSizeCustom"))
+                 column(6, div(style = "font-size: 14px;", verbatimTextOutput("totalPopCustom"))),
+                 column(6, div(style = "font-size: 14px;", verbatimTextOutput("sampleSizeCustom")))
                ),
-               verbatimTextOutput("adjustedSampleSizeCustom"),
+               div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSizeCustom")),
                h4("Proportional Allocation"),
                tableOutput("allocationTableCustom"),
-               textOutput("interpretationTextCustom"),
+               div(style = "font-size: 14px;", textOutput("interpretationTextCustom")),
                conditionalPanel(
                  condition = "input.showFlowchart_custom && output.stratumCount_custom > 1",
                  h4("Stratification Flow Chart"),
                  grVizOutput("flowchart_custom", width = "100%", height = "500px"),
                  div(id = "diagramEditor_custom",
-                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px; font-size: 14px;",
                      h4("Interactive Diagram Editor"),
                      p("Click on nodes or edges in the diagram to edit them."),
                      uiOutput("nodeEdgeEditorUI_custom")
@@ -158,7 +159,7 @@ ui <- navbarPage(
                actionButton("removeStratum", "Remove Last Stratum", class = "btn-warning"),
                uiOutput("stratumInputs"),
                div(
-                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;",
+                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 14px;",
                  p("For a single population, enter the total size below."),
                  p("For multiple populations, click 'Add Stratum' to create additional groups.")
                ),
@@ -171,8 +172,8 @@ ui <- navbarPage(
                                choices = c("dot", "neato", "twopi", "circo", "fdp")),
                    colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
                    colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize", "Default Node Font Size", min = 8, max = 24, value = 14),
-                   sliderInput("edgeFontSize", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeFontSize", "Default Node Font Size", min = 12, max = 24, value = 16),
+                   sliderInput("edgeFontSize", "Default Edge Font Size", min = 10, max = 20, value = 14),
                    sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
                    sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
                    selectInput("nodeShape", "Node Shape", 
@@ -195,9 +196,9 @@ ui <- navbarPage(
                      style = "border: 1px solid #ddd; padding: 10px;",
                      h5("Font Size Controls"),
                      sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
-                                 min = 8, max = 24, value = 14),
+                                 min = 12, max = 24, value = 16),
                      sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
-                                 min = 8, max = 24, value = 12),
+                                 min = 10, max = 20, value = 14),
                      actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-primary")
                    ),
                    br(), br(),
@@ -216,9 +217,9 @@ ui <- navbarPage(
              mainPanel(
                width = 8,
                h3("Taro Yamane Method with Proportional Allocation"),
-               h4(textOutput("greetingText"), style = "color: #1A5276; font-weight: bold;"),
+               h4(textOutput("greetingText"), style = "color: #1A5276; font-weight: bold; font-size: 18px;"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px;",
+                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
                  HTML("
             <strong>Taro Yamane Formula:</strong><br>
             <em>n = N / (1 + N &times; e²)</em><br>
@@ -231,22 +232,22 @@ ui <- navbarPage(
           ")
                ),
                fluidRow(
-                 column(6, verbatimTextOutput("totalPop")),
-                 column(6, verbatimTextOutput("sampleSize"))
+                 column(6, div(style = "font-size: 14px;", verbatimTextOutput("totalPop"))),
+                 column(6, div(style = "font-size: 14px;", verbatimTextOutput("sampleSize")))
                ),
-               verbatimTextOutput("formulaExplanation"),
-               verbatimTextOutput("adjustedSampleSize"),
+               div(style = "font-size: 14px;", verbatimTextOutput("formulaExplanation")),
+               div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSize")),
                h4("Proportional Allocation"),
-               p("The proportional allocation formula is:"),
-               p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>")),
+               div(style = "font-size: 14px;", p("The proportional allocation formula is:")),
+               div(style = "font-size: 14px;", p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>"))),
                tableOutput("allocationTable"),
-               textOutput("interpretationText"),
+               div(style = "font-size: 14px;", textOutput("interpretationText")),
                conditionalPanel(
                  condition = "input.showFlowchart && output.stratumCount > 1",
                  h4("Stratification Flow Chart"),
                  grVizOutput("flowchart", width = "100%", height = "500px"),
                  div(id = "diagramEditor",
-                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px; font-size: 14px;",
                      h4("Interactive Diagram Editor"),
                      p("Click on nodes or edges in the diagram to edit them."),
                      uiOutput("nodeEdgeEditorUI")
@@ -277,8 +278,8 @@ ui <- navbarPage(
                                choices = c("dot", "neato", "twopi", "circo", "fdp")),
                    colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
                    colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize_c", "Default Node Font Size", min = 8, max = 24, value = 14),
-                   sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 8, max = 24, value = 12),
+                   sliderInput("nodeFontSize_c", "Default Node Font Size", min = 12, max = 24, value = 16),
+                   sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 10, max = 20, value = 14),
                    sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
                    sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
                    selectInput("nodeShape_c", "Node Shape", 
@@ -301,9 +302,9 @@ ui <- navbarPage(
                      style = "border: 1px solid #ddd; padding: 10px;",
                      h5("Font Size Controls"),
                      sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
-                                 min = 8, max = 24, value = 14),
+                                 min = 12, max = 24, value = 16),
                      sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
-                                 min = 8, max = 24, value = 12),
+                                 min = 10, max = 20, value = 14),
                      actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-primary")
                    ),
                    br(), br(),
@@ -323,7 +324,7 @@ ui <- navbarPage(
                width = 8,
                h3("Cochran Sample Size Calculator with Proportional Allocation"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px;",
+                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
                  HTML("
             <strong>Cochran's Formula:</strong><br>
             <em>n₀ = (Z² × p × (1-p)) / e²</em><br>
@@ -336,20 +337,20 @@ ui <- navbarPage(
             For finite populations, apply the finite population correction: n = n₀ / (1 + (n₀ - 1)/N)
           ")
                ),
-               verbatimTextOutput("cochranFormulaExplanation"),
-               verbatimTextOutput("cochranSample"),
-               verbatimTextOutput("cochranAdjustedSample"),
+               div(style = "font-size: 14px;", verbatimTextOutput("cochranFormulaExplanation")),
+               div(style = "font-size: 14px;", verbatimTextOutput("cochranSample")),
+               div(style = "font-size: 14px;", verbatimTextOutput("cochranAdjustedSample")),
                h4("Proportional Allocation"),
-               p("The proportional allocation formula is:"),
-               p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>")),
+               div(style = "font-size: 14px;", p("The proportional allocation formula is:")),
+               div(style = "font-size: 14px;", p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>"))),
                tableOutput("cochranAllocationTable"),
-               textOutput("cochranInterpretation"),
+               div(style = "font-size: 14px;", textOutput("cochranInterpretation")),
                conditionalPanel(
                  condition = "input.showFlowchart_c && output.stratumCount_c > 1",
                  h4("Stratification Flow Chart"),
                  grVizOutput("flowchart_c", width = "100%", height = "500px"),
                  div(id = "diagramEditor_c",
-                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px;",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px; font-size: 14px;",
                      h4("Interactive Diagram Editor"),
                      p("Click on nodes or edges in the diagram to edit them."),
                      uiOutput("nodeEdgeEditorUI_c")
@@ -380,7 +381,7 @@ ui <- navbarPage(
              mainPanel(
                width = 8,
                h3("Power Analysis for Inferential Tests"),
-               verbatimTextOutput("powerResult")
+               div(style = "font-size: 14px;", verbatimTextOutput("powerResult"))
              )
            )
   ),
@@ -390,14 +391,15 @@ ui <- navbarPage(
              sidebarPanel(
                width = 4,
                tags$textarea(id = "dataInput", rows = 10, cols = 30,
-                             placeholder = "Paste a column of data (with header) from Excel or statistical software..."),
+                             placeholder = "Paste a column of data (with header) from Excel or statistical software...",
+                             style = "font-size: 14px;"),
                actionButton("runDesc", "Get Descriptive Statistics", class = "btn-primary"),
                downloadButton("downloadDescSteps", "Download Calculation Steps", class = "btn-info")
              ),
              mainPanel(
                width = 8,
                h3("Descriptive Statistics"),
-               verbatimTextOutput("descResult")
+               div(style = "font-size: 14px;", verbatimTextOutput("descResult"))
              )
            )
   ),
@@ -405,7 +407,7 @@ ui <- navbarPage(
   tabPanel("How to Use App",
            fluidPage(
              div(
-               style = "padding: 20px; max-width: 1000px; margin: 0 auto;",
+               style = "padding: 20px; max-width: 1000px; margin: 0 auto; font-size: 16px;",
                h2("How to Use CalcuStats", style = "color: #1A5276; text-align: center;"),
                h3("Welcome to CalcuStats!"),
                p("This application provides several tools for statistical calculations including sample size determination, power analysis, and descriptive statistics."),
@@ -418,6 +420,12 @@ ui <- navbarPage(
                  tags$li(strong("Power Analysis:"), "Determine required sample size for various statistical tests."),
                  tags$li(strong("Descriptive Statistics:"), "Compute basic statistics for your data.")
                ),
+               
+               h3("About the Developer"),
+               p("CalcuStats was developed by Mudasir Mohammed Ibrahim, a Registered Nurse with a Bachelor of Science degree and Diploma qualifications."),
+               p("With expertise in both healthcare and data analysis, Mudasir created this tool to help researchers and students perform essential statistical calculations with ease."),
+               p("Connect with Mudasir on GitHub:", 
+                 tags$a(href="https://github.com/mudassiribrahim30", target="_blank", "github.com/mudassiribrahim30")),
                
                h3("Detailed Instructions"),
                h4("Proportional Allocation"),
@@ -480,10 +488,7 @@ ui <- navbarPage(
                
                h3("Need Help?"),
                p("For any questions or suggestions, please contact ", 
-                 tags$a(href="mailto:mudassiribrahim30@gmail.com", "mudassiribrahim30@gmail.com"), "."),
-               
-               h3("About"),
-               p("CalcuStats was developed by Mudasir Mohammed Ibrahim (Registered Nurse, BSc, Dip) to assist researchers with statistical calculations and descriptive statistics.")
+                 tags$a(href="mailto:mudassiribrahim30@gmail.com", "mudassiribrahim30@gmail.com"), ".")
              )
            )
   ),
@@ -491,7 +496,7 @@ ui <- navbarPage(
   tabPanel("Usage",
            fluidPage(
              div(
-               style = "text-align: center; padding: 50px;",
+               style = "text-align: center; padding: 50px; font-size: 16px;",
                h3("App Usage Statistics"),
                div(
                  style = "font-size: 24px; margin: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 10px;",
@@ -634,8 +639,8 @@ server <- function(input, output, session) {
   generateDotCode_custom <- function() {
     if (rv_custom$stratumCount <= 1) return("")
     
-    strata <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]])
-    pops <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
+    strata <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]] )
+    pops <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]] )
     alloc <- allocationData_custom()
     total_sample <- sum(alloc$Proportional_Sample[1:rv_custom$stratumCount])
     
@@ -1166,8 +1171,8 @@ server <- function(input, output, session) {
   generateDotCode_yamane <- function() {
     if (rv$stratumCount <= 1) return("")
     
-    strata <- sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]])
-    pops <- sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
+    strata <- sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]] )
+    pops <- sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]] )
     alloc <- allocationData()
     total_sample <- sum(alloc$Proportional_Sample[1:rv$stratumCount])
     
