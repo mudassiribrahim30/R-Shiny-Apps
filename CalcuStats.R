@@ -29,9 +29,25 @@ getGreeting <- function() {
   }
 }
 
+getUserName <- function() {
+  user <- Sys.getenv("USERNAME")
+  if (user == "") {
+    user <- Sys.getenv("USER")
+  }
+  if (user == "") {
+    user <- "User"
+  }
+  return(user)
+}
+
 ui <- navbarPage(
   title = div(icon("chart-bar"), "CalcuStats"),
   theme = shinytheme("cosmo"),
+  header = div(
+    style = "text-align: right; padding: 5px 15px; background-color: #f8f9fa; font-size: 14px;",
+    textOutput("welcomeMessage"),
+    textOutput("currentDateTime")
+  ),
   footer = div(
     style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #ddd; font-size: 14px;",
     HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
@@ -111,7 +127,6 @@ ui <- navbarPage(
              mainPanel(
                width = 8,
                h3("Proportional Allocation for Specified Sample Size"),
-               h4(textOutput("greetingTextCustom"), style = "color: #1A5276; font-weight: bold; font-size: 18px;"),
                div(
                  style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
                  HTML("
@@ -217,7 +232,6 @@ ui <- navbarPage(
              mainPanel(
                width = 8,
                h3("Taro Yamane Method with Proportional Allocation"),
-               h4(textOutput("greetingText"), style = "color: #1A5276; font-weight: bold; font-size: 18px;"),
                div(
                  style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
                  HTML("
@@ -238,8 +252,6 @@ ui <- navbarPage(
                div(style = "font-size: 14px;", verbatimTextOutput("formulaExplanation")),
                div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSize")),
                h4("Proportional Allocation"),
-               div(style = "font-size: 14px;", p("The proportional allocation formula is:")),
-               div(style = "font-size: 14px;", p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>"))),
                tableOutput("allocationTable"),
                div(style = "font-size: 14px;", textOutput("interpretationText")),
                conditionalPanel(
@@ -341,8 +353,6 @@ ui <- navbarPage(
                div(style = "font-size: 14px;", verbatimTextOutput("cochranSample")),
                div(style = "font-size: 14px;", verbatimTextOutput("cochranAdjustedSample")),
                h4("Proportional Allocation"),
-               div(style = "font-size: 14px;", p("The proportional allocation formula is:")),
-               div(style = "font-size: 14px;", p(HTML("<em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em>"))),
                tableOutput("cochranAllocationTable"),
                div(style = "font-size: 14px;", textOutput("cochranInterpretation")),
                conditionalPanel(
@@ -508,8 +518,16 @@ ui <- navbarPage(
   )
 )
 
-# The server function remains exactly the same as in your original code
 server <- function(input, output, session) {
+  # Welcome message and date/time
+  output$welcomeMessage <- renderText({
+    paste(getGreeting(), getUserName())
+  })
+  
+  output$currentDateTime <- renderText({
+    format(Sys.time(), "%A, %B %d, %Y %I:%M %p")
+  })
+  
   # Custom Proportional Allocation section variables
   rv_custom <- reactiveValues(
     stratumCount = 1,
@@ -2123,244 +2141,239 @@ server <- function(input, output, session) {
         )
       }
       
-      steps <- c(steps,
-                 "",
-                 "3. Non-response Adjustment:",
-                 paste("Non-response rate: ", input$non_response_c, "%"),
-                 paste("Adjusted sample size = ", ceiling(res$corrected), " / (1 - ", input$non_response_c/100, ")"),
-                 paste("Calculation: ", ceiling(res$corrected), " / ", (1 - input$non_response_c/100), " = ", ceiling(res$corrected) / (1 - input$non_response_c/100)),
-                 paste("Final adjusted sample size: ", adjustedCochranSampleSize())
+      steps <- c(
+        steps,
+        "",
+        "3. Non-response Adjustment:",
+        paste("Non-response rate: ", input$non_response_c, "%"),
+        paste("Adjusted sample size = ", ceiling(res$corrected), " / (1 - ", input$non_response_c/100, ")"),
+        paste("Calculation: ", ceiling(res$corrected), " / ", (1 - input$non_response_c/100), " = ", ceiling(res$corrected) / (1 - input$non_response_c/100)),
+        paste("Final adjusted sample size: ", adjustedCochranSampleSize())
       )
-      if (!is.null(alloc)) {
-        steps <- c(
-          steps,
-          "",
-          "4. Proportional Allocation:",
-          capture.output(print(alloc))
-        )
-      }
       
-      
-      interpretation <- cochranInterpretationText()
-      
-      steps <- c(steps, "", "Interpretation:", interpretation)
-      
-      writeLines(steps, file)
+  
+  if (!is.null(alloc)) {
+    steps <- c(
+      steps,
+      "",
+      "4. Proportional Allocation:",
+      capture.output(print(alloc))
+    )
+  }
+  
+  
+  interpretation <- cochranInterpretationText()
+  
+  steps <- c(steps, "", "Interpretation:", interpretation)
+  
+  writeLines(steps, file)
     }
   )
-  
-  # Power Analysis section
-  powerResult <- reactiveVal()
-  
-  observeEvent(input$runPower, {
-    result <- switch(input$testType,
-                     "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "two.sample"),
-                     "Paired t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "paired"),
-                     "One-sample t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "one.sample"),
-                     "One-Way ANOVA" = pwr.anova.test(f = input$effectSize, sig.level = input$alpha, power = input$power, k = 1),
-                     "Two-Way ANOVA" = pwr.anova.test(f = input$effectSize, sig.level = input$alpha, power = input$power, k = 2),
-                     "Proportion" = pwr.p.test(h = input$effectSize, sig.level = input$alpha, power = input$power),
-                     "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, power = input$power),
-                     "Chi-squared" = pwr.chisq.test(w = input$effectSize, sig.level = input$alpha, power = input$power, df = 1),
-                     "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize, sig.level = input$alpha, power = input$power),
-                     "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize, sig.level = input$alpha, power = input$power)
+
+# Power Analysis section
+powerResult <- reactiveVal()
+
+observeEvent(input$runPower, {
+  result <- switch(input$testType,
+                   "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "two.sample"),
+                   "Paired t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "paired"),
+                   "One-sample t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, power = input$power, type = "one.sample"),
+                   "One-Way ANOVA" = pwr.anova.test(f = input$effectSize, sig.level = input$alpha, power = input$power, k = 1),
+                   "Two-Way ANOVA" = pwr.anova.test(f = input$effectSize, sig.level = input$alpha, power = input$power, k = 2),
+                   "Proportion" = pwr.p.test(h = input$effectSize, sig.level = input$alpha, power = input$power),
+                   "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, power = input$power),
+                   "Chi-squared" = pwr.chisq.test(w = input$effectSize, sig.level = input$alpha, power = input$power, df = 1),
+                   "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize, sig.level = input$alpha, power = input$power),
+                   "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize, sig.level = input$alpha, power = input$power)
+  )
+  powerResult(result)
+  output$powerResult <- renderPrint({ result })
+})
+
+output$downloadPowerSteps <- downloadHandler(
+  filename = function() paste("Power_Analysis_Steps_", Sys.Date(), ".txt", sep = ""),
+  content = function(file) {
+    req(powerResult())
+    result <- powerResult()
+    
+    test_info <- switch(input$testType,
+                        "Independent t-test" = "Independent samples t-test",
+                        "Paired t-test" = "Paired samples t-test",
+                        "One-sample t-test" = "One-sample t-test",
+                        "One-Way ANOVA" = "One-Way ANOVA",
+                        "Two-Way ANOVA" = "Two-Way ANOVA",
+                        "Proportion" = "Test of proportion",
+                        "Correlation" = "Correlation test",
+                        "Chi-squared" = "Chi-squared test",
+                        "Simple Linear Regression" = "Simple Linear Regression",
+                        "Multiple Linear Regression" = "Multiple Linear Regression"
     )
-    powerResult(result)
-    output$powerResult <- renderPrint({ result })
+    
+    formula_text <- switch(input$testType,
+                           "Independent t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'two.sample')",
+                           "Paired t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'paired')",
+                           "One-sample t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'one.sample')",
+                           "One-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 1)",
+                           "Two-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 2)",
+                           "Proportion" = "pwr.p.test(h = effect_size, sig.level = alpha, power = power)",
+                           "Correlation" = "pwr.r.test(r = effect_size, sig.level = alpha, power = power)",
+                           "Chi-squared" = "pwr.chisq.test(w = effect_size, sig.level = alpha, power = power, df = 1)",
+                           "Simple Linear Regression" = "pwr.f2.test(u = 1, f2 = effect_size, sig.level = alpha, power = power)",
+                           "Multiple Linear Regression" = paste0("pwr.f2.test(u = ", input$predictors, ", f2 = effect_size, sig.level = alpha, power = power)")
+    )
+    
+    steps <- c(
+      "Power Analysis Calculation Steps",
+      "===============================",
+      "",
+      paste("Test Type:", test_info),
+      paste("Effect Size:", input$effectSize),
+      paste("Significance Level (alpha):", input$alpha),
+      paste("Desired Power:", input$power),
+      if (input$testType == "Multiple Linear Regression") paste("Number of Predictors:", input$predictors) else "",
+      "",
+      "R Function Used:",
+      formula_text,
+      "",
+      "Results:",
+      capture.output(print(result)),
+      "",
+      "Interpretation:",
+      paste("For a", test_info, "with an effect size of", input$effectSize, ","),
+      paste("a significance level of", input$alpha, ","),
+      paste("and desired power of", input$power, ","),
+      paste("the required sample size is", result$n, ".")
+    )
+    
+    writeLines(steps, file)
+  }
+)
+
+# Descriptive Statistics section
+descResult <- reactiveVal()
+
+observeEvent(input$runDesc, {
+  req(input$dataInput)
+  lines <- unlist(strsplit(input$dataInput, "[\n\r]+"))
+  
+  if (length(lines) < 2) {
+    output$descResult <- renderPrint({ "Please include header (Variable name) and at least one row of data." })
+    return()
+  }
+  
+  header <- lines[1]
+  data_lines <- lines[-1]
+  
+  suppressWarnings({
+    nums <- as.numeric(data_lines)
+    is_numeric <- !is.na(nums)
   })
   
-  output$downloadPowerSteps <- downloadHandler(
-    filename = function() paste("Power_Analysis_Steps_", Sys.Date(), ".txt", sep = ""),
-    content = function(file) {
-      req(powerResult())
-      result <- powerResult()
-      
-      test_info <- switch(input$testType,
-                          "Independent t-test" = "Independent samples t-test",
-                          "Paired t-test" = "Paired samples t-test",
-                          "One-sample t-test" = "One-sample t-test",
-                          "One-Way ANOVA" = "One-Way ANOVA",
-                          "Two-Way ANOVA" = "Two-Way ANOVA",
-                          "Proportion" = "Test of proportion",
-                          "Correlation" = "Correlation test",
-                          "Chi-squared" = "Chi-squared test",
-                          "Simple Linear Regression" = "Simple Linear Regression",
-                          "Multiple Linear Regression" = "Multiple Linear Regression"
-      )
-      
-      formula_text <- switch(input$testType,
-                             "Independent t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'two.sample')",
-                             "Paired t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'paired')",
-                             "One-sample t-test" = "pwr.t.test(d = effect_size, sig.level = alpha, power = power, type = 'one.sample')",
-                             "One-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 1)",
-                             "Two-Way ANOVA" = "pwr.anova.test(f = effect_size, sig.level = alpha, power = power, k = 2)",
-                             "Proportion" = "pwr.p.test(h = effect_size, sig.level = alpha, power = power)",
-                             "Correlation" = "pwr.r.test(r = effect_size, sig.level = alpha, power = power)",
-                             "Chi-squared" = "pwr.chisq.test(w = effect_size, sig.level = alpha, power = power, df = 1)",
-                             "Simple Linear Regression" = "pwr.f2.test(u = 1, f2 = effect_size, sig.level = alpha, power = power)",
-                             "Multiple Linear Regression" = paste0("pwr.f2.test(u = ", input$predictors, ", f2 = effect_size, sig.level = alpha, power = power)")
-      )
-      
+  if (all(is_numeric)) {
+    values <- nums[is_numeric]
+    n_miss <- sum(is.na(nums))
+    desc <- list(
+      Mean = mean(values),
+      SD = sd(values),
+      Min = min(values),
+      Max = max(values),
+      Mode = as.numeric(names(sort(table(values), decreasing = TRUE)[1])),
+      Median = median(values),
+      Skewness = skewness(values),
+      Kurtosis = kurtosis(values),
+      Missing = n_miss,
+      Shapiro_Wilk_p = shapiro.test(values)$p.value
+    )
+    desc$total <- sum(values)
+    
+    descResult(list(type = "numeric", header = header, results = desc))
+    
+    output$descResult <- renderPrint({
+      cat(paste("Descriptive Statistics for:", header, "\n"))
+      cat("(Numeric Data)\n\n")
+      print(desc)
+    })
+  } else {
+    categories <- trimws(data_lines)
+    tbl <- table(factor(categories))
+    cum_freq <- cumsum(tbl)
+    percent <- prop.table(tbl) * 100
+    n_miss <- sum(is.na(categories))
+    
+    df <- data.frame(
+      Category = names(tbl),
+      Frequency = as.vector(tbl),
+      Percentage = round(as.vector(percent), 2),
+      Cumulative_Frequency = as.vector(cum_freq)
+    )
+    
+    df <- rbind(df, data.frame(
+      Category = "Total", 
+      Frequency = sum(tbl), 
+      Percentage = 100, 
+      Cumulative_Frequency = max(cum_freq)
+    ))
+    
+    descResult(list(type = "categorical", header = header, results = df, missing = n_miss))
+    
+    output$descResult <- renderPrint({
+      cat(paste("Descriptive Statistics for:", header, "\n"))
+      cat("(Categorical Data)\n\n")
+      print(df)
+      cat("\nMissing Values:", n_miss, "\n")
+    })
+  }
+})
+
+output$downloadDescSteps <- downloadHandler(
+  filename = function() paste("Descriptive_Stats_Steps_", Sys.Date(), ".txt", sep = ""),
+  content = function(file) {
+    req(descResult())
+    result <- descResult()
+    
+    if (result$type == "numeric") {
       steps <- c(
-        "Power Analysis Calculation Steps",
-        "===============================",
+        "Descriptive Statistics Calculation Steps (Numeric Data)",
+        "======================================================",
         "",
-        paste("Test Type:", test_info),
-        paste("Effect Size:", input$effectSize),
-        paste("Significance Level (alpha):", input$alpha),
-        paste("Desired Power:", input$power),
-        if (input$testType == "Multiple Linear Regression") paste("Number of Predictors:", input$predictors) else "",
+        paste("Variable Name:", result$header),
         "",
-        "R Function Used:",
-        formula_text,
-        "",
-        "Results:",
-        capture.output(print(result)),
+        "Calculated Statistics:",
+        paste("Mean:", result$results$Mean),
+        paste("Standard Deviation:", result$results$SD),
+        paste("Minimum:", result$results$Min),
+        paste("Maximum:", result$results$Max),
+        paste("Median:", result$results$Median),
+        paste("Mode:", result$results$Mode),
+        paste("Skewness:", result$results$Skewness),
+        paste("Kurtosis:", result$results$Kurtosis),
+        paste("Total:", result$results$total),
+        paste("Missing Values:", result$results$Missing),
+        paste("Shapiro-Wilk p-value:", result$results$Shapiro_Wilk_p),
         "",
         "Interpretation:",
-        paste("For a", test_info, "with an effect size of", input$effectSize, ","),
-        paste("a significance level of", input$alpha, ","),
-        paste("and desired power of", input$power, ","),
-        paste("the required sample size is", result$n, ".")
+        ifelse(result$results$Shapiro_Wilk_p > 0.05, 
+               "The data appears to be normally distributed", 
+               "The data does not appear to be normally distributed"),
+        paste("(Shapiro-Wilk test p-value:", result$results$Shapiro_Wilk_p, ")")
       )
-      
-      writeLines(steps, file)
-    }
-  )
-  
-  # Descriptive Statistics section
-  descResult <- reactiveVal()
-  
-  observeEvent(input$runDesc, {
-    req(input$dataInput)
-    lines <- unlist(strsplit(input$dataInput, "[\n\r]+"))
-    
-    if (length(lines) < 2) {
-      output$descResult <- renderPrint({ "Please include header (Variable name) and at least one row of data." })
-      return()
-    }
-    
-    header <- lines[1]
-    data_lines <- lines[-1]
-    
-    suppressWarnings({
-      nums <- as.numeric(data_lines)
-      is_numeric <- !is.na(nums)
-    })
-    
-    if (all(is_numeric)) {
-      values <- nums[is_numeric]
-      n_miss <- sum(is.na(nums))
-      desc <- list(
-        Mean = mean(values),
-        SD = sd(values),
-        Min = min(values),
-        Max = max(values),
-        Mode = as.numeric(names(sort(table(values), decreasing = TRUE)[1])),
-        Median = median(values),
-        Skewness = skewness(values),
-        Kurtosis = kurtosis(values),
-        Missing = n_miss,
-        Shapiro_Wilk_p = shapiro.test(values)$p.value
-      )
-      desc$total <- sum(values)
-      
-      descResult(list(type = "numeric", header = header, results = desc))
-      
-      output$descResult <- renderPrint({
-        cat(paste("Descriptive Statistics for:", header, "\n"))
-        cat("(Numeric Data)\n\n")
-        print(desc)
-      })
     } else {
-      categories <- trimws(data_lines)
-      tbl <- table(factor(categories))
-      cum_freq <- cumsum(tbl)
-      percent <- prop.table(tbl) * 100
-      n_miss <- sum(is.na(categories))
-      
-      df <- data.frame(
-        Category = names(tbl),
-        Frequency = as.vector(tbl),
-        Percentage = round(as.vector(percent), 2),
-        Cumulative_Frequency = as.vector(cum_freq)
+      steps <- c(
+        "Descriptive Statistics Calculation Steps (Categorical Data)",
+        "==========================================================",
+        "",
+        paste("Variable Name:", result$header),
+        "",
+        "Frequency Table:",
+        capture.output(print(result$results)),
+        "",
+        paste("Missing Values:", result$missing)
       )
-      
-      df <- rbind(df, data.frame(
-        Category = "Total", 
-        Frequency = sum(tbl), 
-        Percentage = 100, 
-        Cumulative_Frequency = max(cum_freq)
-      ))
-      
-      descResult(list(type = "categorical", header = header, results = df, missing = n_miss))
-      
-      output$descResult <- renderPrint({
-        cat(paste("Descriptive Statistics for:", header, "\n"))
-        cat("(Categorical Data)\n\n")
-        print(df)
-        cat("\nMissing Values:", n_miss, "\n")
-      })
     }
-  })
-  
-  output$downloadDescSteps <- downloadHandler(
-    filename = function() paste("Descriptive_Stats_Steps_", Sys.Date(), ".txt", sep = ""),
-    content = function(file) {
-      req(descResult())
-      result <- descResult()
-      
-      if (result$type == "numeric") {
-        steps <- c(
-          "Descriptive Statistics Calculation Steps (Numeric Data)",
-          "======================================================",
-          "",
-          paste("Variable Name:", result$header),
-          "",
-          "Calculated Statistics:",
-          paste("Mean:", result$results$Mean),
-          paste("Standard Deviation:", result$results$SD),
-          paste("Minimum:", result$results$Min),
-          paste("Maximum:", result$results$Max),
-          paste("Median:", result$results$Median),
-          paste("Mode:", result$results$Mode),
-          paste("Skewness:", result$results$Skewness),
-          paste("Kurtosis:", result$results$Kurtosis),
-          paste("Total:", result$results$total),
-          paste("Missing Values:", result$results$Missing),
-          paste("Shapiro-Wilk p-value:", result$results$Shapiro_Wilk_p),
-          "",
-          "Interpretation:",
-          ifelse(result$results$Shapiro_Wilk_p > 0.05, 
-                 "The data appears to be normally distributed", 
-                 "The data does not appear to be normally distributed"),
-          paste("(Shapiro-Wilk test p-value:", result$results$Shapiro_Wilk_p, ")")
-        )
-      } else {
-        steps <- c(
-          "Descriptive Statistics Calculation Steps (Categorical Data)",
-          "==========================================================",
-          "",
-          paste("Variable Name:", result$header),
-          "",
-          "Frequency Table:",
-          capture.output(print(result$results)),
-          "",
-          paste("Missing Values:", result$missing)
-        )
-      }
-      
-      writeLines(steps, file)
-    }
-  )
-  
-  output$greetingText <- renderText({
-    getGreeting()
-  })
-  
-  output$greetingTextCustom <- renderText({
-    getGreeting()
-  })
+    
+    writeLines(steps, file)
+  }
+)
 }
 
 shinyApp(ui = ui, server = server)
