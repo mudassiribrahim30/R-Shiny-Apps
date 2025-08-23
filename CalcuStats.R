@@ -52,6 +52,12 @@ ui <- navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
+               id = "proportional_sidebar",
+               div(
+                 style = "margin-bottom: 15px;",
+                 actionButton("reset_proportional", "Reset All Values", class = "btn-danger",
+                              icon = icon("refresh"))
+               ),
                numericInput("custom_sample", "Your Sample Size (n)", value = 100, min = 1, step = 1),
                numericInput("non_response_custom", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
                actionButton("addStratum_custom", "Add Stratum", class = "btn-primary"),
@@ -67,47 +73,56 @@ ui <- navbarPage(
                  checkboxInput("showFlowchart_custom", "Generate Flow Chart Diagram", FALSE),
                  conditionalPanel(
                    condition = "input.showFlowchart_custom",
-                   selectInput("flowchartLayout_custom", "Layout Style:",
-                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                   colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
-                   colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 12, max = 24, value = 16),
-                   sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                   sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                   sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                   selectInput("nodeShape_custom", "Node Shape", 
-                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                               selected = "rectangle"),
-                   sliderInput("arrowSize_custom", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                   actionButton("updateFlowchart_custom", "Update Diagram", class = "btn-primary"),
-                   br(), br(),
-                   h4("Diagram Editor"),
                    div(
-                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                     h5("Text Editing"),
-                     textInput("nodeText_custom", "Current Text:", ""),
-                     textInput("newText_custom", "New Text (use -> for replacement):", ""),
-                     actionButton("editNodeText_custom", "Update Text", class = "btn-info"),
-                     actionButton("deleteText_custom", "Delete Text", class = "btn-danger"),
-                     actionButton("resetDiagramText_custom", "Reset All Text", class = "btn-warning")
-                   ),
-                   div(
-                     style = "border: 1px solid #ddd; padding: 10px;",
-                     h5("Font Size Controls"),
-                     sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
-                                 min = 12, max = 24, value = 16),
-                     sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
-                                 min = 10, max = 20, value = 14),
-                     actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-primary")
-                   ),
-                   br(), br(),
-                   h4("Download Diagram"),
-                   div(style = "display: inline-block;", 
-                       downloadButton("downloadFlowchartPNG_custom", "PNG (High Quality)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartSVG_custom", "SVG (Vector)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartPDF_custom", "PDF (Vector)", class = "btn-success"))
+                     style = "max-height: 400px; overflow-y: auto;",
+                     selectInput("flowchartLayout_custom", "Layout Style:",
+                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                     colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
+                     colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
+                     sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 12, max = 24, value = 16),
+                     sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                     sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                     sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                     selectInput("nodeShape_custom", "Node Shape", 
+                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                 selected = "rectangle"),
+                     sliderInput("arrowSize_custom", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                     
+                     # New options for including stratum/pop sizes
+                     h4("Diagram Content Options"),
+                     checkboxInput("includePopSize_custom", "Include Population Size", value = TRUE),
+                     checkboxInput("includeStratumSize_custom", "Include Stratum Size", value = TRUE),
+                     
+                     actionButton("updateFlowchart_custom", "Update Diagram", class = "btn-primary"),
+                     br(), br(),
+                     h4("Diagram Editor"),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                       h5("Text Editing"),
+                       textInput("nodeText_custom", "Current Text:", ""),
+                       textInput("newText_custom", "New Text (use -> for replacement):", ""),
+                       actionButton("editNodeText_custom", "Update Text", class = "btn-info"),
+                       actionButton("deleteText_custom", "Delete Text", class = "btn-danger"),
+                       actionButton("resetDiagramText_custom", "Reset All Text", class = "btn-warning")
+                     ),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px;",
+                       h5("Font Size Controls"),
+                       sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
+                                   min = 12, max = 24, value = 16),
+                       sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
+                                   min = 10, max = 20, value = 14),
+                       actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-primary")
+                     ),
+                     br(), br(),
+                     h4("Download Diagram"),
+                     div(style = "display: inline-block;", 
+                         downloadButton("downloadFlowchartPNG_custom", "PNG (High Quality)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartSVG_custom", "SVG (Vector)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartPDF_custom", "PDF (Vector)", class = "btn-success"))
+                   )
                  )
                ),
                downloadButton("downloadCustomWord", "Download as Word", class = "btn-primary"),
@@ -157,6 +172,12 @@ ui <- navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
+               id = "yamane_sidebar",
+               div(
+                 style = "margin-bottom: 15px;",
+                 actionButton("reset_yamane", "Reset All Values", class = "btn-danger",
+                              icon = icon("refresh"))
+               ),
                numericInput("e", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
                numericInput("non_response", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
                actionButton("addStratum", "Add Stratum", class = "btn-primary"),
@@ -172,47 +193,56 @@ ui <- navbarPage(
                  checkboxInput("showFlowchart", "Generate Flow Chart Diagram", FALSE),
                  conditionalPanel(
                    condition = "input.showFlowchart",
-                   selectInput("flowchartLayout", "Layout Style:",
-                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                   colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
-                   colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize", "Default Node Font Size", min = 12, max = 24, value = 16),
-                   sliderInput("edgeFontSize", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                   sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                   sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                   selectInput("nodeShape", "Node Shape", 
-                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                               selected = "rectangle"),
-                   sliderInput("arrowSize", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                   actionButton("updateFlowchart", "Update Diagram", class = "btn-primary"),
-                   br(), br(),
-                   h4("Diagram Editor"),
                    div(
-                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                     h5("Text Editing"),
-                     textInput("nodeText", "Current Text:", ""),
-                     textInput("newText", "New Text (use -> for replacement):", ""),
-                     actionButton("editNodeText", "Update Text", class = "btn-info"),
-                     actionButton("deleteText", "Delete Text", class = "btn-danger"),
-                     actionButton("resetDiagramText", "Reset All Text", class = "btn-warning")
-                   ),
-                   div(
-                     style = "border: 1px solid #ddd; padding: 10px;",
-                     h5("Font Size Controls"),
-                     sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
-                                 min = 12, max = 24, value = 16),
-                     sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
-                                 min = 10, max = 20, value = 14),
-                     actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-primary")
-                   ),
-                   br(), br(),
-                   h4("Download Diagram"),
-                   div(style = "display: inline-block;", 
-                       downloadButton("downloadFlowchartPNG", "PNG (High Quality)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartSVG", "SVG (Vector)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartPDF", "PDF (Vector)", class = "btn-success"))
+                     style = "max-height: 400px; overflow-y: auto;",
+                     selectInput("flowchartLayout", "Layout Style:",
+                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                     colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
+                     colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
+                     sliderInput("nodeFontSize", "Default Node Font Size", min = 12, max = 24, value = 16),
+                     sliderInput("edgeFontSize", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                     sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                     sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                     selectInput("nodeShape", "Node Shape", 
+                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                 selected = "rectangle"),
+                     sliderInput("arrowSize", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                     
+                     # New options for including stratum/pop sizes
+                     h4("Diagram Content Options"),
+                     checkboxInput("includePopSize", "Include Population Size", value = TRUE),
+                     checkboxInput("includeStratumSize", "Include Stratum Size", value = TRUE),
+                     
+                     actionButton("updateFlowchart", "Update Diagram", class = "btn-primary"),
+                     br(), br(),
+                     h4("Diagram Editor"),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                       h5("Text Editing"),
+                       textInput("nodeText", "Current Text:", ""),
+                       textInput("newText", "New Text (use -> for replacement):", ""),
+                       actionButton("editNodeText", "Update Text", class = "btn-info"),
+                       actionButton("deleteText", "Delete Text", class = "btn-danger"),
+                       actionButton("resetDiagramText", "Reset All Text", class = "btn-warning")
+                     ),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px;",
+                       h5("Font Size Controls"),
+                       sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
+                                   min = 12, max = 24, value = 16),
+                       sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
+                                   min = 10, max = 20, value = 14),
+                       actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-primary")
+                     ),
+                     br(), br(),
+                     h4("Download Diagram"),
+                     div(style = "display: inline-block;", 
+                         downloadButton("downloadFlowchartPNG", "PNG (High Quality)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartSVG", "SVG (Vector)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartPDF", "PDF (Vector)", class = "btn-success"))
+                   )
                  )
                ),
                downloadButton("downloadWord", "Download as Word", class = "btn-primary"),
@@ -262,6 +292,12 @@ ui <- navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
+               id = "cochran_sidebar",
+               div(
+                 style = "margin-bottom: 15px;",
+                 actionButton("reset_cochran", "Reset All Values", class = "btn-danger",
+                              icon = icon("refresh"))
+               ),
                numericInput("p", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
                numericInput("z", "Z-score (Z)", value = 1.96),
                numericInput("e_c", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
@@ -275,47 +311,56 @@ ui <- navbarPage(
                  checkboxInput("showFlowchart_c", "Generate Flow Chart Diagram", FALSE),
                  conditionalPanel(
                    condition = "input.showFlowchart_c",
-                   selectInput("flowchartLayout_c", "Layout Style:",
-                               choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                   colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
-                   colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
-                   sliderInput("nodeFontSize_c", "Default Node Font Size", min = 12, max = 24, value = 16),
-                   sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                   sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                   sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                   selectInput("nodeShape_c", "Node Shape", 
-                               choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                               selected = "rectangle"),
-                   sliderInput("arrowSize_c", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                   actionButton("updateFlowchart_c", "Update Diagram", class = "btn-primary"),
-                   br(), br(),
-                   h4("Diagram Editor"),
                    div(
-                     style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                     h5("Text Editing"),
-                     textInput("nodeText_c", "Current Text:", ""),
-                     textInput("newText_c", "New Text (use -> for replacement):", ""),
-                     actionButton("editNodeText_c", "Update Text", class = "btn-info"),
-                     actionButton("deleteText_c", "Delete Text", class = "btn-danger"),
-                     actionButton("resetDiagramText_c", "Reset All Text", class = "btn-warning")
-                   ),
-                   div(
-                     style = "border: 1px solid #ddd; padding: 10px;",
-                     h5("Font Size Controls"),
-                     sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
-                                 min = 12, max = 24, value = 16),
-                     sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
-                                 min = 10, max = 20, value = 14),
-                     actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-primary")
-                   ),
-                   br(), br(),
-                   h4("Download Diagram"),
-                   div(style = "display: inline-block;", 
-                       downloadButton("downloadFlowchartPNG_c", "PNG (High Quality)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartSVG_c", "SVG (Vector)", class = "btn-success")),
-                   div(style = "display: inline-block; margin-left: 5px;", 
-                       downloadButton("downloadFlowchartPDF_c", "PDF (Vector)", class = "btn-success"))
+                     style = "max-height: 400px; overflow-y: auto;",
+                     selectInput("flowchartLayout_c", "Layout Style:",
+                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                     colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
+                     colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
+                     sliderInput("nodeFontSize_c", "Default Node Font Size", min = 12, max = 24, value = 16),
+                     sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                     sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                     sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                     selectInput("nodeShape_c", "Node Shape", 
+                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                 selected = "rectangle"),
+                     sliderInput("arrowSize_c", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                     
+                     # New options for including stratum/pop sizes
+                     h4("Diagram Content Options"),
+                     checkboxInput("includePopSize_c", "Include Population Size", value = TRUE),
+                     checkboxInput("includeStratumSize_c", "Include Stratum Size", value = TRUE),
+                     
+                     actionButton("updateFlowchart_c", "Update Diagram", class = "btn-primary"),
+                     br(), br(),
+                     h4("Diagram Editor"),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                       h5("Text Editing"),
+                       textInput("nodeText_c", "Current Text:", ""),
+                       textInput("newText_c", "New Text (use -> for replacement):", ""),
+                       actionButton("editNodeText_c", "Update Text", class = "btn-info"),
+                       actionButton("deleteText_c", "Delete Text", class = "btn-danger"),
+                       actionButton("resetDiagramText_c", "Reset All Text", class = "btn-warning")
+                     ),
+                     div(
+                       style = "border: 1px solid #ddd; padding: 10px;",
+                       h5("Font Size Controls"),
+                       sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
+                                   min = 12, max = 24, value = 16),
+                       sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
+                                   min = 10, max = 20, value = 14),
+                       actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-primary")
+                     ),
+                     br(), br(),
+                     h4("Download Diagram"),
+                     div(style = "display: inline-block;", 
+                         downloadButton("downloadFlowchartPNG_c", "PNG (High Quality)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartSVG_c", "SVG (Vector)", class = "btn-success")),
+                     div(style = "display: inline-block; margin-left: 5px;", 
+                         downloadButton("downloadFlowchartPDF_c", "PDF (Vector)", class = "btn-success"))
+                   )
                  )
                ),
                downloadButton("downloadCochranWord", "Download as Word", class = "btn-primary"),
@@ -363,6 +408,12 @@ ui <- navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
+               id = "power_sidebar",
+               div(
+                 style = "margin-bottom: 15px;",
+                 actionButton("reset_power", "Reset All Values", class = "btn-danger",
+                              icon = icon("refresh"))
+               ),
                selectInput("testType", "Statistical Test:",
                            choices = c("Independent t-test", "Paired t-test", "One-sample t-test", "One-Way ANOVA",
                                        "Two-Way ANOVA", "Proportion", "Correlation", "Chi-squared",
@@ -389,6 +440,12 @@ ui <- navbarPage(
            sidebarLayout(
              sidebarPanel(
                width = 4,
+               id = "desc_sidebar",
+               div(
+                 style = "margin-bottom: 15px;",
+                 actionButton("reset_desc", "Reset All Values", class = "btn-danger",
+                              icon = icon("refresh"))
+               ),
                tags$textarea(id = "dataInput", rows = 10, cols = 30,
                              placeholder = "Paste a column of data (with header) from Excel or statistical software...",
                              style = "font-size: 14px;"),
@@ -507,6 +564,7 @@ ui <- navbarPage(
   )
 )
 
+
 server <- function(input, output, session) {
   # Welcome message and date/time
   output$welcomeMessage <- renderText({
@@ -515,6 +573,239 @@ server <- function(input, output, session) {
   
   output$currentDateTime <- renderText({
     format(Sys.time(), "%A, %B %d, %Y %I:%M %p")
+  })
+  
+  # Initialize reactive values for storing inputs
+  initValues <- reactiveValues(
+    proportional = list(
+      custom_sample = 100,
+      non_response_custom = 0,
+      stratumCount = 1,
+      stratum_names = c("Stratum 1"),
+      stratum_pops = c(100)
+    ),
+    yamane = list(
+      e = 0.05,
+      non_response = 0,
+      stratumCount = 1,
+      stratum_names = c("Stratum 1"),
+      stratum_pops = c(100)
+    ),
+    cochran = list(
+      p = 0.5,
+      z = 1.96,
+      e_c = 0.05,
+      N_c = NULL,
+      non_response_c = 0,
+      stratumCount = 1,
+      stratum_names = c("Stratum 1"),
+      stratum_pops = c(100)
+    ),
+    power = list(
+      testType = "Independent t-test",
+      effectSize = 0.5,
+      alpha = 0.05,
+      power = 0.8,
+      predictors = 2
+    ),
+    desc = list(
+      dataInput = ""
+    )
+  )
+  
+  # Load saved values from localStorage if available
+  observe({
+    # Try to load values from localStorage
+    tryCatch({
+      # Proportional Allocation
+      if (!is.null(input$proportional_values)) {
+        prop_vals <- jsonlite::fromJSON(input$proportional_values)
+        initValues$proportional <- prop_vals
+        updateNumericInput(session, "custom_sample", value = prop_vals$custom_sample)
+        updateNumericInput(session, "non_response_custom", value = prop_vals$non_response_custom)
+        
+        # Update strata inputs
+        if (prop_vals$stratumCount > 1) {
+          for (i in 1:prop_vals$stratumCount) {
+            updateTextInput(session, paste0("stratum_custom", i), value = prop_vals$stratum_names[i])
+            updateNumericInput(session, paste0("pop_custom", i), value = prop_vals$stratum_pops[i])
+          }
+        }
+      }
+      
+      # Taro Yamane
+      if (!is.null(input$yamane_values)) {
+        yamane_vals <- jsonlite::fromJSON(input$yamane_values)
+        initValues$yamane <- yamane_vals
+        updateNumericInput(session, "e", value = yamane_vals$e)
+        updateNumericInput(session, "non_response", value = yamane_vals$non_response)
+        
+        # Update strata inputs
+        if (yamane_vals$stratumCount > 1) {
+          for (i in 1:yamane_vals$stratumCount) {
+            updateTextInput(session, paste0("stratum", i), value = yamane_vals$stratum_names[i])
+            updateNumericInput(session, paste0("pop", i), value = yamane_vals$stratum_pops[i])
+          }
+        }
+      }
+      
+      # Cochran
+      if (!is.null(input$cochran_values)) {
+        cochran_vals <- jsonlite::fromJSON(input$cochran_values)
+        initValues$cochran <- cochran_vals
+        updateNumericInput(session, "p", value = cochran_vals$p)
+        updateNumericInput(session, "z", value = cochran_vals$z)
+        updateNumericInput(session, "e_c", value = cochran_vals$e_c)
+        updateNumericInput(session, "N_c", value = cochran_vals$N_c)
+        updateNumericInput(session, "non_response_c", value = cochran_vals$non_response_c)
+        
+        # Update strata inputs
+        if (cochran_vals$stratumCount > 1) {
+          for (i in 1:cochran_vals$stratumCount) {
+            updateTextInput(session, paste0("stratum_c", i), value = cochran_vals$stratum_names[i])
+            updateNumericInput(session, paste0("pop_c", i), value = cochran_vals$stratum_pops[i])
+          }
+        }
+      }
+      
+      # Power Analysis
+      if (!is.null(input$power_values)) {
+        power_vals <- jsonlite::fromJSON(input$power_values)
+        initValues$power <- power_vals
+        updateSelectInput(session, "testType", selected = power_vals$testType)
+        updateNumericInput(session, "effectSize", value = power_vals$effectSize)
+        updateNumericInput(session, "alpha", value = power_vals$alpha)
+        updateNumericInput(session, "power", value = power_vals$power)
+        updateNumericInput(session, "predictors", value = power_vals$predictors)
+      }
+      
+      # Descriptive Statistics
+      if (!is.null(input$desc_values)) {
+        desc_vals <- jsonlite::fromJSON(input$desc_values)
+        initValues$desc <- desc_vals
+        updateTextAreaInput(session, "dataInput", value = desc_vals$dataInput)
+      }
+    }, error = function(e) {
+      message("Error loading saved values: ", e$message)
+    })
+  })
+  
+  # Save values to localStorage when they change
+  observe({
+    # Proportional Allocation
+    prop_vals <- list(
+      custom_sample = input$custom_sample,
+      non_response_custom = input$non_response_custom,
+      stratumCount = rv_custom$stratumCount,
+      stratum_names = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]]),
+      stratum_pops = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
+    )
+    session$sendCustomMessage(type = "saveValues", 
+                              message = list(section = "proportional", values = jsonlite::toJSON(prop_vals)))
+    
+    # Taro Yamane
+    yamane_vals <- list(
+      e = input$e,
+      non_response = input$non_response,
+      stratumCount = rv$stratumCount,
+      stratum_names = sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]]),
+      stratum_pops = sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
+    )
+    session$sendCustomMessage(type = "saveValues", 
+                              message = list(section = "yamane", values = jsonlite::toJSON(yamane_vals)))
+    
+    # Cochran
+    cochran_vals <- list(
+      p = input$p,
+      z = input$z,
+      e_c = input$e_c,
+      N_c = input$N_c,
+      non_response_c = input$non_response_c,
+      stratumCount = rv_c$stratumCount,
+      stratum_names = sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]]),
+      stratum_pops = sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
+    )
+    session$sendCustomMessage(type = "saveValues", 
+                              message = list(section = "cochran", values = jsonlite::toJSON(cochran_vals)))
+    
+    # Power Analysis
+    power_vals <- list(
+      testType = input$testType,
+      effectSize = input$effectSize,
+      alpha = input$alpha,
+      power = input$power,
+      predictors = input$predictors
+    )
+    session$sendCustomMessage(type = "saveValues", 
+                              message = list(section = "power", values = jsonlite::toJSON(power_vals)))
+    
+    # Descriptive Statistics
+    desc_vals <- list(
+      dataInput = input$dataInput
+    )
+    session$sendCustomMessage(type = "saveValues", 
+                              message = list(section = "desc", values = jsonlite::toJSON(desc_vals)))
+  })
+  
+  # Reset buttons
+  observeEvent(input$reset_proportional, {
+    updateNumericInput(session, "custom_sample", value = initValues$proportional$custom_sample)
+    updateNumericInput(session, "non_response_custom", value = initValues$proportional$non_response_custom)
+    
+    # Reset strata
+    rv_custom$stratumCount <- 1
+    updateTextInput(session, "stratum_custom1", value = initValues$proportional$stratum_names[1])
+    updateNumericInput(session, "pop_custom1", value = initValues$proportional$stratum_pops[1])
+    
+    # Clear saved values
+    session$sendCustomMessage(type = "clearValues", message = "proportional")
+  })
+  
+  observeEvent(input$reset_yamane, {
+    updateNumericInput(session, "e", value = initValues$yamane$e)
+    updateNumericInput(session, "non_response", value = initValues$yamane$non_response)
+    
+    # Reset strata
+    rv$stratumCount <- 1
+    updateTextInput(session, "stratum1", value = initValues$yamane$stratum_names[1])
+    updateNumericInput(session, "pop1", value = initValues$yamane$stratum_pops[1])
+    
+    # Clear saved values
+    session$sendCustomMessage(type = "clearValues", message = "yamane")
+  })
+  
+  observeEvent(input$reset_cochran, {
+    updateNumericInput(session, "p", value = initValues$cochran$p)
+    updateNumericInput(session, "z", value = initValues$cochran$z)
+    updateNumericInput(session, "e_c", value = initValues$cochran$e_c)
+    updateNumericInput(session, "N_c", value = initValues$cochran$N_c)
+    updateNumericInput(session, "non_response_c", value = initValues$cochran$non_response_c)
+    
+    # Reset strata
+    rv_c$stratumCount <- 1
+    updateTextInput(session, "stratum_c1", value = initValues$cochran$stratum_names[1])
+    updateNumericInput(session, "pop_c1", value = initValues$cochran$stratum_pops[1])
+    
+    # Clear saved values
+    session$sendCustomMessage(type = "clearValues", message = "cochran")
+  })
+  
+  observeEvent(input$reset_power, {
+    updateSelectInput(session, "testType", selected = initValues$power$testType)
+    updateNumericInput(session, "effectSize", value = initValues$power$effectSize)
+    updateNumericInput(session, "alpha", value = initValues$power$alpha)
+    updateNumericInput(session, "power", value = initValues$power$power)
+    updateNumericInput(session, "predictors", value = initValues$power$predictors)
+    
+    # Clear saved values
+    session$sendCustomMessage(type = "clearValues", message = "power")
+  })
+  
+  observeEvent(input$reset_desc, {
+    updateTextAreaInput(session, "dataInput", value = initValues$desc$dataInput)
+    
+    # Clear saved values
+    session$sendCustomMessage(type = "clearValues", message = "desc")
   })
   
   # Custom Proportional Allocation section variables
@@ -537,13 +828,17 @@ server <- function(input, output, session) {
         div(style = "margin-bottom: 10px; width: 100%;",
             textInput(paste0("stratum_custom", i),
                       label = paste("Stratum", i, "Name"),
-                      value = paste("Stratum", i),
+                      value = ifelse(i <= length(initValues$proportional$stratum_names), 
+                                     initValues$proportional$stratum_names[i], 
+                                     paste("Stratum", i)),
                       width = "100%")
         ),
         div(style = "margin-bottom: 20px; width = 100%;",
             numericInput(paste0("pop_custom", i),
                          label = paste("Stratum", i, "Population"),
-                         value = 100,
+                         value = ifelse(i <= length(initValues$proportional$stratum_pops), 
+                                        initValues$proportional$stratum_pops[i], 
+                                        100),
                          min = 0,
                          width = "100%")
         ),
@@ -652,9 +947,23 @@ server <- function(input, output, session) {
     total_sample <- sum(alloc$Proportional_Sample[1:rv_custom$stratumCount])
     
     nodes <- paste0("node", 1:(rv_custom$stratumCount + 3))
-    node_labels <- c(paste0("Total Population\nN = ", totalPopulation_custom()), 
-                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv_custom$stratumCount]),
-                     paste0("Total Sample\nn = ", total_sample))
+    
+    # Create node labels based on user preferences
+    node_labels <- c(paste0("Total Population\nN = ", totalPopulation_custom()))
+    
+    # Add stratum nodes with optional content
+    for (i in 1:rv_custom$stratumCount) {
+      stratum_label <- paste0("Stratum: ", strata[i])
+      if (input$includePopSize_custom) {
+        stratum_label <- paste0(stratum_label, "\nPop: ", pops[i])
+      }
+      if (input$includeStratumSize_custom) {
+        stratum_label <- paste0(stratum_label, "\nSample: ", alloc$Proportional_Sample[i])
+      }
+      node_labels <- c(node_labels, stratum_label)
+    }
+    
+    node_labels <- c(node_labels, paste0("Total Sample\nn = ", total_sample))
     
     for (i in seq_along(nodes)) {
       if (!is.null(rv_custom$nodeTexts[[nodes[i]]])) {
@@ -1041,13 +1350,17 @@ server <- function(input, output, session) {
         div(style = "margin-bottom: 10px; width: 100%;",
             textInput(paste0("stratum", i),
                       label = paste("Stratum", i, "Name"),
-                      value = paste("Stratum", i),
+                      value = ifelse(i <= length(initValues$yamane$stratum_names), 
+                                     initValues$yamane$stratum_names[i], 
+                                     paste("Stratum", i)),
                       width = "100%")
         ),
         div(style = "margin-bottom: 20px; width = 100%;",
             numericInput(paste0("pop", i),
                          label = paste("Stratum", i, "Population"),
-                         value = 100,
+                         value = ifelse(i <= length(initValues$yamane$stratum_pops), 
+                                        initValues$yamane$stratum_pops[i], 
+                                        100),
                          min = 0,
                          width = "100%")
         ),
@@ -1184,9 +1497,23 @@ server <- function(input, output, session) {
     total_sample <- sum(alloc$Proportional_Sample[1:rv$stratumCount])
     
     nodes <- paste0("node", 1:(rv$stratumCount + 3))
-    node_labels <- c(paste0("Total Population\nN = ", totalPopulation()), 
-                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv$stratumCount]),
-                     paste0("Total Sample\nn = ", total_sample))
+    
+    # Create node labels based on user preferences
+    node_labels <- c(paste0("Total Population\nN = ", totalPopulation()))
+    
+    # Add stratum nodes with optional content
+    for (i in 1:rv$stratumCount) {
+      stratum_label <- paste0("Stratum: ", strata[i])
+      if (input$includePopSize) {
+        stratum_label <- paste0(stratum_label, "\nPop: ", pops[i])
+      }
+      if (input$includeStratumSize) {
+        stratum_label <- paste0(stratum_label, "\nSample: ", alloc$Proportional_Sample[i])
+      }
+      node_labels <- c(node_labels, stratum_label)
+    }
+    
+    node_labels <- c(node_labels, paste0("Total Sample\nn = ", total_sample))
     
     for (i in seq_along(nodes)) {
       if (!is.null(rv$nodeTexts[[nodes[i]]])) {
@@ -1249,170 +1576,6 @@ server <- function(input, output, session) {
     
     dot_code <- generateDotCode_yamane()
     grViz(dot_code)
-  })
-  
-  jsCode_yamane <- '
-  $(document).ready(function() {
-    document.getElementById("flowchart").addEventListener("click", function(event) {
-      var target = event.target;
-      if (target.tagName === "text") {
-        target = target.parentNode;
-      }
-      
-      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
-        var nodeId = target.getAttribute("id");
-        Shiny.setInputValue("selected_node", nodeId);
-      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
-        var pathId = target.getAttribute("id");
-        Shiny.setInputValue("selected_edge", pathId);
-      }
-    });
-  });
-  '
-  
-  observe({
-    session$sendCustomMessage(type='jsCode', list(value = jsCode_yamane))
-  })
-  
-  observeEvent(input$selected_node, {
-    rv$selectedNode <- input$selected_node
-    rv$selectedEdge <- NULL
-    
-    if (!is.null(rv$nodeTexts[[rv$selectedNode]])) {
-      updateTextInput(session, "nodeText", value = rv$nodeTexts[[rv$selectedNode]])
-    } else {
-      node_index <- as.numeric(gsub("node", "", rv$selectedNode))
-      if (node_index == 1) {
-        updateTextInput(session, "nodeText", value = paste0("Total Population\nN = ", totalPopulation()))
-      } else if (node_index == rv$stratumCount + 2) {
-        alloc <- allocationData()
-        total_sample <- sum(alloc$Proportional_Sample[1:rv$stratumCount])
-        updateTextInput(session, "nodeText", 
-                        value = paste0("Total Sample\nn = ", total_sample))
-      } else {
-        stratum_num <- node_index - 1
-        strata <- sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]])
-        pops <- sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
-        alloc <- allocationData()
-        updateTextInput(session, "nodeText", 
-                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
-      }
-    }
-    
-    # Update font size slider for selected node
-    if (!is.null(rv$nodeFontSizes[[rv$selectedNode]])) {
-      updateSliderInput(session, "selectedNodeFontSize", 
-                        value = rv$nodeFontSizes[[rv$selectedNode]])
-    } else {
-      updateSliderInput(session, "selectedNodeFontSize", value = input$nodeFontSize)
-    }
-  })
-  
-  observeEvent(input$selected_edge, {
-    rv$selectedEdge <- input$selected_edge
-    rv$selectedNode <- NULL
-    
-    if (!is.null(rv$edgeTexts[[rv$selectedEdge]])) {
-      updateTextInput(session, "nodeText", value = rv$edgeTexts[[rv$selectedEdge]])
-    } else {
-      edge_num <- as.numeric(gsub("edge", "", rv$selectedEdge))
-      alloc <- allocationData()
-      updateTextInput(session, "nodeText", 
-                      value = paste0("", alloc$Proportional_Sample[edge_num]))
-    }
-    
-    # Update font size slider for selected edge
-    if (!is.null(rv$edgeFontSizes[[rv$selectedEdge]])) {
-      updateSliderInput(session, "selectedEdgeFontSize", 
-                        value = rv$edgeFontSizes[[rv$selectedEdge]])
-    } else {
-      updateSliderInput(session, "selectedEdgeFontSize", value = input$edgeFontSize)
-    }
-  })
-  
-  observeEvent(input$editNodeText, {
-    if (input$newText == "") return()
-    
-    if (!is.null(rv$selectedNode)) {
-      if (grepl("->", input$newText)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv$nodeTexts[[rv$selectedNode]] %||% input$nodeText
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv$nodeTexts[[rv$selectedNode]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv$nodeTexts[[rv$selectedNode]] <- input$newText
-      }
-    } else if (!is.null(rv$selectedEdge)) {
-      if (grepl("->", input$newText)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv$edgeTexts[[rv$selectedEdge]] %||% input$nodeText
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv$edgeTexts[[rv$selectedEdge]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv$edgeTexts[[rv$selectedEdge]] <- input$newText
-      }
-    }
-    
-    updateTextInput(session, "newText", value = "")
-    output$flowchart <- renderGrViz({
-      dot_code <- generateDotCode_yamane()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$deleteText, {
-    if (!is.null(rv$selectedNode)) {
-      if (grepl("->", input$newText)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv$nodeTexts[[rv$selectedNode]] %||% input$nodeText
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv$nodeTexts[[rv$selectedNode]] <- updated_text
-      } else {
-        # Delete entire text
-        rv$nodeTexts[[rv$selectedNode]] <- NULL
-      }
-    } else if (!is.null(rv$selectedEdge)) {
-      if (grepl("->", input$newText)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv$edgeTexts[[rv$selectedEdge]] %||% input$nodeText
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv$edgeTexts[[rv$selectedEdge]] <- updated_text
-      } else {
-        # Delete entire text
-        rv$edgeTexts[[rv$selectedEdge]] <- NULL
-      }
-    }
-    
-    updateTextInput(session, "newText", value = "")
-    output$flowchart <- renderGrViz({
-      dot_code <- generateDotCode_yamane()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$applyFontSizes, {
-    if (!is.null(rv$selectedNode)) {
-      rv$nodeFontSizes[[rv$selectedNode]] <- input$selectedNodeFontSize
-    } else if (!is.null(rv$selectedEdge)) {
-      rv$edgeFontSizes[[rv$selectedEdge]] <- input$selectedEdgeFontSize
-    }
-    
-    output$flowchart <- renderGrViz({
-      dot_code <- generateDotCode_yamane()
-      grViz(dot_code)
-    })
   })
   
   observeEvent(input$resetDiagramText, {
@@ -1512,8 +1675,6 @@ server <- function(input, output, session) {
         body_add_par("Sample Size Calculation (Taro Yamane Method)", style = "heading 2") %>%
         body_add_par(paste("Total Population:", totalPopulation()), style = "Normal") %>%
         body_add_par(paste("Margin of Error:", input$e), style = "Normal") %>%
-        
-        body_add_par(paste("Margin of Error:", input$e), style = "Normal") %>%
         body_add_par(paste("Non-response Rate:", input$non_response, "%"), style = "Normal") %>%
         body_add_par(paste("Initial Sample Size:", sampleSize()), style = "Normal") %>%
         body_add_par(paste("Adjusted Sample Size (accounting for non-response):", adjustedSampleSize()), style = "Normal") %>%
@@ -1586,13 +1747,17 @@ server <- function(input, output, session) {
         div(style = "margin-bottom: 10px; width: 100%;",
             textInput(paste0("stratum_c", i),
                       label = paste("Stratum", i, "Name"),
-                      value = paste("Stratum", i),
+                      value = ifelse(i <= length(initValues$cochran$stratum_names), 
+                                     initValues$cochran$stratum_names[i], 
+                                     paste("Stratum", i)),
                       width = "100%")
         ),
         div(style = "margin-bottom: 20px; width = 100%;",
             numericInput(paste0("pop_c", i),
                          label = paste("Stratum", i, "Population"),
-                         value = 100,
+                         value = ifelse(i <= length(initValues$cochran$stratum_pops), 
+                                        initValues$cochran$stratum_pops[i], 
+                                        100),
                          min = 0,
                          width = "100%")
         ),
@@ -1813,9 +1978,23 @@ server <- function(input, output, session) {
     total_sample <- sum(alloc$Proportional_Sample[1:rv_c$stratumCount])
     
     nodes <- paste0("node", 1:(rv_c$stratumCount + 3))
-    node_labels <- c(paste0("Total Population\nN = ", ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)), 
-                     paste0("Stratum: ", strata, "\nPop: ", pops, "\nSample: ", alloc$Proportional_Sample[1:rv_c$stratumCount]),
-                     paste0("Total Sample\nn = ", total_sample))
+    
+    # Create node labels based on user preferences
+    node_labels <- c(paste0("Total Population\nN = ", ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)))
+    
+    # Add stratum nodes with optional content
+    for (i in 1:rv_c$stratumCount) {
+      stratum_label <- paste0("Stratum: ", strata[i])
+      if (input$includePopSize_c) {
+        stratum_label <- paste0(stratum_label, "\nPop: ", pops[i])
+      }
+      if (input$includeStratumSize_c) {
+        stratum_label <- paste0(stratum_label, "\nSample: ", alloc$Proportional_Sample[i])
+      }
+      node_labels <- c(node_labels, stratum_label)
+    }
+    
+    node_labels <- c(node_labels, paste0("Total Sample\nn = ", total_sample))
     
     for (i in seq_along(nodes)) {
       if (!is.null(rv_c$nodeTexts[[nodes[i]]])) {
@@ -1903,7 +2082,9 @@ server <- function(input, output, session) {
     } else {
       node_index <- as.numeric(gsub("node", "", rv_c$selectedNode))
       if (node_index == 1) {
-        updateTextInput(session, "nodeText_c", value = paste0("Total Population\nN = ", ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)))
+        updateTextInput(session, "nodeText_c", 
+                        value = paste0("Total Population\nN = ", 
+                                       ifelse(is.null(input$N_c) || is.na(input$N_c), totalPopulation_c(), input$N_c)))
       } else if (node_index == rv_c$stratumCount + 2) {
         alloc <- cochranAllocationData()
         total_sample <- sum(alloc$Proportional_Sample[1:rv_c$stratumCount])
@@ -1912,13 +2093,17 @@ server <- function(input, output, session) {
       } else {
         stratum_num <- node_index - 1
         strata <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]])
-        pops <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
-        alloc <- cochranAllocationData()
+        pops   <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
+        alloc  <- cochranAllocationData()
+        
         updateTextInput(session, "nodeText_c", 
-                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
+                        value = paste0("Stratum: ", strata[stratum_num], 
+                                       "\nPop: ", pops[stratum_num], 
+                                       "\nSample: ", alloc$Proportional_Sample[stratum_num]))
       }
     }
   })
+  
   
   observeEvent(input$selected_edge_c, {
     rv_c$selectedEdge <- input$selected_edge_c
@@ -2176,7 +2361,7 @@ server <- function(input, output, session) {
                pwr.anova.test(f = input$effectSize, sig.level = input$alpha, power = input$power, k = 2)
              },
              "Proportion" = pwr.p.test(h = input$effectSize, sig.level = input$alpha, power = input$power),
-             "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, power = input$power),
+             "Cororrelation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, power = input$power),
              "Chi-squared" = pwr.chisq.test(w = input$effectSize, sig.level = input$alpha, power = input$power, df = 1),
              "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize, sig.level = input$alpha, power = input$power),
              "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize, sig.level = input$alpha, power = input$power)
@@ -2395,4 +2580,51 @@ server <- function(input, output, session) {
   )
 }
 
+# Add JavaScript for localStorage functionality
+jscode <- "
+// Function to save values to localStorage
+shinyjs.saveValues = function(params) {
+  localStorage.setItem(params.section, params.values);
+}
+
+// Function to clear values from localStorage
+shinyjs.clearValues = function(params) {
+  localStorage.removeItem(params);
+}
+
+// Function to initialize values from localStorage
+$(document).on('shiny:connected', function(event) {
+  // Proportional Allocation
+  var propValues = localStorage.getItem('proportional');
+  if (propValues) {
+    Shiny.setInputValue('proportional_values', propValues);
+  }
+  
+  // Taro Yamane
+  var yamaneValues = localStorage.getItem('yamane');
+  if (yamaneValues) {
+    Shiny.setInputValue('yamane_values', yamaneValues);
+  }
+  
+  // Cochran
+  var cochranValues = localStorage.getItem('cochran');
+  if (cochranValues) {
+    Shiny.setInputValue('cochran_values', cochranValues);
+  }
+  
+  // Power Analysis
+  var powerValues = localStorage.getItem('power');
+  if (powerValues) {
+    Shiny.setInputValue('power_values', powerValues);
+  }
+  
+  // Descriptive Statistics
+  var descValues = localStorage.getItem('desc');
+  if (descValues) {
+    Shiny.setInputValue('desc_values', descValues);
+  }
+});
+"
+
+# Run the application
 shinyApp(ui = ui, server = server)
