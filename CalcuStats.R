@@ -29,24 +29,381 @@ getGreeting <- function() {
   }
 }
 
+# WHO-inspired CSS
+who_css <- "
+/* WHO-inspired color scheme */
+:root {
+  --who-blue: #0092D0;
+  --who-light-blue: #6BC1E0;
+  --who-dark-blue: #00689D;
+  --who-green: #7CC242;
+  --who-gray: #6D6E71;
+  --who-light-gray: #F1F1F2;
+}
+
+/* WHO-style header and navigation */
+.navbar {
+  background-color: var(--who-blue) !important;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.navbar .navbar-nav > li > a {
+  color: white !important;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.navbar .navbar-nav > li > a:hover {
+  background-color: var(--who-dark-blue) !important;
+  color: white !important;
+}
+
+.navbar .navbar-brand {
+  color: white !important;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* WHO-style panels and cards */
+.panel {
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.panel-heading {
+  background-color: var(--who-blue) !important;
+  color: white !important;
+  border: none;
+  border-radius: 4px 4px 0 0;
+  font-weight: bold;
+}
+
+.who-info-box {
+  background-color: #E8F4FC;
+  border-left: 4px solid var(--who-blue);
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.who-formula-box {
+  background-color: #F8F9FA;
+  border: 1px solid #DEE2E6;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+/* WHO-style buttons */
+.btn-who {
+  background-color: var(--who-blue);
+  color: white;
+  border: none;
+}
+
+.btn-who:hover {
+  background-color: var(--who-dark-blue);
+  color: white;
+}
+
+.btn-who-secondary {
+  background-color: var(--who-green);
+  color: white;
+  border: none;
+}
+
+.btn-who-secondary:hover {
+  background-color: #6BA83A;
+  color: white;
+}
+
+/* WHO-style footer */
+.who-footer {
+  background-color: var(--who-gray);
+  color: white;
+  padding: 15px 0;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.who-footer a {
+  color: var(--who-light-blue);
+  text-decoration: underline;
+}
+
+/* Improved form controls */
+.form-control {
+  border-radius: 4px;
+  border: 1px solid #CED4DA;
+}
+
+.form-control:focus {
+  border-color: var(--who-light-blue);
+  box-shadow: 0 0 0 0.2rem rgba(0, 146, 208, 0.25);
+}
+
+/* Calculation sections - WHITE BACKGROUND WITH BLACK TEXT - LARGER FONT */
+.shiny-text-output, 
+.verbatimTextOutput,
+pre {
+  background-color: white !important;
+  color: black !important;
+  padding: 20px !important;
+  border-radius: 6px !important;
+  border: 2px solid #E8F4FC !important;
+  font-family: 'Arial', sans-serif !important;  /* Changed to Arial for better readability */
+  font-size: 18px !important;  /* Increased font size */
+  line-height: 1.6 !important;
+  margin-bottom: 20px !important;
+  white-space: pre-wrap !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* Specific styling for calculation steps */
+.shiny-text-output pre,
+.verbatimTextOutput pre {
+  font-size: 18px !important;  /* Increased font size */
+  line-height: 1.8 !important;
+  margin: 15px 0 !important;
+  padding: 20px !important;
+  background-color: #ffffff !important;
+  border-left: 4px solid var(--who-blue) !important;
+}
+
+/* Table styling for calculation results */
+.table-responsive table {
+  background-color: white !important;
+  color: black !important;
+  border: 2px solid #E8F4FC !important;
+  font-size: 18px !important;  /* Increased font size */
+  margin: 20px 0 !important;
+}
+
+.table-responsive th {
+  background-color: var(--who-light-blue) !important;
+  color: black !important;
+  font-size: 18px !important;  /* Increased font size */
+  font-weight: bold !important;
+  padding: 15px !important;
+  text-align: center !important;
+}
+
+.table-responsive td {
+  background-color: white !important;
+  color: black !important;
+  border: 1px solid #ddd !important;
+  font-size: 18px !important;  /* Increased font size */
+  padding: 12px 15px !important;
+}
+
+/* Headings above calculation sections */
+h3, h4 {
+  color: var(--who-dark-blue) !important;
+  margin-top: 25px !important;
+  margin-bottom: 15px !important;
+}
+
+h3 {
+  font-size: 26px !important;  /* Increased font size */
+  font-weight: bold !important;
+}
+
+h4 {
+  font-size: 22px !important;  /* Increased font size */
+  font-weight: 600 !important;
+}
+
+/* Fluid row spacing for calculation outputs */
+.fluid-row {
+  margin-bottom: 25px !important;
+}
+
+.fluid-row .col-md-6 {
+  margin-bottom: 20px !important;
+}
+
+/* Welcome header and date styling */
+.welcome-header {
+  text-align: right;
+  padding: 10px 20px !important;  /* Increased padding */
+  background-color: #f8f9fa;
+  font-size: 16px !important;  /* Increased font size */
+  color: #00689D;
+  border-bottom: 1px solid #E8F4FC;
+  font-family: 'Arial', sans-serif !important;  /* Added font family */
+}
+
+.welcome-header div {
+  display: inline-block;
+  margin-right: 15px !important;  /* Increased margin */
+}
+
+.welcome-header div:last-child {
+  border-left: 1px solid #ccc;
+  padding-left: 15px !important;  /* Increased padding */
+}
+
+/* Responsive adjustments for better mobile viewing */
+@media (max-width: 768px) {
+  .sidebar-panel {
+    margin-bottom: 20px;
+  }
+  
+  .shiny-text-output, 
+  .verbatimTextOutput,
+  pre {
+    padding: 15px !important;
+    font-size: 16px !important;  /* Adjusted for mobile */
+    line-height: 1.5 !important;
+    margin-bottom: 15px !important;
+  }
+  
+  .table-responsive th,
+  .table-responsive td {
+    font-size: 16px !important;  /* Adjusted for mobile */
+    padding: 10px !important;
+  }
+  
+  h3 {
+    font-size: 22px !important;  /* Adjusted for mobile */
+  }
+  
+  h4 {
+    font-size: 20px !important;  /* Adjusted for mobile */
+  }
+  
+  .welcome-header {
+    font-size: 14px !important;  /* Adjusted for mobile */
+    padding: 8px 15px !important;
+  }
+}
+
+/* Additional spacing for better readability */
+.container-fluid {
+  padding: 0 20px !important;
+}
+
+.main-panel {
+  padding: 20px !important;
+}
+
+/* Highlight important numbers in calculations */
+strong {
+  color: var(--who-dark-blue) !important;
+  font-weight: bold !important;
+}
+
+em {
+  color: #2C3E50 !important;
+  font-style: italic !important;
+}
+"
+
 ui <- navbarPage(
   title = div(icon("chart-bar"), "CalcuStats"),
-  theme = shinytheme("cosmo"),
-  header = div(
-    style = "text-align: right; padding: 5px 15px; background-color: #f8f9fa; font-size: 14px;",
-    textOutput("welcomeMessage"),
-    textOutput("currentDateTime")
+  theme = shinytheme("flatly"),
+  header = tags$head(
+    tags$style(HTML(who_css)),
+    tags$div(
+      class = "welcome-header",
+      div(style = "display: inline-block; margin-right: 15px;", 
+          textOutput("welcomeMessage")),
+      div(style = "display: inline-block; border-left: 1px solid #ccc; padding-left: 15px;", 
+          textOutput("currentDateTime"))
+    )
   ),
+  # ... rest of the UI code remains the same
   footer = div(
-    style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #ddd; font-size: 14px;",
+    class = "who-footer",
     HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
          <a href='https://github.com/mudassiribrahim30' target='_blank'>GitHub Profile</a></p>"),
     div(
-      style = "margin-top: 10px; font-size: 0.9em; color: #555;",
+      style = "margin-top: 10px; font-size: 0.9em; color: #fff;",
       "Your Companion for Sample Size Calculation and Descriptive Analytics"
     )
   ),
   useShinyjs(),
+  
+  # Home/Introduction Tab
+  tabPanel("Home",
+           div(class = "container-fluid",
+               div(class = "row",
+                   div(class = "col-md-8 col-md-offset-2",
+                       div(class = "jumbotron", style = "background-color: #E8F4FC; padding: 30px;",
+                           h1("Welcome to CalcuStats", style = "color: #00689D;"),
+                           p("A comprehensive statistical tool for sample size calculation, power analysis, and descriptive statistics."),
+                           hr(),
+                           p("This application provides researchers and healthcare professionals with reliable methods for determining appropriate sample sizes for various study designs."),
+                           p("Developed by Mudasir Mohammed Ibrahim, BSc, RN")
+                       ),
+                       
+                       div(class = "row",
+                           div(class = "col-md-4",
+                               div(class = "panel panel-default",
+                                   div(class = "panel-heading", 
+                                       h3("Sample Size Calculators", class = "panel-title")
+                                   ),
+                                   div(class = "panel-body",
+                                       p("Determine appropriate sample sizes using:"),
+                                       tags$ul(
+                                         tags$li("Taro Yamane formula"),
+                                         tags$li("Cochran's formula"),
+                                         tags$li("Proportional allocation"),
+                                         tags$li("Various other statistical formulas")
+                                       )
+                                   )
+                               )
+                           ),
+                           div(class = "col-md-4",
+                               div(class = "panel panel-default",
+                                   div(class = "panel-heading", 
+                                       h3("Power Analysis", class = "panel-title")
+                                   ),
+                                   div(class = "panel-body",
+                                       p("Calculate statistical power for:"),
+                                       tags$ul(
+                                         tags$li("t-tests"),
+                                         tags$li("ANOVA"),
+                                         tags$li("Correlation studies"),
+                                         tags$li("Regression analysis"),
+                                         tags$li("Chi-square tests")
+                                       )
+                                   )
+                               )
+                           ),
+                           div(class = "col-md-4",
+                               div(class = "panel panel-default",
+                                   div(class = "panel-heading", 
+                                       h3("Descriptive Statistics", class = "panel-title")
+                                   ),
+                                   div(class = "panel-body",
+                                       p("Generate comprehensive descriptive statistics:"),
+                                       tags$ul(
+                                         tags$li("Central tendency measures"),
+                                         tags$li("Dispersion metrics"),
+                                         tags$li("Distribution characteristics"),
+                                         tags$li("Data visualization options")
+                                       )
+                                   )
+                               )
+                           )
+                       ),
+                       
+                       div(class = "who-info-box",
+                           h4("Getting Started"),
+                           p("1. Select the appropriate calculator from the navigation menu"),
+                           p("2. Enter your study parameters"),
+                           p("3. Review the results and download reports"),
+                           p("4. Use the flowchart features to visualize your sampling strategy")
+                       )
+                   )
+               )
+           )
+  ),
   
   tabPanel("Proportional Allocation",
            sidebarLayout(
@@ -54,85 +411,106 @@ ui <- navbarPage(
                width = 4,
                id = "proportional_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_proportional", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Proportional Allocation Parameters"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_proportional", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     numericInput("custom_sample", "Your Sample Size (n)", value = 100, min = 1, step = 1),
+                     numericInput("non_response_custom", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
+                     actionButton("addStratum_custom", "Add Stratum", class = "btn-who"),
+                     actionButton("removeStratum_custom", "Remove Last Stratum", class = "btn-who-secondary"),
+                     uiOutput("stratumInputs_custom"),
+                     div(
+                       class = "who-info-box",
+                       style = "margin-top: 10px; font-size: 14px;",
+                       p("For a single population, enter the total size below."),
+                       p("For multiple populations, click 'Add Stratum' to create additional groups.")
+                     )
+                 )
                ),
-               numericInput("custom_sample", "Your Sample Size (n)", value = 100, min = 1, step = 1),
-               numericInput("non_response_custom", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
-               actionButton("addStratum_custom", "Add Stratum", class = "btn-primary"),
-               actionButton("removeStratum_custom", "Remove Last Stratum", class = "btn-warning"),
-               uiOutput("stratumInputs_custom"),
-               div(
-                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 14px;",
-                 p("For a single population, enter the total size below."),
-                 p("For multiple populations, click 'Add Stratum' to create additional groups.")
-               ),
+               
                conditionalPanel(
                  condition = "output.stratumCount_custom > 1",
-                 checkboxInput("showFlowchart_custom", "Generate Flow Chart Diagram", FALSE),
-                 conditionalPanel(
-                   condition = "input.showFlowchart_custom",
-                   div(
-                     style = "max-height: 400px; overflow-y: auto;",
-                     selectInput("flowchartLayout_custom", "Layout Style:",
-                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                     colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
-                     colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
-                     sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 12, max = 24, value = 16),
-                     sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                     sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                     sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                     selectInput("nodeShape_custom", "Node Shape", 
-                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                                 selected = "rectangle"),
-                     sliderInput("arrowSize_custom", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                     
-                     # New options for including stratum/pop sizes
-                     h4("Diagram Content Options"),
-                     checkboxInput("includePopSize_custom", "Include Population Size", value = TRUE),
-                     checkboxInput("includeStratumSize_custom", "Include Stratum Size", value = TRUE),
-                     
-                     actionButton("updateFlowchart_custom", "Update Diagram", class = "btn-primary"),
-                     br(), br(),
-                     h4("Diagram Editor"),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                       h5("Text Editing"),
-                       textInput("nodeText_custom", "Current Text:", ""),
-                       textInput("newText_custom", "New Text (use -> for replacement):", ""),
-                       actionButton("editNodeText_custom", "Update Text", class = "btn-info"),
-                       actionButton("deleteText_custom", "Delete Text", class = "btn-danger"),
-                       actionButton("resetDiagramText_custom", "Reset All Text", class = "btn-warning")
-                     ),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px;",
-                       h5("Font Size Controls"),
-                       sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
-                                   min = 12, max = 24, value = 16),
-                       sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
-                                   min = 10, max = 20, value = 14),
-                       actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-primary")
-                     ),
-                     br(), br(),
-                     h4("Download Diagram"),
-                     div(style = "display: inline-block;", 
-                         downloadButton("downloadFlowchartPNG_custom", "PNG (High Quality)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartSVG_custom", "SVG (Vector)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartPDF_custom", "PDF (Vector)", class = "btn-success"))
+                 div(
+                   class = "panel panel-default",
+                   div(class = "panel-heading", "Flow Chart Options"),
+                   div(class = "panel-body",
+                       checkboxInput("showFlowchart_custom", "Generate Flow Chart Diagram", FALSE),
+                       conditionalPanel(
+                         condition = "input.showFlowchart_custom",
+                         div(
+                           style = "max-height: 400px; overflow-y: auto;",
+                           selectInput("flowchartLayout_custom", "Layout Style:",
+                                       choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                           colourpicker::colourInput("nodeColor_custom", "Node Color", value = "#6BAED6"),
+                           colourpicker::colourInput("edgeColor_custom", "Edge Color", value = "#636363"),
+                           sliderInput("nodeFontSize_custom", "Default Node Font Size", min = 12, max = 24, value = 16),
+                           sliderInput("edgeFontSize_custom", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                           sliderInput("nodeWidth_custom", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                           sliderInput("nodeHeight_custom", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                           selectInput("nodeShape_custom", "Node Shape", 
+                                       choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                       selected = "rectangle"),
+                           sliderInput("arrowSize_custom", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                           
+                           # New options for including stratum/pop sizes
+                           h4("Diagram Content Options"),
+                           checkboxInput("includePopSize_custom", "Include Population Size", value = TRUE),
+                           checkboxInput("includeStratumSize_custom", "Include Stratum Size", value = TRUE),
+                           
+                           actionButton("updateFlowchart_custom", "Update Diagram", class = "btn-who"),
+                           br(), br(),
+                           h4("Diagram Editor"),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                             h5("Text Editing"),
+                             textInput("nodeText_custom", "Current Text:", ""),
+                             textInput("newText_custom", "New Text (use -> for replacement):", ""),
+                             actionButton("editNodeText_custom", "Update Text", class = "btn-who"),
+                             actionButton("deleteText_custom", "Delete Text", class = "btn-who-secondary"),
+                             actionButton("resetDiagramText_custom", "Reset All Text", class = "btn-warning")
+                           ),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px;",
+                             h5("Font Size Controls"),
+                             sliderInput("selectedNodeFontSize_custom", "Selected Node Font Size", 
+                                         min = 12, max = 24, value = 16),
+                             sliderInput("selectedEdgeFontSize_custom", "Selected Edge Font Size", 
+                                         min = 10, max = 20, value = 14),
+                             actionButton("applyFontSizes_custom", "Apply Font Sizes", class = "btn-who")
+                           ),
+                           br(), br(),
+                           h4("Download Diagram"),
+                           div(style = "display: inline-block;", 
+                               downloadButton("downloadFlowchartPNG_custom", "PNG (High Quality)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartSVG_custom", "SVG (Vector)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartPDF_custom", "PDF (Vector)", class = "btn-who-secondary"))
+                         )
+                       )
                    )
                  )
                ),
-               downloadButton("downloadCustomWord", "Download as Word", class = "btn-primary"),
-               downloadButton("downloadCustomSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadCustomWord", "Download as Word", class = "btn-who"),
+                     downloadButton("downloadCustomSteps", "Download Calculation Steps", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
                h3("Proportional Allocation for Specified Sample Size"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                 class = "who-info-box",
                  HTML("
             <strong>Proportional Allocation Formula:</strong><br>
             <em>n<sub>i</sub> = (N<sub>i</sub> / N) &times; n</em><br>
@@ -151,7 +529,9 @@ ui <- navbarPage(
                ),
                div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSizeCustom")),
                h4("Proportional Allocation"),
-               tableOutput("allocationTableCustom"),
+               div(class = "table-responsive",
+                   tableOutput("allocationTableCustom")
+               ),
                div(style = "font-size: 14px;", textOutput("interpretationTextCustom")),
                conditionalPanel(
                  condition = "input.showFlowchart_custom && output.stratumCount_custom > 1",
@@ -174,85 +554,106 @@ ui <- navbarPage(
                width = 4,
                id = "yamane_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_yamane", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Taro Yamane Parameters"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_yamane", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     numericInput("e", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
+                     numericInput("non_response", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
+                     actionButton("addStratum", "Add Stratum", class = "btn-who"),
+                     actionButton("removeStratum", "Remove Last Stratum", class = "btn-who-secondary"),
+                     uiOutput("stratumInputs"),
+                     div(
+                       class = "who-info-box",
+                       style = "margin-top: 10px; font-size: 14px;",
+                       p("For a single population, enter the total size below."),
+                       p("For multiple populations, click 'Add Stratum' to create additional groups.")
+                     )
+                 )
                ),
-               numericInput("e", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
-               numericInput("non_response", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
-               actionButton("addStratum", "Add Stratum", class = "btn-primary"),
-               actionButton("removeStratum", "Remove Last Stratum", class = "btn-warning"),
-               uiOutput("stratumInputs"),
-               div(
-                 style = "margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 14px;",
-                 p("For a single population, enter the total size below."),
-                 p("For multiple populations, click 'Add Stratum' to create additional groups.")
-               ),
+               
                conditionalPanel(
                  condition = "output.stratumCount > 1",
-                 checkboxInput("showFlowchart", "Generate Flow Chart Diagram", FALSE),
-                 conditionalPanel(
-                   condition = "input.showFlowchart",
-                   div(
-                     style = "max-height: 400px; overflow-y: auto;",
-                     selectInput("flowchartLayout", "Layout Style:",
-                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                     colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
-                     colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
-                     sliderInput("nodeFontSize", "Default Node Font Size", min = 12, max = 24, value = 16),
-                     sliderInput("edgeFontSize", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                     sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                     sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                     selectInput("nodeShape", "Node Shape", 
-                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                                 selected = "rectangle"),
-                     sliderInput("arrowSize", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                     
-                     # New options for including stratum/pop sizes
-                     h4("Diagram Content Options"),
-                     checkboxInput("includePopSize", "Include Population Size", value = TRUE),
-                     checkboxInput("includeStratumSize", "Include Stratum Size", value = TRUE),
-                     
-                     actionButton("updateFlowchart", "Update Diagram", class = "btn-primary"),
-                     br(), br(),
-                     h4("Diagram Editor"),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                       h5("Text Editing"),
-                       textInput("nodeText", "Current Text:", ""),
-                       textInput("newText", "New Text (use -> for replacement):", ""),
-                       actionButton("editNodeText", "Update Text", class = "btn-info"),
-                       actionButton("deleteText", "Delete Text", class = "btn-danger"),
-                       actionButton("resetDiagramText", "Reset All Text", class = "btn-warning")
-                     ),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px;",
-                       h5("Font Size Controls"),
-                       sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
-                                   min = 12, max = 24, value = 16),
-                       sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
-                                   min = 10, max = 20, value = 14),
-                       actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-primary")
-                     ),
-                     br(), br(),
-                     h4("Download Diagram"),
-                     div(style = "display: inline-block;", 
-                         downloadButton("downloadFlowchartPNG", "PNG (High Quality)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartSVG", "SVG (Vector)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartPDF", "PDF (Vector)", class = "btn-success"))
+                 div(
+                   class = "panel panel-default",
+                   div(class = "panel-heading", "Flow Chart Options"),
+                   div(class = "panel-body",
+                       checkboxInput("showFlowchart", "Generate Flow Chart Diagram", FALSE),
+                       conditionalPanel(
+                         condition = "input.showFlowchart",
+                         div(
+                           style = "max-height: 400px; overflow-y: auto;",
+                           selectInput("flowchartLayout", "Layout Style:",
+                                       choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                           colourpicker::colourInput("nodeColor", "Node Color", value = "#6BAED6"),
+                           colourpicker::colourInput("edgeColor", "Edge Color", value = "#636363"),
+                           sliderInput("nodeFontSize", "Default Node Font Size", min = 12, max = 24, value = 16),
+                           sliderInput("edgeFontSize", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                           sliderInput("nodeWidth", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                           sliderInput("nodeHeight", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                           selectInput("nodeShape", "Node Shape", 
+                                       choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                       selected = "rectangle"),
+                           sliderInput("arrowSize", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                           
+                           # New options for including stratum/pop sizes
+                           h4("Diagram Content Options"),
+                           checkboxInput("includePopSize", "Include Population Size", value = TRUE),
+                           checkboxInput("includeStratumSize", "Include Stratum Size", value = TRUE),
+                           
+                           actionButton("updateFlowchart", "Update Diagram", class = "btn-who"),
+                           br(), br(),
+                           h4("Diagram Editor"),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                             h5("Text Editing"),
+                             textInput("nodeText", "Current Text:", ""),
+                             textInput("newText", "New Text (use -> for replacement):", ""),
+                             actionButton("editNodeText", "Update Text", class = "btn-who"),
+                             actionButton("deleteText", "Delete Text", class = "btn-who-secondary"),
+                             actionButton("resetDiagramText", "Reset All Text", class = "btn-warning")
+                           ),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px;",
+                             h5("Font Size Controls"),
+                             sliderInput("selectedNodeFontSize", "Selected Node Font Size", 
+                                         min = 12, max = 24, value = 16),
+                             sliderInput("selectedEdgeFontSize", "Selected Edge Font Size", 
+                                         min = 10, max = 20, value = 14),
+                             actionButton("applyFontSizes", "Apply Font Sizes", class = "btn-who")
+                           ),
+                           br(), br(),
+                           h4("Download Diagram"),
+                           div(style = "display: inline-block;", 
+                               downloadButton("downloadFlowchartPNG", "PNG (High Quality)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartSVG", "SVG (Vector)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartPDF", "PDF (Vector)", class = "btn-who-secondary"))
+                         )
+                       )
                    )
                  )
                ),
-               downloadButton("downloadWord", "Download as Word", class = "btn-primary"),
-               downloadButton("downloadSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadWord", "Download as Word", class = "btn-who"),
+                     downloadButton("downloadSteps", "Download Calculation Steps", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
                h3("Taro Yamane Method with Proportional Allocation"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                 class = "who-info-box",
                  HTML("
             <strong>Taro Yamane Formula:</strong><br>
             <em>n = N / (1 + N &times; e²)</em><br>
@@ -271,7 +672,9 @@ ui <- navbarPage(
                div(style = "font-size: 14px;", verbatimTextOutput("formulaExplanation")),
                div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSize")),
                h4("Proportional Allocation"),
-               tableOutput("allocationTable"),
+               div(class = "table-responsive",
+                   tableOutput("allocationTable")
+               ),
                div(style = "font-size: 14px;", textOutput("interpretationText")),
                conditionalPanel(
                  condition = "input.showFlowchart && output.stratumCount > 1",
@@ -294,83 +697,103 @@ ui <- navbarPage(
                width = 4,
                id = "cochran_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_cochran", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Cochran Formula Parameters"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_cochran", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     numericInput("p", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
+                     numericInput("z", "Z-score (Z)", value = 1.96),
+                     numericInput("e_c", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
+                     numericInput("N_c", "Population Size (optional)", value = NULL, min = 1),
+                     numericInput("non_response_c", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
+                     actionButton("addStratum_c", "Add Stratum", class = "btn-who"),
+                     actionButton("removeStratum_c", "Remove Last Stratum", class = "btn-who-secondary"),
+                     uiOutput("stratumInputs_c")
+                 )
                ),
-               numericInput("p", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
-               numericInput("z", "Z-score (Z)", value = 1.96),
-               numericInput("e_c", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
-               numericInput("N_c", "Population Size (optional)", value = NULL, min = 1),
-               numericInput("non_response_c", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
-               actionButton("addStratum_c", "Add Stratum", class = "btn-primary"),
-               actionButton("removeStratum_c", "Remove Last Stratum", class = "btn-warning"),
-               uiOutput("stratumInputs_c"),
+               
                conditionalPanel(
                  condition = "output.stratumCount_c > 1",
-                 checkboxInput("showFlowchart_c", "Generate Flow Chart Diagram", FALSE),
-                 conditionalPanel(
-                   condition = "input.showFlowchart_c",
-                   div(
-                     style = "max-height: 400px; overflow-y: auto;",
-                     selectInput("flowchartLayout_c", "Layout Style:",
-                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                     colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
-                     colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
-                     sliderInput("nodeFontSize_c", "Default Node Font Size", min = 12, max = 24, value = 16),
-                     sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                     sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                     sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                     selectInput("nodeShape_c", "Node Shape", 
-                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                                 selected = "rectangle"),
-                     sliderInput("arrowSize_c", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                     
-                     # New options for including stratum/pop sizes
-                     h4("Diagram Content Options"),
-                     checkboxInput("includePopSize_c", "Include Population Size", value = TRUE),
-                     checkboxInput("includeStratumSize_c", "Include Stratum Size", value = TRUE),
-                     
-                     actionButton("updateFlowchart_c", "Update Diagram", class = "btn-primary"),
-                     br(), br(),
-                     h4("Diagram Editor"),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                       h5("Text Editing"),
-                       textInput("nodeText_c", "Current Text:", ""),
-                       textInput("newText_c", "New Text (use -> for replacement):", ""),
-                       actionButton("editNodeText_c", "Update Text", class = "btn-info"),
-                       actionButton("deleteText_c", "Delete Text", class = "btn-danger"),
-                       actionButton("resetDiagramText_c", "Reset All Text", class = "btn-warning")
-                     ),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px;",
-                       h5("Font Size Controls"),
-                       sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
-                                   min = 12, max = 24, value = 16),
-                       sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
-                                   min = 10, max = 20, value = 14),
-                       actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-primary")
-                     ),
-                     br(), br(),
-                     h4("Download Diagram"),
-                     div(style = "display: inline-block;", 
-                         downloadButton("downloadFlowchartPNG_c", "PNG (High Quality)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartSVG_c", "SVG (Vector)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartPDF_c", "PDF (Vector)", class = "btn-success"))
+                 div(
+                   class = "panel panel-default",
+                   div(class = "panel-heading", "Flow Chart Options"),
+                   div(class = "panel-body",
+                       checkboxInput("showFlowchart_c", "Generate Flow Chart Diagram", FALSE),
+                       conditionalPanel(
+                         condition = "input.showFlowchart_c",
+                         div(
+                           style = "max-height: 400px; overflow-y: auto;",
+                           selectInput("flowchartLayout_c", "Layout Style:",
+                                       choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                           colourpicker::colourInput("nodeColor_c", "Node Color", value = "#6BAED6"),
+                           colourpicker::colourInput("edgeColor_c", "Edge Color", value = "#636363"),
+                           sliderInput("nodeFontSize_c", "Default Node Font Size", min = 12, max = 24, value = 16),
+                           sliderInput("edgeFontSize_c", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                           sliderInput("nodeWidth_c", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                           sliderInput("nodeHeight_c", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                           selectInput("nodeShape_c", "Node Shape", 
+                                       choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                       selected = "rectangle"),
+                           sliderInput("arrowSize_c", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                           
+                           # New options for including stratum/pop sizes
+                           h4("Diagram Content Options"),
+                           checkboxInput("includePopSize_c", "Include Population Size", value = TRUE),
+                           checkboxInput("includeStratumSize_c", "Include Stratum Size", value = TRUE),
+                           
+                           actionButton("updateFlowchart_c", "Update Diagram", class = "btn-who"),
+                           br(), br(),
+                           h4("Diagram Editor"),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                             h5("Text Editing"),
+                             textInput("nodeText_c", "Current Text:", ""),
+                             textInput("newText_c", "New Text (use -> for replacement):", ""),
+                             actionButton("editNodeText_c", "Update Text", class = "btn-who"),
+                             actionButton("deleteText_c", "Delete Text", class = "btn-who-secondary"),
+                             actionButton("resetDiagramText_c", "Reset All Text", class = "btn-warning")
+                           ),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px;",
+                             h5("Font Size Controls"),
+                             sliderInput("selectedNodeFontSize_c", "Selected Node Font Size", 
+                                         min = 12, max = 24, value = 16),
+                             sliderInput("selectedEdgeFontSize_c", "Selected Edge Font Size", 
+                                         min = 10, max = 20, value = 14),
+                             actionButton("applyFontSizes_c", "Apply Font Sizes", class = "btn-who")
+                           ),
+                           br(), br(),
+                           h4("Download Diagram"),
+                           div(style = "display: inline-block;", 
+                               downloadButton("downloadFlowchartPNG_c", "PNG (High Quality)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartSVG_c", "SVG (Vector)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartPDF_c", "PDF (Vector)", class = "btn-who-secondary"))
+                         )
+                       )
                    )
                  )
                ),
-               downloadButton("downloadCochranWord", "Download as Word", class = "btn-primary"),
-               downloadButton("downloadCochranSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadCochranWord", "Download as Word", class = "btn-who"),
+                     downloadButton("downloadCochranSteps", "Download Calculation Steps", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
                h3("Cochran Sample Size Calculator with Proportional Allocation"),
                div(
-                 style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                 class = "who-info-box",
                  HTML("
             <strong>Cochran's Formula:</strong><br>
             <em>n₀ = (Z² × p × (1-p)) / e²</em><br>
@@ -387,7 +810,9 @@ ui <- navbarPage(
                div(style = "font-size: 14px;", verbatimTextOutput("cochranSample")),
                div(style = "font-size: 14px;", verbatimTextOutput("cochranAdjustedSample")),
                h4("Proportional Allocation"),
-               tableOutput("cochranAllocationTable"),
+               div(class = "table-responsive",
+                   tableOutput("cochranAllocationTable")
+               ),
                div(style = "font-size: 14px;", textOutput("cochranInterpretation")),
                conditionalPanel(
                  condition = "input.showFlowchart_c && output.stratumCount_c > 1",
@@ -404,101 +829,130 @@ ui <- navbarPage(
            )
   ),
   
-  # NEW TAB: Other Formulas
+  # REVISED: Other Formulas Tab
   tabPanel("Other Formulas",
            sidebarLayout(
              sidebarPanel(
                width = 4,
                id = "other_formulas_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_other", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Study Design Selection"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_other", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     selectInput("formula_type", "Select Study Design:",
+                                 choices = c("Mean Estimation (Known Variance)" = "mean_known_var",
+                                             "Mean Estimation (Unknown Variance)" = "mean_unknown_var",
+                                             "Proportion Difference" = "proportion_diff",
+                                             "Correlation Coefficient" = "correlation",
+                                             "Regression Coefficient" = "regression",
+                                             "Odds Ratio" = "odds_ratio",
+                                             "Relative Risk" = "relative_risk",
+                                             "Prevalence Study" = "prevalence",
+                                             "Case-Control Study" = "case_control",
+                                             "Cohort Study" = "cohort")),
+                     uiOutput("formula_params"),
+                     numericInput("non_response_other", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1)
+                 )
                ),
-               selectInput("formula_type", "Select Formula:",
-                           choices = c("Mean Estimation (Known Variance)" = "mean_known_var",
-                                       "Mean Estimation (Unknown Variance)" = "mean_unknown_var",
-                                       "Proportion Difference" = "proportion_diff",
-                                       "Correlation Coefficient" = "correlation",
-                                       "Regression Coefficient" = "regression",
-                                       "Odds Ratio" = "odds_ratio",
-                                       "Relative Risk" = "relative_risk",
-                                       "Prevalence Study" = "prevalence",
-                                       "Case-Control Study" = "case_control",
-                                       "Cohort Study" = "cohort")),
-               uiOutput("formula_params"),
-               numericInput("non_response_other", "Non-response Rate (%)", value = 0, min = 0, max = 100, step = 1),
-               actionButton("addStratum_other", "Add Stratum", class = "btn-primary"),
-               actionButton("removeStratum_other", "Remove Last Stratum", class = "btn-warning"),
-               uiOutput("stratumInputs_other"),
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Stratification"),
+                 div(class = "panel-body",
+                     actionButton("addStratum_other", "Add Stratum", class = "btn-who"),
+                     actionButton("removeStratum_other", "Remove Last Stratum", class = "btn-who-secondary"),
+                     uiOutput("stratumInputs_other")
+                 )
+               ),
+               
                conditionalPanel(
                  condition = "output.stratumCount_other > 1",
-                 checkboxInput("showFlowchart_other", "Generate Flow Chart Diagram", FALSE),
-                 conditionalPanel(
-                   condition = "input.showFlowchart_other",
-                   div(
-                     style = "max-height: 400px; overflow-y: auto;",
-                     selectInput("flowchartLayout_other", "Layout Style:",
-                                 choices = c("dot", "neato", "twopi", "circo", "fdp")),
-                     colourpicker::colourInput("nodeColor_other", "Node Color", value = "#6BAED6"),
-                     colourpicker::colourInput("edgeColor_other", "Edge Color", value = "#636363"),
-                     sliderInput("nodeFontSize_other", "Default Node Font Size", min = 12, max = 24, value = 16),
-                     sliderInput("edgeFontSize_other", "Default Edge Font Size", min = 10, max = 20, value = 14),
-                     sliderInput("nodeWidth_other", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
-                     sliderInput("nodeHeight_other", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
-                     selectInput("nodeShape_other", "Node Shape", 
-                                 choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
-                                 selected = "rectangle"),
-                     sliderInput("arrowSize_other", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
-                     
-                     h4("Diagram Content Options"),
-                     checkboxInput("includePopSize_other", "Include Population Size", value = TRUE),
-                     checkboxInput("includeStratumSize_other", "Include Stratum Size", value = TRUE),
-                     
-                     actionButton("updateFlowchart_other", "Update Diagram", class = "btn-primary"),
-                     br(), br(),
-                     h4("Diagram Editor"),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
-                       h5("Text Editing"),
-                       textInput("nodeText_other", "Current Text:", ""),
-                       textInput("newText_other", "New Text (use -> for replacement):", ""),
-                       actionButton("editNodeText_other", "Update Text", class = "btn-info"),
-                       actionButton("deleteText_other", "Delete Text", class = "btn-danger"),
-                       actionButton("resetDiagramText_other", "Reset All Text", class = "btn-warning")
-                     ),
-                     div(
-                       style = "border: 1px solid #ddd; padding: 10px;",
-                       h5("Font Size Controls"),
-                       sliderInput("selectedNodeFontSize_other", "Selected Node Font Size", 
-                                   min = 12, max = 24, value = 16),
-                       sliderInput("selectedEdgeFontSize_other", "Selected Edge Font Size", 
-                                   min = 10, max = 20, value = 14),
-                       actionButton("applyFontSizes_other", "Apply Font Sizes", class = "btn-primary")
-                     ),
-                     br(), br(),
-                     h4("Download Diagram"),
-                     div(style = "display: inline-block;", 
-                         downloadButton("downloadFlowchartPNG_other", "PNG (High Quality)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartSVG_other", "SVG (Vector)", class = "btn-success")),
-                     div(style = "display: inline-block; margin-left: 5px;", 
-                         downloadButton("downloadFlowchartPDF_other", "PDF (Vector)", class = "btn-success"))
+                 div(
+                   class = "panel panel-default",
+                   div(class = "panel-heading", "Flow Chart Options"),
+                   div(class = "panel-body",
+                       checkboxInput("showFlowchart_other", "Generate Flow Chart Diagram", FALSE),
+                       conditionalPanel(
+                         condition = "input.showFlowchart_other",
+                         div(
+                           style = "max-height: 400px; overflow-y: auto;",
+                           selectInput("flowchartLayout_other", "Layout Style:",
+                                       choices = c("dot", "neato", "twopi", "circo", "fdp")),
+                           colourpicker::colourInput("nodeColor_other", "Node Color", value = "#6BAED6"),
+                           colourpicker::colourInput("edgeColor_other", "Edge Color", value = "#636363"),
+                           sliderInput("nodeFontSize_other", "Default Node Font Size", min = 12, max = 24, value = 16),
+                           sliderInput("edgeFontSize_other", "Default Edge Font Size", min = 10, max = 20, value = 14),
+                           sliderInput("nodeWidth_other", "Node Width", min = 0.5, max = 3, value = 1, step = 0.1),
+                           sliderInput("nodeHeight_other", "Node Height", min = 0.5, max = 3, value = 0.8, step = 0.1),
+                           selectInput("nodeShape_other", "Node Shape", 
+                                       choices = c("rectangle", "ellipse", "circle", "diamond", "triangle", "hexagon"),
+                                       selected = "rectangle"),
+                           sliderInput("arrowSize_other", "Arrow Size", min = 0.1, max = 2, value = 1, step = 0.1),
+                           
+                           h4("Diagram Content Options"),
+                           checkboxInput("includePopSize_other", "Include Population Size", value = TRUE),
+                           checkboxInput("includeStratumSize_other", "Include Stratum Size", value = TRUE),
+                           
+                           actionButton("updateFlowchart_other", "Update Diagram", class = "btn-who"),
+                           br(), br(),
+                           h4("Diagram Editor"),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;",
+                             h5("Text Editing"),
+                             textInput("nodeText_other", "Current Text:", ""),
+                             textInput("newText_other", "New Text (use -> for replacement):", ""),
+                             actionButton("editNodeText_other", "Update Text", class = "btn-who"),
+                             actionButton("deleteText_other", "Delete Text", class = "btn-who-secondary"),
+                             actionButton("resetDiagramText_other", "Reset All Text", class = "btn-warning")
+                           ),
+                           div(
+                             style = "border: 1px solid #ddd; padding: 10px;",
+                             h5("Font Size Controls"),
+                             sliderInput("selectedNodeFontSize_other", "Selected Node Font Size", 
+                                         min = 12, max = 24, value = 16),
+                             sliderInput("selectedEdgeFontSize_other", "Selected Edge Font Size", 
+                                         min = 10, max = 20, value = 14),
+                             actionButton("applyFontSizes_other", "Apply Font Sizes", class = "btn-who")
+                           ),
+                           br(), br(),
+                           h4("Download Diagram"),
+                           div(style = "display: inline-block;", 
+                               downloadButton("downloadFlowchartPNG_other", "PNG (High Quality)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartSVG_other", "SVG (Vector)", class = "btn-who-secondary")),
+                           div(style = "display: inline-block; margin-left: 5px;", 
+                               downloadButton("downloadFlowchartPDF_other", "PDF (Vector)", class = "btn-who-secondary"))
+                         )
+                       )
                    )
                  )
                ),
-               downloadButton("downloadOtherWord", "Download as Word", class = "btn-primary"),
-               downloadButton("downloadOtherSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadOtherWord", "Download as Word", class = "btn-who"),
+                     downloadButton("downloadOtherSteps", "Download Calculation Steps", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
-               h3("Other Sample Size Formulas"),
+               h3("Sample Size Calculation for Various Study Designs"),
                uiOutput("formula_description"),
                div(style = "font-size: 14px;", verbatimTextOutput("formulaExplanation_other")),
                div(style = "font-size: 14px;", verbatimTextOutput("sampleSize_other")),
                div(style = "font-size: 14px;", verbatimTextOutput("adjustedSampleSize_other")),
                h4("Proportional Allocation"),
-               tableOutput("allocationTable_other"),
+               div(class = "table-responsive",
+                   tableOutput("allocationTable_other")
+               ),
                div(style = "font-size: 14px;", textOutput("interpretationText_other")),
                conditionalPanel(
                  condition = "input.showFlowchart_other && output.stratumCount_other > 1",
@@ -521,27 +975,54 @@ ui <- navbarPage(
                width = 4,
                id = "power_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_power", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Power Analysis Parameters"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_power", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     selectInput("testType", "Statistical Test:",
+                                 choices = c("Independent t-test", "Paired t-test", "One-sample t-test", "One-Way ANOVA",
+                                             "Two-Way ANOVA", "Proportion", "Correlation", "Chi-squared",
+                                             "Simple Linear Regression", "Multiple Linear Regression")),
+                     numericInput("effectSize", "Effect Size", value = 0.5),
+                     numericInput("alpha", "Significance Level (alpha)", value = 0.05),
+                     numericInput("power", "Desired Power", value = 0.8),
+                     conditionalPanel(
+                       condition = "input.testType == 'Multiple Linear Regression'",
+                       numericInput("predictors", "Number of Predictors", value = 2, min = 1)
+                     ),
+                     actionButton("runPower", "Run Power Analysis", class = "btn-who")
+                 )
                ),
-               selectInput("testType", "Statistical Test:",
-                           choices = c("Independent t-test", "Paired t-test", "One-sample t-test", "One-Way ANOVA",
-                                       "Two-Way ANOVA", "Proportion", "Correlation", "Chi-squared",
-                                       "Simple Linear Regression", "Multiple Linear Regression")),
-               numericInput("effectSize", "Effect Size", value = 0.5),
-               numericInput("alpha", "Significance Level (alpha)", value = 0.05),
-               numericInput("power", "Desired Power", value = 0.8),
-               conditionalPanel(
-                 condition = "input.testType == 'Multiple Linear Regression'",
-                 numericInput("predictors", "Number of Predictors", value = 2, min = 1)
-               ),
-               actionButton("runPower", "Run Power Analysis", class = "btn-primary"),
-               downloadButton("downloadPowerSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadPowerSteps", "Download Calculation Steps", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
                h3("Power Analysis for Inferential Tests"),
+               div(
+                 class = "who-info-box",
+                 HTML("
+            <strong>Power Analysis:</strong><br>
+            <p>Statistical power is the probability that a test will correctly reject a false null hypothesis (avoid a Type II error).</p>
+            <p>Power is influenced by:</p>
+            <ul>
+              <li><strong>Effect size:</strong> The magnitude of the difference or relationship you want to detect</li>
+              <li><strong>Sample size:</strong> The number of observations in your study</li>
+              <li><strong>Significance level (α):</strong> The probability of a Type I error (false positive)</li>
+            </ul>
+            <p>A power of 0.8 (80%) is generally considered acceptable in most research contexts.</p>
+          ")
+               ),
                div(style = "font-size: 14px;", verbatimTextOutput("powerResult"))
              )
            )
@@ -553,25 +1034,85 @@ ui <- navbarPage(
                width = 4,
                id = "desc_sidebar",
                div(
-                 style = "margin-bottom: 15px;",
-                 actionButton("reset_desc", "Reset All Values", class = "btn-danger",
-                              icon = icon("refresh"))
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Data Input"),
+                 div(class = "panel-body",
+                     div(
+                       style = "margin-bottom: 15px;",
+                       actionButton("reset_desc", "Reset All Values", class = "btn-who",
+                                    icon = icon("refresh"))
+                     ),
+                     tags$textarea(id = "dataInput", rows = 10, cols = 30,
+                                   placeholder = "Paste your data (with header) from Excel or statistical software...",
+                                   style = "font-size: 14px; width: 100%;"),
+                     selectInput("dataType", "Data Type:",
+                                 choices = c("Auto Detect" = "auto",
+                                             "Numerical/Continuous" = "numerical",
+                                             "Categorical (Nominal)" = "nominal",
+                                             "Ordinal" = "ordinal")),
+                     actionButton("runDesc", "Analyze Data", class = "btn-who")
+                 )
                ),
-               tags$textarea(id = "dataInput", rows = 10, cols = 30,
-                             placeholder = "Paste a column of data (with header) from Excel or statistical software...",
-                             style = "font-size: 14px;"),
-               actionButton("runDesc", "Get Descriptive Statistics", class = "btn-primary"),
-               downloadButton("downloadDescSteps", "Download Calculation Steps", class = "btn-info")
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Export Results"),
+                 div(class = "panel-body",
+                     downloadButton("downloadDescSteps", "Download Analysis Results", class = "btn-who-secondary")
+                 )
+               )
              ),
              mainPanel(
                width = 8,
                h3("Descriptive Statistics"),
-               div(style = "font-size: 14px;", verbatimTextOutput("descResult"))
+               div(
+                 class = "who-info-box",
+                 HTML("
+          <strong>Descriptive Statistics:</strong><br>
+          <p>Descriptive statistics summarize and describe the main features of a dataset. The appropriate statistics depend on the measurement scale:</p>
+          <ul>
+            <li><strong>Numerical/Continuous Data:</strong> Mean, median, standard deviation, range, etc.</li>
+            <li><strong>Categorical (Nominal) Data:</strong> Frequency counts, percentages, mode</li>
+            <li><strong>Ordinal Data:</strong> Median, mode, frequency counts, percentiles</li>
+          </ul>
+          <p>The app will automatically detect your data type or you can manually specify it.</p>
+        ")
+               ),
+               uiOutput("dataTypeDetection"),
+               conditionalPanel(
+                 condition = "output.dataType == 'numerical'",
+                 h4("Numerical Data Summary"),
+                 div(style = "font-size: 14px;", verbatimTextOutput("numericalSummary")),
+                 plotOutput("numericalPlots", height = "400px")
+               ),
+               conditionalPanel(
+                 condition = "output.dataType == 'categorical'",
+                 h4("Categorical Data Summary"),
+                 div(style = "font-size: 14px;", verbatimTextOutput("categoricalSummary")),
+                 plotOutput("categoricalPlots", height = "400px")
+               ),
+               conditionalPanel(
+                 condition = "output.dataType == 'ordinal'",
+                 h4("Ordinal Data Summary"),
+                 div(style = "font-size: 14px;", verbatimTextOutput("ordinalSummary")),
+                 plotOutput("ordinalPlots", height = "400px")
+               ),
+               conditionalPanel(
+                 condition = "output.dataType == 'mixed'",
+                 h4("Mixed Data Summary"),
+                 div(style = "font-size: 14px;", verbatimTextOutput("mixedSummary"))
+               ),
+               conditionalPanel(
+                 condition = "output.dataType == 'unknown'",
+                 h4("Data Analysis"),
+                 div(style = "font-size: 14px;", verbatimTextOutput("unknownData"))
+               )
              )
            )
   ),
   
-  tabPanel("How to Use App",
+  # User Guide Tab (now properly maintained as its own tab)
+  tabPanel("User Guide",
            fluidPage(
              div(
                style = "padding: 20px; max-width: 1000px; margin: 0 auto; font-size: 16px;",
@@ -598,7 +1139,7 @@ ui <- navbarPage(
                h3("Detailed Instructions"),
                h4("Other Formulas"),
                tags$ol(
-                 tags$li("Select the desired formula from the dropdown menu."),
+                 tags$li("Select the desired study design from the dropdown menu."),
                  tags$li("Enter the required parameters for the selected formula."),
                  tags$li("Adjust the non-response rate if needed."),
                  tags$li("Add strata for proportional allocation if needed."),
@@ -606,7 +1147,6 @@ ui <- navbarPage(
                  tags$li("Generate flow charts and download results as needed.")
                ),
                
-               # Other instructions remain the same...
                h3("Tips"),
                tags$ul(
                  tags$li("For proportional allocation, remember to account for non-response if applicable."),
@@ -623,7 +1163,7 @@ ui <- navbarPage(
            )
   ),
   
-  tabPanel("Usage",
+  tabPanel("Usage Statistics",
            fluidPage(
              div(
                style = "text-align: center; padding: 50px; font-size: 16px;",
@@ -637,6 +1177,7 @@ ui <- navbarPage(
            )
   )
 )
+
 
 server <- function(input, output, session) {
   # Welcome message and date/time
@@ -4430,9 +4971,7 @@ server <- function(input, output, session) {
           "Required sample size:", ifelse(input$testType %in% c("Independent t-test", "Paired t-test"), 
                                           ceiling(result$n * 2), ceiling(result$n)), "\n",
           ifelse(input$testType %in% c("Independent t-test", "Paired t-test"), 
-                 paste("Sample size per group:", ceiling(result$n)), ""), "\n",
-          "\nTechnical details:\n",
-          capture.output(print(result))
+                 paste("Sample size per group:", ceiling(result$n)), "")
         )
       })
     }, error = function(e) {
@@ -4511,62 +5050,171 @@ server <- function(input, output, session) {
     tryCatch({
       data_text <- input$dataInput
       if (nchar(trimws(data_text)) == 0) {
-        output$descResult <- renderText({
+        output$unknownData <- renderText({
           "Please paste some data into the text area."
         })
+        output$dataType <- reactive({"unknown"})
         return()
       }
       
       # Parse the data
       data_lines <- strsplit(data_text, "\n")[[1]]
-      data_values <- as.numeric(data_lines)
       
-      if (all(is.na(data_values))) {
-        output$descResult <- renderText({
-          "Unable to parse numeric data. Please ensure you've pasted numeric values only."
-        })
-        return()
+      # Check if data has a header
+      has_header <- length(data_lines) > 1 && 
+        suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
+      
+      if (has_header) {
+        # Remove header for analysis
+        data_values <- data_lines[-1]
+      } else {
+        data_values <- data_lines
       }
       
-      data_values <- data_values[!is.na(data_values)]
+      # Clean data
+      data_values <- trimws(data_values)
+      data_values <- data_values[data_values != ""]
       
       if (length(data_values) == 0) {
-        output$descResult <- renderText({
-          "No valid numeric data found."
+        output$unknownData <- renderText({
+          "No valid data found."
         })
+        output$dataType <- reactive({"unknown"})
         return()
       }
       
-      # Calculate descriptive statistics
-      desc_stats <- list(
-        "Number of observations" = length(data_values),
-        "Mean" = mean(data_values),
-        "Median" = median(data_values),
-        "Standard Deviation" = sd(data_values),
-        "Variance" = var(data_values),
-        "Minimum" = min(data_values),
-        "Maximum" = max(data_values),
-        "Range" = max(data_values) - min(data_values),
-        "First Quartile (Q1)" = quantile(data_values, 0.25),
-        "Third Quartile (Q3)" = quantile(data_values, 0.75),
-        "Interquartile Range (IQR)" = IQR(data_values),
-        "Skewness" = e1071::skewness(data_values),
-        "Kurtosis" = e1071::kurtosis(data_values)
-      )
+      # Determine data type
+      detect_data_type <- function(values) {
+        # Try to convert to numeric
+        numeric_test <- suppressWarnings(as.numeric(values))
+        num_numeric <- sum(!is.na(numeric_test))
+        prop_numeric <- num_numeric / length(values)
+        
+        # Check if values are Likert scale (ordinal)
+        likert_pattern <- "^(strongly disagree|disagree|neutral|agree|strongly agree|[1-5])$"
+        is_likert <- all(grepl(likert_pattern, tolower(values), ignore.case = TRUE))
+        
+        if (prop_numeric > 0.8) {
+          return("numerical")
+        } else if (is_likert) {
+          return("ordinal")
+        } else if (prop_numeric < 0.2 && length(unique(values)) < 10) {
+          return("categorical")
+        } else {
+          return("mixed")
+        }
+      }
       
-      output$descResult <- renderText({
-        paste(
-          "Descriptive Statistics\n",
-          "=====================\n",
-          paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": ", collapse = "\n"),
-          "\n\nData preview (first 10 values):\n",
-          paste(head(data_values, 10), collapse = ", ")
+      data_type <- input$dataType
+      if (data_type == "auto") {
+        data_type <- detect_data_type(data_values)
+      }
+      
+      output$dataType <- reactive({data_type})
+      outputOptions(output, "dataType", suspendWhenHidden = FALSE)
+      
+      output$dataTypeDetection <- renderUI({
+        div(
+          class = "who-info-box",
+          style = "margin-bottom: 20px;",
+          HTML(paste0(
+            "<strong>Detected Data Type:</strong> ", data_type, "<br>",
+            "<strong>Number of observations:</strong> ", length(data_values), "<br>",
+            "<strong>Missing values:</strong> ", sum(is.na(data_values) | data_values == ""), "<br>"
+          ))
         )
       })
+      
+      # Generate appropriate summary based on data type
+      if (data_type == "numerical") {
+        numeric_values <- as.numeric(data_values)
+        numeric_values <- numeric_values[!is.na(numeric_values)]
+        
+        if (length(numeric_values) == 0) {
+          output$numericalSummary <- renderText({
+            "No valid numerical data found."
+          })
+          return()
+        }
+        
+        desc_stats <- list(
+          "Number of observations" = length(numeric_values),
+          "Number of missing values" = sum(is.na(numeric_values)),
+          "Mean" = mean(numeric_values),
+          "Median" = median(numeric_values),
+          "Standard Deviation" = sd(numeric_values),
+          "Variance" = var(numeric_values),
+          "Minimum" = min(numeric_values),
+          "Maximum" = max(numeric_values),
+          "Range" = max(numeric_values) - min(numeric_values),
+          "First Quartile (Q1)" = quantile(numeric_values, 0.25),
+          "Third Quartile (Q3)" = quantile(numeric_values, 0.75),
+          "Interquartile Range (IQR)" = IQR(numeric_values),
+          "Skewness" = e1071::skewness(numeric_values),
+          "Kurtosis" = e1071::kurtosis(numeric_values)
+        )
+        
+        output$numericalSummary <- renderText({
+          paste(
+            "Numerical Data Summary\n",
+            "======================\n",
+            paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": ", collapse = "\n"),
+            "\n\nData preview (first 10 values):\n",
+            paste(head(numeric_values, 10), collapse = ", ")
+          )
+        })
+        
+        output$numericalPlots <- renderPlot({
+          par(mfrow = c(1, 2))
+          hist(numeric_values, main = "Histogram", xlab = "Values", col = "#6BAED6")
+          boxplot(numeric_values, main = "Boxplot", col = "#6BAED6")
+        })
+        
+      } else if (data_type %in% c("categorical", "ordinal")) {
+        # For categorical and ordinal data
+        freq_table <- table(data_values)
+        freq_percent <- prop.table(freq_table) * 100
+        cum_freq <- cumsum(freq_table)
+        
+        # Create frequency table
+        freq_df <- data.frame(
+          Category = names(freq_table),
+          Frequency = as.numeric(freq_table),
+          Percentage = round(as.numeric(freq_percent), 2),
+          Cumulative = as.numeric(cum_freq)
+        )
+        
+        mode_val <- names(freq_table)[which.max(freq_table)]
+        
+        output$categoricalSummary <- renderText({
+          paste(
+            ifelse(data_type == "categorical", "Categorical", "Ordinal"), "Data Summary\n",
+            "==================================\n",
+            "Number of observations: ", length(data_values), "\n",
+            "Number of categories: ", nrow(freq_df), "\n",
+            "Mode: ", mode_val, " (", max(freq_table), " occurrences)\n\n",
+            "Frequency Table:\n",
+            paste(capture.output(print(freq_df, row.names = FALSE)), collapse = "\n")
+          )
+        })
+        
+        output$categoricalPlots <- renderPlot({
+          par(mfrow = c(1, 2))
+          barplot(freq_table, main = "Bar Plot", las = 2, col = "#6BAED6")
+          pie(freq_table, main = "Pie Chart", col = rainbow(length(freq_table)))
+        })
+        
+      } else if (data_type == "mixed") {
+        output$mixedSummary <- renderText({
+          "Mixed data types detected. Please specify the data type manually or clean your data."
+        })
+      }
+      
     }, error = function(e) {
-      output$descResult <- renderText({
-        paste("Error in descriptive statistics:", e$message)
+      output$unknownData <- renderText({
+        paste("Error in data analysis:", e$message)
       })
+      output$dataType <- reactive({"unknown"})
     })
   })
   
@@ -4582,45 +5230,92 @@ server <- function(input, output, session) {
       }
       
       data_lines <- strsplit(data_text, "\n")[[1]]
-      data_values <- as.numeric(data_lines)
-      data_values <- data_values[!is.na(data_values)]
+      
+      # Check if data has a header
+      has_header <- length(data_lines) > 1 && 
+        suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
+      
+      if (has_header) {
+        # Remove header for analysis
+        data_values <- data_lines[-1]
+      } else {
+        data_values <- data_lines
+      }
+      
+      data_values <- trimws(data_values)
+      data_values <- data_values[data_values != ""]
       
       if (length(data_values) == 0) {
-        writeLines("No valid numeric data found.", file)
+        writeLines("No valid data found.", file)
         return()
       }
       
-      desc_stats <- list(
-        "Number of observations" = length(data_values),
-        "Mean" = mean(data_values),
-        "Median" = median(data_values),
-        "Standard Deviation" = sd(data_values),
-        "Variance" = var(data_values),
-        "Minimum" = min(data_values),
-        "Maximum" = max(data_values),
-        "Range" = max(data_values) - min(data_values),
-        "First Quartile (Q1)" = quantile(data_values, 0.25),
-        "Third Quartile (Q3)" = quantile(data_values, 0.75),
-        "Interquartile Range (IQR)" = IQR(data_values),
-        "Skewness" = e1071::skewness(data_values),
-        "Kurtosis" = e1071::kurtosis(data_values)
-      )
+      data_type <- input$dataType
+      if (data_type == "auto") {
+        data_type <- detect_data_type(data_values)
+      }
       
       result_text <- c(
-        "DESCRIPTIVE STATISTICS",
-        "======================",
+        "DESCRIPTIVE STATISTICS ANALYSIS",
+        "===============================",
         paste("Date:", Sys.Date()),
-        "",
-        "Input Data:",
-        paste("Number of values:", length(data_values)),
-        paste("First 10 values:", paste(head(data_values, 10), collapse = ", ")),
-        "",
-        "Descriptive Statistics:",
-        paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": "),
-        "",
-        "Full dataset:",
-        paste(data_values, collapse = ", ")
+        paste("Data Type:", data_type),
+        paste("Number of observations:", length(data_values)),
+        paste("Missing values:", sum(is.na(data_values) | data_values == "")),
+        ""
       )
+      
+      if (data_type == "numerical") {
+        numeric_values <- as.numeric(data_values)
+        numeric_values <- numeric_values[!is.na(numeric_values)]
+        
+        desc_stats <- list(
+          "Mean" = mean(numeric_values),
+          "Median" = median(numeric_values),
+          "Standard Deviation" = sd(numeric_values),
+          "Variance" = var(numeric_values),
+          "Minimum" = min(numeric_values),
+          "Maximum" = max(numeric_values),
+          "Range" = max(numeric_values) - min(numeric_values),
+          "First Quartile (Q1)" = quantile(numeric_values, 0.25),
+          "Third Quartile (Q3)" = quantile(numeric_values, 0.75),
+          "Interquartile Range (IQR)" = IQR(numeric_values),
+          "Skewness" = e1071::skewness(numeric_values),
+          "Kurtosis" = e1071::kurtosis(numeric_values)
+        )
+        
+        result_text <- c(result_text,
+                         "Numerical Data Summary:",
+                         paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": "),
+                         "",
+                         "Full dataset:",
+                         paste(numeric_values, collapse = ", "))
+        
+      } else if (data_type %in% c("categorical", "ordinal")) {
+        freq_table <- table(data_values)
+        freq_percent <- prop.table(freq_table) * 100
+        cum_freq <- cumsum(freq_table)
+        
+        freq_df <- data.frame(
+          Category = names(freq_table),
+          Frequency = as.numeric(freq_table),
+          Percentage = round(as.numeric(freq_percent), 2),
+          Cumulative = as.numeric(cum_freq)
+        )
+        
+        result_text <- c(result_text,
+                         paste0(ifelse(data_type == "categorical", "Categorical", "Ordinal"), " Data Summary:"),
+                         "Frequency Table:",
+                         capture.output(print(freq_df, row.names = FALSE)),
+                         "",
+                         "Full dataset:",
+                         paste(data_values, collapse = ", "))
+      } else {
+        result_text <- c(result_text,
+                         "Mixed or unknown data type. Unable to generate detailed summary.",
+                         "Raw data:",
+                         paste(data_values, collapse = ", "))
+      }
       
       writeLines(result_text, file)
     }
