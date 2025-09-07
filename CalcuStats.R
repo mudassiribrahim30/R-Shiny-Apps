@@ -1575,8 +1575,9 @@ server <- function(input, output, session) {
   
   adjustedSampleSize_custom <- reactive({
     n <- input$custom_sample
-    if (n == 0) return(0)
+    if (is.null(n) || n == 0) return(0)
     non_response_rate <- input$non_response_custom / 100
+    if (non_response_rate >= 1) return(Inf) # Handle 100% non-response edge case
     ceiling(n / (1 - non_response_rate))
   })
   
@@ -1599,6 +1600,8 @@ server <- function(input, output, session) {
   allocationData_custom <- reactive({
     N <- totalPopulation_custom()
     n <- adjustedSampleSize_custom()
+    if (N == 0 || n == 0) return(NULL)
+    
     strata <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]] )
     pops <- sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]] )
     proportions <- pops / N
@@ -1639,7 +1642,7 @@ server <- function(input, output, session) {
   
   interpretationText_custom <- reactive({
     alloc <- allocationData_custom()
-    if (is.null(alloc)) return("")
+    if (is.null(alloc)) return("Please provide valid population and sample size values.")
     sentences <- paste0(alloc$Stratum[-nrow(alloc)],
                         " (population: ", alloc$Population[-nrow(alloc)],
                         ") should contribute ", alloc$Proportional_Sample[-nrow(alloc)],
@@ -1649,7 +1652,6 @@ server <- function(input, output, session) {
            ", the adjusted sample size is ", adjustedSampleSize_custom(), ". ",
            paste(sentences, collapse = " "))
   })
-  
   output$totalPopCustom <- renderText({ paste("Total Population:", totalPopulation_custom()) })
   output$sampleSizeCustom <- renderText({ paste("Your Sample Size:", input$custom_sample) })
   output$allocationTableCustom <- renderTable({ allocationData_custom() })
@@ -2001,58 +2003,67 @@ server <- function(input, output, session) {
   
   output$downloadCustomWord <- downloadHandler(
     filename = function() {
-      paste("proportional_allocation_results_", Sys.Date(), ".docx", sep = "")
+      paste0("proportional_allocation_results_", Sys.Date(), ".docx")
     },
     content = function(file) {
-      doc <- read_docx()
-      
-      # Add title
-      doc <- doc %>% 
-        body_add_par("Proportional Allocation Results", style = "heading 1") %>%
-        body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add input parameters
-      doc <- doc %>%
-        body_add_par("Input Parameters:", style = "heading 2") %>%
-        body_add_par(paste("Specified sample size:", input$custom_sample), style = "Normal") %>%
-        body_add_par(paste("Non-response rate:", input$non_response_custom, "%"), style = "Normal") %>%
-        body_add_par(paste("Adjusted sample size:", adjustedSampleSize_custom()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add stratum information
-      doc <- doc %>%
-        body_add_par("Stratum Information:", style = "heading 2")
-      
-      strata_data <- data.frame(
-        Stratum = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]]),
-        Population = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
-      )
-      
-      ft <- flextable(strata_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add allocation results
-      doc <- doc %>%
-        body_add_par("Allocation Results:", style = "heading 2")
-      
-      alloc_data <- allocationData_custom()
-      ft_alloc <- flextable(alloc_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft_alloc) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add interpretation
-      doc <- doc %>%
-        body_add_par("Interpretation:", style = "heading 2") %>%
-        body_add_par(interpretationText_custom(), style = "Normal")
-      
-      # Save document
-      print(doc, target = file)
+      withProgress(message = "Generating Word document", value = 0, {
+        tryCatch({
+          doc <- officer::read_docx()
+          
+          # ---- Title ----
+          doc <- doc %>% 
+            officer::body_add_par("Proportional Allocation Results", style = "heading 1") %>%
+            officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Input parameters ----
+          incProgress(0.2, detail = "Adding input parameters")
+          doc <- doc %>%
+            officer::body_add_par("Input Parameters:", style = "heading 2") %>%
+            officer::body_add_par(paste("Specified sample size:", as.character(input$custom_sample)), style = "Normal") %>%
+            officer::body_add_par(paste("Non-response rate:", as.character(input$non_response_custom), "%"), style = "Normal") %>%
+            officer::body_add_par(paste("Adjusted sample size:", as.character(adjustedSampleSize_custom())), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Stratum info ----
+          incProgress(0.4, detail = "Adding stratum information")
+          strata_data <- data.frame(
+            Stratum = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("stratum_custom", i)]]),
+            Population = sapply(1:rv_custom$stratumCount, function(i) input[[paste0("pop_custom", i)]])
+          )
+          ft <- flextable::flextable(strata_data) %>%
+            flextable::theme_box() %>%
+            flextable::autofit()
+          doc <- flextable::body_add_flextable(doc, ft) %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Allocation results ----
+          incProgress(0.7, detail = "Adding allocation results")
+          alloc_data <- allocationData_custom()
+          if (!is.data.frame(alloc_data)) alloc_data <- as.data.frame(alloc_data)
+          
+          ft_alloc <- flextable::flextable(alloc_data) %>%
+            flextable::theme_box() %>%
+            flextable::autofit()
+          doc <- flextable::body_add_flextable(doc, ft_alloc) %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Interpretation ----
+          incProgress(0.9, detail = "Adding interpretation")
+          interp <- interpretationText_custom()
+          if (is.list(interp)) interp <- paste(unlist(interp), collapse = " ")
+          
+          doc <- doc %>%
+            officer::body_add_par("Interpretation:", style = "heading 2") %>%
+            officer::body_add_par(as.character(interp), style = "Normal")
+          
+          # ---- Save document ----
+          print(doc, target = file)
+          
+        }, error = function(e) {
+          showNotification(paste("Error generating document:", e$message), type = "error")
+        })
+      })
     }
   )
   
@@ -2621,69 +2632,74 @@ server <- function(input, output, session) {
   
   output$downloadWord <- downloadHandler(
     filename = function() {
-      paste("yamane_allocation_results_", Sys.Date(), ".docx", sep = "")
+      paste0("yamane_allocation_results_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx")
     },
     content = function(file) {
-      doc <- read_docx()
-      
-      # Add title
-      doc <- doc %>% 
-        body_add_par("Taro Yamane Sample Size Results", style = "heading 1") %>%
-        body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add input parameters
-      doc <- doc %>%
-        body_add_par("Input Parameters:", style = "heading 2") %>%
-        body_add_par(paste("Margin of error (e):", input$e), style = "Normal") %>%
-        body_add_par(paste("Non-response rate:", input$non_response, "%"), style = "Normal") %>%
-        body_add_par(paste("Yamane sample size:", yamaneSampleSize()), style = "Normal") %>%
-        body_add_par(paste("Adjusted sample size:", adjustedSampleSize()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add formula explanation
-      doc <- doc %>%
-        body_add_par("Formula Calculation:", style = "heading 2") %>%
-        body_add_par("Taro Yamane Formula: n = N / (1 + N × e²)", style = "Normal") %>%
-        body_add_par(output$formulaExplanation(), style = "Normal") %>%
-        body_add_par("", style = "Normal") %>%
-        body_add_par("Non-response Adjustment:", style = "heading 2") %>%
-        body_add_par(output$adjustedSampleSize(), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add stratum information
-      doc <- doc %>%
-        body_add_par("Stratum Information:", style = "heading 2")
-      
-      strata_data <- data.frame(
-        Stratum = sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]]),
-        Population = sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
-      )
-      
-      ft <- flextable(strata_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add allocation results
-      doc <- doc %>%
-        body_add_par("Allocation Results:", style = "heading 2")
-      
-      alloc_data <- allocationData()
-      ft_alloc <- flextable(alloc_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft_alloc) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add interpretation
-      doc <- doc %>%
-        body_add_par("Interpretation:", style = "heading 2") %>%
-        body_add_par(interpretationText(), style = "Normal")
-      
-      # Save document
-      print(doc, target = file)
+      withProgress(message = "Generating Word document", value = 0, {
+        tryCatch({
+          doc <- officer::read_docx()
+          
+          # ---- Title ----
+          doc <- doc %>% 
+            officer::body_add_par("Taro Yamane Sample Size Results", style = "heading 1") %>%
+            officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Input parameters ----
+          incProgress(0.2, detail = "Adding input parameters")
+          doc <- doc %>%
+            officer::body_add_par("Input Parameters:", style = "heading 2") %>%
+            officer::body_add_par(paste("Margin of error (e):", input$e), style = "Normal") %>%
+            officer::body_add_par(paste("Non-response rate:", input$non_response, "%"), style = "Normal") %>%
+            officer::body_add_par(paste("Yamane sample size:", as.character(yamaneSampleSize())), style = "Normal") %>%
+            officer::body_add_par(paste("Adjusted sample size:", as.character(adjustedSampleSize())), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Formula explanation ----
+          incProgress(0.4, detail = "Adding formula explanation")
+          doc <- doc %>%
+            officer::body_add_par("Formula Calculation:", style = "heading 2") %>%
+            officer::body_add_par("Taro Yamane Formula: n = N / (1 + N × e²)", style = "Normal")
+          
+          # ---- Stratum info ----
+          incProgress(0.6, detail = "Adding stratum information")
+          strata_data <- data.frame(
+            Stratum = sapply(1:rv$stratumCount, function(i) input[[paste0("stratum", i)]]),
+            Population = sapply(1:rv$stratumCount, function(i) input[[paste0("pop", i)]])
+          )
+          ft <- flextable::flextable(strata_data) %>%
+            flextable::theme_box() %>%
+            flextable::autofit()
+          doc <- flextable::body_add_flextable(doc, ft) %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Allocation results ----
+          incProgress(0.8, detail = "Adding allocation results")
+          alloc_data <- allocationData()
+          if (!is.data.frame(alloc_data)) alloc_data <- as.data.frame(alloc_data)
+          
+          ft_alloc <- flextable::flextable(alloc_data) %>%
+            flextable::theme_box() %>%
+            flextable::autofit()
+          doc <- flextable::body_add_flextable(doc, ft_alloc) %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Interpretation ----
+          incProgress(0.9, detail = "Adding interpretation")
+          interp <- interpretationText()
+          if (is.list(interp)) interp <- paste(unlist(interp), collapse = " ")
+          
+          doc <- doc %>%
+            officer::body_add_par("Interpretation:", style = "heading 2") %>%
+            officer::body_add_par(as.character(interp), style = "Normal")
+          
+          # ---- Save document ----
+          print(doc, target = file)
+          
+        }, error = function(e) {
+          showNotification(paste("Error generating document:", e$message), type = "error")
+        })
+      })
     }
   )
   
@@ -2778,11 +2794,16 @@ server <- function(input, output, session) {
     edgeFontSizes = list()
   )
   
-  observeEvent(input$addStratum_c, { rv_c$stratumCount <- rv_c$stratumCount + 1 })
-  observeEvent(input$removeStratum_c, { if (rv_c$stratumCount > 1) rv_c$stratumCount <- rv_c$stratumCount - 1 })
+  observeEvent(input$addStratum_c, { 
+    rv_c$stratumCount <- rv_c$stratumCount + 1 
+  })
+  
+  observeEvent(input$removeStratum_c, { 
+    if (rv_c$stratumCount > 1) rv_c$stratumCount <- rv_c$stratumCount - 1 
+  })
   
   output$stratumInputs_c <- renderUI({
-    lapply(1:rv_c$stratumCount, function(i) {
+    strata_list <- lapply(1:rv_c$stratumCount, function(i) {
       tagList(
         div(style = "margin-bottom: 10px; width: 100%;",
             textInput(paste0("stratum_c", i),
@@ -2792,7 +2813,7 @@ server <- function(input, output, session) {
                                      paste("Stratum", i)),
                       width = "100%")
         ),
-        div(style = "margin-bottom: 20px; width = 100%;",
+        div(style = "margin-bottom: 20px; width: 100%;",
             numericInput(paste0("pop_c", i),
                          label = paste("Stratum", i, "Population"),
                          value = ifelse(i <= length(initValues$cochran$stratum_pops), 
@@ -2800,10 +2821,18 @@ server <- function(input, output, session) {
                                         100),
                          min = 0,
                          width = "100%")
-        ),
-        tags$hr()
+        )
       )
     })
+    
+    # Add horizontal rule only between strata, not after the last one
+    if (rv_c$stratumCount > 1) {
+      for (i in 1:(rv_c$stratumCount - 1)) {
+        strata_list[[i]] <- tagList(strata_list[[i]], tags$hr())
+      }
+    }
+    
+    return(strata_list)
   })
   
   output$stratumCount_c <- reactive({
@@ -2812,23 +2841,26 @@ server <- function(input, output, session) {
   outputOptions(output, "stratumCount_c", suspendWhenHidden = FALSE)
   
   totalPopulation_c <- reactive({
-    sum(sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]]), na.rm = TRUE)
+    sum(sapply(1:rv_c$stratumCount, function(i) {
+      pop_val <- input[[paste0("pop_c", i)]]
+      if (is.null(pop_val) || is.na(pop_val)) 0 else pop_val
+    }), na.rm = TRUE)
   })
   
   cochranSampleSize <- reactive({
     p <- input$p
     z <- input$z
     e <- input$e_c
-    N <- input$N_c
+    N_c <- input$N_c
     
-    if (p <= 0 || p >= 1 || e <= 0 || z <= 0) return(0)
+    if (is.null(p) || is.null(z) || is.null(e) || e == 0) return(0)
     
     # Infinite population formula
     n0 <- (z^2 * p * (1 - p)) / (e^2)
     
     # Finite population correction
-    if (!is.null(N) && !is.na(N) && N > 0) {
-      n0 / (1 + (n0 - 1) / N)
+    if (!is.null(N_c) && !is.na(N_c) && N_c > 0 && n0 > 0) {
+      n0 / (1 + (n0 - 1) / N_c)
     } else {
       n0
     }
@@ -2836,8 +2868,9 @@ server <- function(input, output, session) {
   
   adjustedSampleSize_c <- reactive({
     n <- cochranSampleSize()
-    if (n == 0) return(0)
+    if (is.null(n) || n == 0) return(0)
     non_response_rate <- input$non_response_c / 100
+    if (non_response_rate >= 1) return(Inf) # Handle 100% non-response edge case
     ceiling(n / (1 - non_response_rate))
   })
   
@@ -2845,7 +2878,7 @@ server <- function(input, output, session) {
     p <- input$p
     z <- input$z
     e <- input$e_c
-    N <- input$N_c
+    N_c <- input$N_c
     n0 <- (z^2 * p * (1 - p)) / (e^2)
     
     explanation <- paste(
@@ -2856,16 +2889,15 @@ server <- function(input, output, session) {
       "4. Result: (", z^2 * p * (1-p), ") / ", e^2, " = ", n0
     )
     
-    if (!is.null(N) && !is.na(N) && N > 0) {
-      n_final <- n0 / (1 + (n0 - 1) / N)
+    if (!is.null(N_c) && !is.na(N_c) && N_c > 0) {
+      n_final <- n0 / (1 + (n0 - 1) / N_c)
       explanation <- paste(
         explanation,
         "\n\nFinite Population Correction:\n",
         "5. Formula: n = n₀ / (1 + (n₀ - 1)/N)\n",
-        "6. Calculation: ", n0, " / (1 + (", n0, " - 1)/", N, ")\n",
-        "7. Step-by-step: ", n0, " / (1 + ", (n0 - 1), "/", N, ")\n",
-        "8. Result: ", n0, " / (1 + ", (n0 - 1)/N, ") = ", n0, " / ", (1 + (n0 - 1)/N), " = ", n_final, "\n",
-        "9. Apply ceiling function: ", ceiling(n_final)
+        "6. Calculation: ", n0, " / (1 + (", n0, " - 1)/", N_c, ")\n",
+        "7. Step-by-step: ", n0, " / (1 + ", (n0 - 1), "/", N_c, ")\n",
+        "8. Result: ", n0, " / (1 + ", (n0 - 1)/N_c, ") = ", n0, " / ", (1 + (n0 - 1)/N_c), " = ", n_final
       )
     } else {
       explanation <- paste(explanation, "\n\nNo finite population correction applied.")
@@ -2897,6 +2929,8 @@ server <- function(input, output, session) {
   allocationData_c <- reactive({
     N <- totalPopulation_c()
     n <- adjustedSampleSize_c()
+    if (N == 0 || n == 0 || is.null(N) || is.null(n)) return(NULL)
+    
     strata <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]] )
     pops <- sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]] )
     proportions <- pops / N
@@ -2937,7 +2971,7 @@ server <- function(input, output, session) {
   
   cochranInterpretation <- reactive({
     alloc <- allocationData_c()
-    if (is.null(alloc)) return("")
+    if (is.null(alloc)) return("Please provide valid population and sample size values.")
     sentences <- paste0(alloc$Stratum[-nrow(alloc)],
                         " (population: ", alloc$Population[-nrow(alloc)],
                         ") should contribute ", alloc$Proportional_Sample[-nrow(alloc)],
@@ -3006,31 +3040,31 @@ server <- function(input, output, session) {
     
     dot_code <- paste0(
       "digraph flowchart {
-        rankdir=TB;
-        layout=\"", input$flowchartLayout_c, "\";
-        node [fontname=Arial, shape=\"", input$nodeShape_c, "\", style=filled, fillcolor='", input$nodeColor_c, "', 
-              width=", input$nodeWidth_c, ", height=", input$nodeHeight_c, "];
-        edge [color='", input$edgeColor_c, "', arrowsize=", input$arrowSize_c, "];
-        
-        // Nodes with custom font sizes
-        '", nodes[1], "' [label='", node_labels[1], "', id='", nodes[1], "', fontsize=", node_font_sizes[1], "];
-        '", nodes[length(nodes)], "' [label='", node_labels[length(node_labels)], "', id='", nodes[length(nodes)], "', fontsize=", node_font_sizes[length(nodes)], "];
-      ",
+      rankdir=TB;
+      layout=\"", input$flowchartLayout_c, "\";
+      node [fontname=Arial, shape=\"", input$nodeShape_c, "\", style=filled, fillcolor='", input$nodeColor_c, "', 
+            width=", input$nodeWidth_c, ", height=", input$nodeHeight_c, "];
+      edge [color='", input$edgeColor_c, "', arrowsize=", input$arrowSize_c, "];
+      
+      // Nodes with custom font sizes
+      '", nodes[1], "' [label='", node_labels[1], "', id='", nodes[1], "', fontsize=", node_font_sizes[1], "];
+      '", nodes[length(nodes)], "' [label='", node_labels[length(node_labels)], "', id='", nodes[length(nodes)], "', fontsize=", node_font_sizes[length(nodes)], "];
+    ",
       paste0(sapply(1:rv_c$stratumCount, function(i) {
         paste0("'", nodes[i+1], "' [label='", node_labels[i+1], "', id='", nodes[i+1], "', fontsize=", node_font_sizes[i+1], "];")
       }), collapse = "\n"),
       "
-        
-        // Edges with custom font sizes
-        '", nodes[1], "' -> {",
+      
+      // Edges with custom font sizes
+      '", nodes[1], "' -> {",
       paste0("'", nodes[2:(rv_c$stratumCount+1)], "'", collapse = " "),
       "} [label='', id='stratification_edges', fontsize=", input$edgeFontSize_c, "];
-      ",
+    ",
       paste0(sapply(1:rv_c$stratumCount, function(i) {
         paste0("'", nodes[i+1], "' -> '", nodes[length(nodes)], "' [label='", edge_labels[i], "', id='edge", i, "', fontsize=", edge_font_sizes[i], "];")
       }), collapse = "\n"),
       "
-      }"
+    }"
     )
     
     return(dot_code)
@@ -3045,23 +3079,23 @@ server <- function(input, output, session) {
   
   # JavaScript for handling clicks on nodes and edges
   jsCode_c <- '
-  $(document).ready(function() {
-    document.getElementById("flowchart_c").addEventListener("click", function(event) {
-      var target = event.target;
-      if (target.tagName === "text") {
-        target = target.parentNode;
-      }
-      
-      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
-        var nodeId = target.getAttribute("id");
-        Shiny.setInputValue("selected_node_c", nodeId);
-      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
-        var pathId = target.getAttribute("id");
-        Shiny.setInputValue("selected_edge_c", pathId);
-      }
-    });
+$(document).ready(function() {
+  document.getElementById("flowchart_c").addEventListener("click", function(event) {
+    var target = event.target;
+    if (target.tagName === "text") {
+      target = target.parentNode;
+    }
+    
+    if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
+      var nodeId = target.getAttribute("id");
+      Shiny.setInputValue("selected_node_c", nodeId);
+    } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
+      var pathId = target.getAttribute("id");
+      Shiny.setInputValue("selected_edge_c", pathId);
+    }
   });
-  '
+});
+'
   
   observe({
     session$sendCustomMessage(type='jsCode', list(value = jsCode_c))
@@ -3299,77 +3333,91 @@ server <- function(input, output, session) {
   
   output$downloadCochranWord <- downloadHandler(
     filename = function() {
-      paste("cochran_allocation_results_", Sys.Date(), ".docx", sep = "")
+      paste0("cochran_allocation_results_", Sys.Date(), ".docx")
     },
     content = function(file) {
-      doc <- read_docx()
-      
-      # Add title
-      doc <- doc %>% 
-        body_add_par("Cochran Sample Size Results", style = "heading 1") %>%
-        body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add input parameters
-      doc <- doc %>%
-        body_add_par("Input Parameters:", style = "heading 2") %>%
-        body_add_par(paste("Estimated proportion (p):", input$p), style = "Normal") %>%
-        body_add_par(paste("Z-score (Z):", input$z), style = "Normal") %>%
-        body_add_par(paste("Margin of error (e):", input$e_c), style = "Normal")
-      
-      if (!is.null(input$N_c) && !is.na(input$N_c) && input$N_c > 0) {
-        doc <- doc %>% body_add_par(paste("Population size (N):", input$N_c), style = "Normal")
-      }
-      
-      doc <- doc %>%
-        body_add_par(paste("Non-response rate:", input$non_response_c, "%"), style = "Normal") %>%
-        body_add_par(paste("Cochran sample size:", ceiling(cochranSampleSize())), style = "Normal") %>%
-        body_add_par(paste("Adjusted sample size:", adjustedSampleSize_c()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add formula explanation
-      doc <- doc %>%
-        body_add_par("Formula Calculation:", style = "heading 2") %>%
-        body_add_par("Cochran's Formula: n₀ = (Z² × p × (1-p)) / e²", style = "Normal") %>%
-        body_add_par(output$cochranFormulaExplanation(), style = "Normal") %>%
-        body_add_par("", style = "Normal") %>%
-        body_add_par("Non-response Adjustment:", style = "heading 2") %>%
-        body_add_par(output$cochranAdjustedSample(), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add stratum information
-      doc <- doc %>%
-        body_add_par("Stratum Information:", style = "heading 2")
-      
-      strata_data <- data.frame(
-        Stratum = sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]]),
-        Population = sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]])
-      )
-      
-      ft <- flextable(strata_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add allocation results
-      doc <- doc %>%
-        body_add_par("Allocation Results:", style = "heading 2")
-      
-      alloc_data <- allocationData_c()
-      ft_alloc <- flextable(alloc_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft_alloc) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add interpretation
-      doc <- doc %>%
-        body_add_par("Interpretation:", style = "heading 2") %>%
-        body_add_par(cochranInterpretation(), style = "Normal")
-      
-      # Save document
-      print(doc, target = file)
+      withProgress(message = "Generating Word document", value = 0, {
+        tryCatch({
+          doc <- officer::read_docx()
+          
+          # ---- Title ----
+          doc <- doc %>% 
+            officer::body_add_par("Cochran Sample Size Results", style = "heading 1") %>%
+            officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Input parameters ----
+          incProgress(0.2, detail = "Adding input parameters")
+          doc <- doc %>%
+            officer::body_add_par("Input Parameters:", style = "heading 2") %>%
+            officer::body_add_par(paste("Estimated proportion (p):", input$p), style = "Normal") %>%
+            officer::body_add_par(paste("Z-score (Z):", input$z), style = "Normal") %>%
+            officer::body_add_par(paste("Margin of error (e):", input$e_c), style = "Normal")
+          
+          if (!is.null(input$N_c) && !is.na(input$N_c) && input$N_c > 0) {
+            doc <- doc %>% officer::body_add_par(paste("Population size (N):", input$N_c), style = "Normal")
+          }
+          
+          doc <- doc %>%
+            officer::body_add_par(paste("Non-response rate:", input$non_response_c, "%"), style = "Normal") %>%
+            officer::body_add_par(paste("Cochran sample size:", ceiling(cochranSampleSize())), style = "Normal") %>%
+            officer::body_add_par(paste("Adjusted sample size:", adjustedSampleSize_c()), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # ---- Formula explanation ----
+          incProgress(0.4, detail = "Adding formula explanation")
+          doc <- doc %>%
+            officer::body_add_par("Formula Calculation:", style = "heading 2") %>%
+            officer::body_add_par("Cochran's Formula: n₀ = (Z² × p × (1-p)) / e²", style = "Normal")
+          
+          # ---- Stratum info ----
+          incProgress(0.6, detail = "Adding stratum information")
+          if (rv_c$stratumCount > 0) {
+            doc <- doc %>% officer::body_add_par("Stratum Information:", style = "heading 2")
+            
+            strata_data <- data.frame(
+              Stratum = sapply(1:rv_c$stratumCount, function(i) input[[paste0("stratum_c", i)]]),
+              Population = sapply(1:rv_c$stratumCount, function(i) input[[paste0("pop_c", i)]]),
+              stringsAsFactors = FALSE
+            )
+            
+            ft <- flextable::flextable(strata_data) %>%
+              flextable::theme_box() %>%
+              flextable::autofit()
+            doc <- flextable::body_add_flextable(doc, ft) %>%
+              officer::body_add_par("", style = "Normal")
+          }
+          
+          # ---- Allocation results ----
+          incProgress(0.8, detail = "Adding allocation results")
+          alloc_data <- allocationData_c()
+          if (!is.null(alloc_data) && nrow(alloc_data) > 0) {
+            doc <- doc %>%
+              officer::body_add_par("Allocation Results:", style = "heading 2")
+            
+            ft_alloc <- flextable::flextable(alloc_data) %>%
+              flextable::theme_box() %>%
+              flextable::autofit()
+            doc <- flextable::body_add_flextable(doc, ft_alloc) %>%
+              officer::body_add_par("", style = "Normal")
+          }
+          
+          # ---- Interpretation ----
+          incProgress(0.9, detail = "Adding interpretation")
+          interp <- cochranInterpretation()
+          if (is.list(interp)) interp <- paste(unlist(interp), collapse = " ")
+          
+          doc <- doc %>%
+            officer::body_add_par("Interpretation:", style = "heading 2") %>%
+            officer::body_add_par(as.character(interp), style = "Normal")
+          
+          # ---- Save document ----
+          print(doc, target = file)
+          
+        }, error = function(e) {
+          showNotification(paste("Error generating document:", e$message), type = "error")
+        })
+      })
     }
   )
   
@@ -3477,7 +3525,6 @@ server <- function(input, output, session) {
       writeLines(steps, file)
     }
   )
-  
   # Other Formulas section variables
   rv_other <- reactiveValues(
     stratumCount = 1,
@@ -4646,151 +4693,157 @@ server <- function(input, output, session) {
   
   output$downloadOtherWord <- downloadHandler(
     filename = function() {
-      paste("other_formula_results_", Sys.Date(), ".docx", sep = "")
+      paste("other_formula_results_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx", sep = "")
     },
     content = function(file) {
-      doc <- read_docx()
+      progress <- shiny::Progress$new()
+      progress$set(message = "Generating Word document", value = 0)
+      on.exit(progress$close())
       
-      # Add title
-      doc <- doc %>% 
-        body_add_par("Other Formula Sample Size Results", style = "heading 1") %>%
-        body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add formula type
-      formula_type_name <- switch(input$formula_type,
-                                  "mean_known_var" = "Mean Estimation (Known Variance)",
-                                  "mean_unknown_var" = "Mean Estimation (Unknown Variance)",
-                                  "proportion_diff" = "Difference Between Proportions",
-                                  "correlation" = "Correlation Coefficient",
-                                  "regression" = "Regression Coefficient",
-                                  "odds_ratio" = "Odds Ratio",
-                                  "relative_risk" = "Relative Risk",
-                                  "prevalence" = "Prevalence Study",
-                                  "case_control" = "Case-Control Study",
-                                  "cohort" = "Cohort Study")
-      
-      doc <- doc %>%
-        body_add_par(paste("Formula Type:", formula_type_name), style = "heading 2") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add input parameters
-      doc <- doc %>%
-        body_add_par("Input Parameters:", style = "heading 2")
-      
-      # Add specific parameters based on formula type
-      params_text <- switch(input$formula_type,
-                            "mean_known_var" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Standard Deviation (σ):", input$sigma_other),
-                              paste("Margin of Error (d):", input$d_other)
-                            ),
-                            "mean_unknown_var" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Effect Size (Cohen's d):", input$effect_size_other)
-                            ),
-                            "proportion_diff" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Proportion 1 (p₁):", input$p1_other),
-                              paste("Proportion 2 (p₂):", input$p2_other)
-                            ),
-                            "correlation" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Correlation Coefficient (r):", input$r_other)
-                            ),
-                            "regression" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Effect Size (f²):", input$effect_size_other),
-                              paste("Number of Predictors:", input$predictors_other)
-                            ),
-                            "odds_ratio" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Odds Ratio (OR):", input$or_other),
-                              paste("Proportion in Control Group:", input$p1_other)
-                            ),
-                            "relative_risk" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Relative Risk (RR):", input$rr_other),
-                              paste("Proportion in Control Group:", input$p1_other)
-                            ),
-                            "prevalence" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Precision (d):", input$precision_other),
-                              paste("Expected Prevalence:", input$prevalence_other)
-                            ),
-                            "case_control" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Odds Ratio (OR):", input$or_other),
-                              paste("Proportion in Controls:", input$p1_other),
-                              paste("Case:Control Ratio:", input$r_other)
-                            ),
-                            "cohort" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Relative Risk (RR):", input$rr_other),
-                              paste("Proportion in Unexposed:", input$p1_other),
-                              paste("Exposed:Unexposed Ratio:", input$r_other)
-                            ))
-      
-      for (param in params_text) {
-        doc <- doc %>% body_add_par(param, style = "Normal")
-      }
-      
-      doc <- doc %>%
-        body_add_par(paste("Non-response rate:", input$non_response_other, "%"), style = "Normal") %>%
-        body_add_par(paste("Sample size:", otherSampleSize()), style = "Normal") %>%
-        body_add_par(paste("Adjusted sample size:", adjustedSampleSize_other()), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add formula explanation
-      doc <- doc %>%
-        body_add_par("Formula Calculation:", style = "heading 2") %>%
-        body_add_par(output$formulaExplanation_other(), style = "Normal") %>%
-        body_add_par("", style = "Normal") %>%
-        body_add_par("Non-response Adjustment:", style = "heading 2") %>%
-        body_add_par(output$adjustedSampleSize_other(), style = "Normal") %>%
-        body_add_par("", style = "Normal")
-      
-      # Add stratum information
-      doc <- doc %>%
-        body_add_par("Stratum Information:", style = "heading 2")
-      
-      strata_data <- data.frame(
-        Stratum = sapply(1:rv_other$stratumCount, function(i) input[[paste0("stratum_other", i)]]),
-        Population = sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]])
-      )
-      
-      ft <- flextable(strata_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add allocation results
-      doc <- doc %>%
-        body_add_par("Allocation Results:", style = "heading 2")
-      
-      alloc_data <- allocationData_other()
-      ft_alloc <- flextable(alloc_data) %>%
-        theme_box() %>%
-        autofit()
-      doc <- doc %>% body_add_flextable(ft_alloc) %>%
-        body_add_par("", style = "Normal")
-      
-      # Add interpretation
-      doc <- doc %>%
-        body_add_par("Interpretation:", style = "heading 2") %>%
-        body_add_par(interpretationText_other(), style = "Normal")
-      
-      # Save document
-      print(doc, target = file)
+      tryCatch({
+        doc <- officer::read_docx()
+        
+        # ---- Title ----
+        doc <- doc %>% 
+          officer::body_add_par("Other Formula Sample Size Results", style = "heading 1") %>%
+          officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+          officer::body_add_par("", style = "Normal")
+        
+        # ---- Formula Type ----
+        formula_type_name <- switch(input$formula_type,
+                                    "mean_known_var"   = "Mean Estimation (Known Variance)",
+                                    "mean_unknown_var" = "Mean Estimation (Unknown Variance)",
+                                    "proportion_diff"  = "Difference Between Proportions",
+                                    "correlation"      = "Correlation Coefficient",
+                                    "regression"       = "Regression Coefficient",
+                                    "odds_ratio"       = "Odds Ratio",
+                                    "relative_risk"    = "Relative Risk",
+                                    "prevalence"       = "Prevalence Study",
+                                    "case_control"     = "Case-Control Study",
+                                    "cohort"           = "Cohort Study"
+        )
+        
+        doc <- doc %>%
+          officer::body_add_par(paste("Formula Type:", formula_type_name), style = "heading 2") %>%
+          officer::body_add_par("", style = "Normal")
+        
+        # ---- Input Parameters ----
+        doc <- doc %>% officer::body_add_par("Input Parameters:", style = "heading 2")
+        
+        params_text <- switch(input$formula_type,
+                              "mean_known_var" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Standard Deviation (σ):", input$sigma_other),
+                                paste("Margin of Error (d):", input$d_other)
+                              ),
+                              "mean_unknown_var" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Effect Size (Cohen's d):", input$effect_size_other)
+                              ),
+                              "proportion_diff" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Proportion 1 (p₁):", input$p1_other),
+                                paste("Proportion 2 (p₂):", input$p2_other)
+                              ),
+                              "correlation" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Correlation Coefficient (r):", input$r_other)
+                              ),
+                              "regression" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Effect Size (f²):", input$effect_size_other),
+                                paste("Number of Predictors:", input$predictors_other)
+                              ),
+                              "odds_ratio" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Odds Ratio (OR):", input$or_other),
+                                paste("Proportion in Control Group:", input$p1_other)
+                              ),
+                              "relative_risk" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Relative Risk (RR):", input$rr_other),
+                                paste("Proportion in Control Group:", input$p1_other)
+                              ),
+                              "prevalence" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Precision (d):", input$precision_other),
+                                paste("Expected Prevalence:", input$prevalence_other)
+                              ),
+                              "case_control" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Odds Ratio (OR):", input$or_other),
+                                paste("Proportion in Controls:", input$p1_other),
+                                paste("Case:Control Ratio:", input$r_other)
+                              ),
+                              "cohort" = c(
+                                paste("Alpha (α):", input$alpha_other),
+                                paste("Power (1-β):", input$power_other),
+                                paste("Relative Risk (RR):", input$rr_other),
+                                paste("Proportion in Unexposed:", input$p1_other),
+                                paste("Exposed:Unexposed Ratio:", input$r_other)
+                              )
+        )
+        
+        for (param in params_text) {
+          doc <- doc %>% officer::body_add_par(param, style = "Normal")
+        }
+        
+        doc <- doc %>%
+          officer::body_add_par(paste("Non-response rate:", input$non_response_other, "%"), style = "Normal") %>%
+          officer::body_add_par(paste("Sample size:", otherSampleSize()), style = "Normal") %>%
+          officer::body_add_par(paste("Adjusted sample size:", adjustedSampleSize_other()), style = "Normal") %>%
+          officer::body_add_par("", style = "Normal")
+        
+        progress$set(value = 0.3, detail = "Adding stratum information")
+        
+        # ---- Stratum Info ----
+        doc <- doc %>%
+          officer::body_add_par("Stratum Information:", style = "heading 2")
+        
+        strata_data <- data.frame(
+          Stratum = sapply(1:rv_other$stratumCount, function(i) input[[paste0("stratum_other", i)]]),
+          Population = sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]])
+        )
+        
+        ft <- flextable::flextable(strata_data) %>%
+          flextable::theme_box() %>%
+          flextable::autofit()
+        doc <- flextable::body_add_flextable(doc, ft) %>%
+          officer::body_add_par("", style = "Normal")
+        
+        progress$set(value = 0.6, detail = "Adding allocation results")
+        
+        # ---- Allocation Results ----
+        doc <- doc %>%
+          officer::body_add_par("Allocation Results:", style = "heading 2")
+        
+        alloc_data <- allocationData_other()
+        ft_alloc <- flextable::flextable(alloc_data) %>%
+          flextable::theme_box() %>%
+          flextable::autofit()
+        doc <- flextable::body_add_flextable(doc, ft_alloc) %>%
+          officer::body_add_par("", style = "Normal")
+        
+        progress$set(value = 0.9, detail = "Finalizing document")
+        
+        # ---- Interpretation ----
+        doc <- doc %>%
+          officer::body_add_par("Interpretation:", style = "heading 2") %>%
+          officer::body_add_par(interpretationText_other(), style = "Normal")
+        
+        # Save file
+        print(doc, target = file)
+        
+      }, error = function(e) {
+        showNotification(paste("Error generating document:", e$message), type = "error")
+      })
     }
   )
   
