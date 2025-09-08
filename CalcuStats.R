@@ -1058,7 +1058,7 @@ ui <- navbarPage(
                  class = "panel panel-default",
                  div(class = "panel-heading", "Export Results"),
                  div(class = "panel-body",
-                     downloadButton("downloadDescSteps", "Download Analysis Results", class = "btn-who-secondary")
+                     downloadButton("downloadDescSteps", "Download Full Report (Word)", class = "btn-who-secondary")
                  )
                )
              ),
@@ -5273,107 +5273,235 @@ $(document).ready(function() {
   
   output$downloadDescSteps <- downloadHandler(
     filename = function() {
-      paste("descriptive_statistics_", Sys.Date(), ".txt", sep = "")
+      paste("descriptive_statistics_report_", Sys.Date(), ".docx", sep = "")
     },
     content = function(file) {
-      data_text <- input$dataInput
-      if (nchar(trimws(data_text)) == 0) {
-        writeLines("No data available for download.", file)
-        return()
-      }
+      # Create progress indicator
+      progress <- shiny::Progress$new()
+      progress$set(message = "Generating Report", value = 0)
+      on.exit(progress$close())
       
-      data_lines <- strsplit(data_text, "\n")[[1]]
-      
-      # Check if data has a header
-      has_header <- length(data_lines) > 1 && 
-        suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
-      
-      if (has_header) {
-        # Remove header for analysis
-        data_values <- data_lines[-1]
-      } else {
-        data_values <- data_lines
-      }
-      
-      data_values <- trimws(data_values)
-      data_values <- data_values[data_values != ""]
-      
-      if (length(data_values) == 0) {
-        writeLines("No valid data found.", file)
-        return()
-      }
-      
-      data_type <- input$dataType
-      if (data_type == "auto") {
-        data_type <- detect_data_type(data_values)
-      }
-      
-      result_text <- c(
-        "DESCRIPTIVE STATISTICS ANALYSIS",
-        "===============================",
-        paste("Date:", Sys.Date()),
-        paste("Data Type:", data_type),
-        paste("Number of observations:", length(data_values)),
-        paste("Missing values:", sum(is.na(data_values) | data_values == "")),
-        ""
-      )
-      
-      if (data_type == "numerical") {
-        numeric_values <- as.numeric(data_values)
-        numeric_values <- numeric_values[!is.na(numeric_values)]
+      tryCatch({
+        # Create a new Word document
+        doc <- officer::read_docx()
         
-        desc_stats <- list(
-          "Mean" = mean(numeric_values),
-          "Median" = median(numeric_values),
-          "Standard Deviation" = sd(numeric_values),
-          "Variance" = var(numeric_values),
-          "Minimum" = min(numeric_values),
-          "Maximum" = max(numeric_values),
-          "Range" = max(numeric_values) - min(numeric_values),
-          "First Quartile (Q1)" = quantile(numeric_values, 0.25),
-          "Third Quartile (Q3)" = quantile(numeric_values, 0.75),
-          "Interquartile Range (IQR)" = IQR(numeric_values),
-          "Skewness" = e1071::skewness(numeric_values),
-          "Kurtosis" = e1071::kurtosis(numeric_values)
-        )
+        # Add title
+        doc <- doc %>% 
+          officer::body_add_par("Descriptive Statistics Report", style = "heading 1") %>%
+          officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+          officer::body_add_par("", style = "Normal")
         
-        result_text <- c(result_text,
-                         "Numerical Data Summary:",
-                         paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": "),
-                         "",
-                         "Full dataset:",
-                         paste(numeric_values, collapse = ", "))
+        progress$set(value = 0.2, detail = "Processing data...")
         
-      } else if (data_type %in% c("categorical", "ordinal")) {
-        freq_table <- table(data_values)
-        freq_percent <- prop.table(freq_table) * 100
-        cum_freq <- cumsum(freq_table)
+        # Process the data (same logic as in runDesc)
+        data_text <- input$dataInput
+        if (nchar(trimws(data_text)) == 0) {
+          doc <- doc %>% officer::body_add_par("No data available for analysis.", style = "Normal")
+          print(doc, target = file)
+          return()
+        }
         
-        freq_df <- data.frame(
-          Category = names(freq_table),
-          Frequency = as.numeric(freq_table),
-          Percentage = round(as.numeric(freq_percent), 2),
-          Cumulative = as.numeric(cum_freq)
-        )
+        data_lines <- strsplit(data_text, "\n")[[1]]
+        has_header <- length(data_lines) > 1 && 
+          suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
         
-        result_text <- c(result_text,
-                         paste0(ifelse(data_type == "categorical", "Categorical", "Ordinal"), " Data Summary:"),
-                         "Frequency Table:",
-                         capture.output(print(freq_df, row.names = FALSE)),
-                         "",
-                         "Full dataset:",
-                         paste(data_values, collapse = ", "))
-      } else {
-        result_text <- c(result_text,
-                         "Mixed or unknown data type. Unable to generate detailed summary.",
-                         "Raw data:",
-                         paste(data_values, collapse = ", "))
-      }
-      
-      writeLines(result_text, file)
+        if (has_header) {
+          data_values <- data_lines[-1]
+        } else {
+          data_values <- data_lines
+        }
+        
+        data_values <- trimws(data_values)
+        data_values <- data_values[data_values != ""]
+        
+        if (length(data_values) == 0) {
+          doc <- doc %>% officer::body_add_par("No valid data found.", style = "Normal")
+          print(doc, target = file)
+          return()
+        }
+        
+        # Determine data type
+        detect_data_type <- function(values) {
+          numeric_test <- suppressWarnings(as.numeric(values))
+          num_numeric <- sum(!is.na(numeric_test))
+          prop_numeric <- num_numeric / length(values)
+          
+          likert_pattern <- "^(strongly disagree|disagree|neutral|agree|strongly agree|[1-5])$"
+          is_likert <- all(grepl(likert_pattern, tolower(values), ignore.case = TRUE))
+          
+          if (prop_numeric > 0.8) {
+            return("numerical")
+          } else if (is_likert) {
+            return("ordinal")
+          } else if (prop_numeric < 0.2 && length(unique(values)) < 10) {
+            return("categorical")
+          } else {
+            return("mixed")
+          }
+        }
+        
+        data_type <- input$dataType
+        if (data_type == "auto") {
+          data_type <- detect_data_type(data_values)
+        }
+        
+        # Add data type information
+        doc <- doc %>%
+          officer::body_add_par("Data Overview", style = "heading 2") %>%
+          officer::body_add_par(paste("Data Type:", data_type), style = "Normal") %>%
+          officer::body_add_par(paste("Number of observations:", length(data_values)), style = "Normal") %>%
+          officer::body_add_par(paste("Missing values:", sum(is.na(data_values) | data_values == "")), style = "Normal") %>%
+          officer::body_add_par("", style = "Normal")
+        
+        progress$set(value = 0.4, detail = "Generating statistics...")
+        
+        if (data_type == "numerical") {
+          # Numerical data analysis
+          numeric_values <- as.numeric(data_values)
+          numeric_values <- numeric_values[!is.na(numeric_values)]
+          
+          if (length(numeric_values) > 0) {
+            # Calculate statistics
+            desc_stats <- data.frame(
+              Statistic = c("Number of observations", "Mean", "Median", "Standard Deviation", 
+                            "Variance", "Minimum", "Maximum", "Range", "First Quartile (Q1)", 
+                            "Third Quartile (Q3)", "Interquartile Range (IQR)", "Skewness", "Kurtosis"),
+              Value = c(length(numeric_values),
+                        round(mean(numeric_values), 4),
+                        round(median(numeric_values), 4),
+                        round(sd(numeric_values), 4),
+                        round(var(numeric_values), 4),
+                        round(min(numeric_values), 4),
+                        round(max(numeric_values), 4),
+                        round(max(numeric_values) - min(numeric_values), 4),
+                        round(quantile(numeric_values, 0.25), 4),
+                        round(quantile(numeric_values, 0.75), 4),
+                        round(IQR(numeric_values), 4),
+                        round(e1071::skewness(numeric_values), 4),
+                        round(e1071::kurtosis(numeric_values), 4))
+            )
+            
+            # Add statistics table
+            doc <- doc %>%
+              officer::body_add_par("Descriptive Statistics", style = "heading 2")
+            
+            ft <- flextable::flextable(desc_stats) %>%
+              flextable::theme_box() %>%
+              flextable::autofit()
+            doc <- flextable::body_add_flextable(doc, ft) %>%
+              officer::body_add_par("", style = "Normal")
+            
+            progress$set(value = 0.6, detail = "Creating charts...")
+            
+            # Create and add charts
+            temp_dir <- tempdir()
+            
+            # Histogram
+            hist_file <- file.path(temp_dir, "histogram.png")
+            png(hist_file, width = 6, height = 4, units = "in", res = 300)
+            hist(numeric_values, main = "Histogram", xlab = "Values", col = "#6BAED6")
+            dev.off()
+            
+            # Boxplot
+            box_file <- file.path(temp_dir, "boxplot.png")
+            png(box_file, width = 6, height = 4, units = "in", res = 300)
+            boxplot(numeric_values, main = "Boxplot", col = "#6BAED6")
+            dev.off()
+            
+            # Add charts to document
+            doc <- doc %>%
+              officer::body_add_par("Data Visualization", style = "heading 2") %>%
+              officer::body_add_par("Histogram", style = "heading 3") %>%
+              officer::body_add_img(hist_file, width = 6, height = 4) %>%
+              officer::body_add_par("Boxplot", style = "heading 3") %>%
+              officer::body_add_img(box_file, width = 6, height = 4)
+            
+            # Clean up temp files
+            unlink(c(hist_file, box_file))
+          }
+          
+        } else if (data_type %in% c("categorical", "ordinal")) {
+          # Categorical/Ordinal data analysis
+          freq_table <- table(data_values)
+          freq_percent <- prop.table(freq_table) * 100
+          cum_freq <- cumsum(freq_table)
+          
+          freq_df <- data.frame(
+            Category = names(freq_table),
+            Frequency = as.numeric(freq_table),
+            Percentage = round(as.numeric(freq_percent), 2),
+            Cumulative = as.numeric(cum_freq)
+          )
+          
+          mode_val <- names(freq_table)[which.max(freq_table)]
+          
+          # Add frequency table
+          doc <- doc %>%
+            officer::body_add_par("Frequency Distribution", style = "heading 2") %>%
+            officer::body_add_par(paste("Mode:", mode_val, "(", max(freq_table), "occurrences)"), style = "Normal")
+          
+          ft <- flextable::flextable(freq_df) %>%
+            flextable::theme_box() %>%
+            flextable::autofit()
+          doc <- flextable::body_add_flextable(doc, ft) %>%
+            officer::body_add_par("", style = "Normal")
+          
+          progress$set(value = 0.6, detail = "Creating charts...")
+          
+          # Create and add charts
+          temp_dir <- tempdir()
+          
+          # Bar plot
+          bar_file <- file.path(temp_dir, "barplot.png")
+          png(bar_file, width = 8, height = 6, units = "in", res = 300)
+          par(mar = c(7, 4, 4, 2) + 0.1)  # Increase bottom margin for long labels
+          barplot(freq_table, main = "Bar Plot", las = 2, col = "#6BAED6")
+          dev.off()
+          
+          # Pie chart
+          pie_file <- file.path(temp_dir, "piechart.png")
+          png(pie_file, width = 6, height = 6, units = "in", res = 300)
+          pie(freq_table, main = "Pie Chart", col = rainbow(length(freq_table)))
+          dev.off()
+          
+          # Add charts to document
+          doc <- doc %>%
+            officer::body_add_par("Data Visualization", style = "heading 2") %>%
+            officer::body_add_par("Bar Plot", style = "heading 3") %>%
+            officer::body_add_img(bar_file, width = 8, height = 6) %>%
+            officer::body_add_par("Pie Chart", style = "heading 3") %>%
+            officer::body_add_img(pie_file, width = 6, height = 6)
+          
+          # Clean up temp files
+          unlink(c(bar_file, pie_file))
+          
+        } else {
+          # Mixed or unknown data type
+          doc <- doc %>%
+            officer::body_add_par("Data Analysis", style = "heading 2") %>%
+            officer::body_add_par("Mixed or unknown data type detected. Please specify the data type manually or clean your data.", style = "Normal") %>%
+            officer::body_add_par("Raw data preview:", style = "heading 3") %>%
+            officer::body_add_par(paste(head(data_values, 20), collapse = ", "), style = "Normal")
+        }
+        
+        progress$set(value = 0.9, detail = "Finalizing document...")
+        
+        # Add data preview section
+        doc <- doc %>%
+          officer::body_add_par("Data Preview", style = "heading 2") %>%
+          officer::body_add_par(paste("First 20 values:", paste(head(data_values, 20), collapse = ", ")), style = "Normal")
+        
+        # Save the document
+        print(doc, target = file)
+        
+      }, error = function(e) {
+        showNotification(paste("Error generating report:", e$message), type = "error")
+      })
     }
   )
 }
+
+
 
 # Add JavaScript for localStorage functionality
 jscode <- "
