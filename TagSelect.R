@@ -20,241 +20,382 @@ ui <- fluidPage(
   tags$head(
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"),
     tags$style(HTML("
-      :root {
-        --primary: #3498db;
-        --secondary: #2c3e50;
-        --success: #2ecc71;
-        --info: #17a2b8;
-        --warning: #f39c12;
-        --danger: #e74c3c;
-        --light: #ecf0f1;
-        --dark: #2c3e50;
-      }
-      
-      body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f7fa;
-      }
-      
-      .navbar {
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-      
-      .sidebar-panel {
-        background-color: white;
-        border-radius: 8px;
-        padding: 25px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border-left: 4px solid var(--primary);
-      }
-      
-      .main-panel {
-        background-color: white;
-        border-radius: 8px;
-        padding: 25px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-      }
-      
-      .btn-primary {
-        background-color: var(--primary);
-        border-color: var(--primary);
-        font-weight: 500;
-        padding: 8px 16px;
-        border-radius: 6px;
-      }
-      
-      .btn-success {
-        background-color: var(--success);
-        border-color: var(--success);
-        font-weight: 500;
-        padding: 8px 16px;
-        border-radius: 6px;
-      }
-      
-      .btn-info {
-        background-color: var(--info);
-        border-color: var(--info);
-        font-weight: 500;
-        padding: 8px 16px;
-        border-radius: 6px;
-      }
-      
-      .btn-warning {
-        background-color: var(--warning);
-        border-color: var(--warning);
-        font-weight: 500;
-        padding: 8px 16px;
-        border-radius: 6px;
-      }
-      
-      .footer {
-        background-color: var(--light);
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 25px;
-        font-size: 14px;
-        color: #7f8c8d;
-        box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
-      }
-      
-      .info-box {
-        background-color: #f8fafc;
-        border-left: 4px solid var(--info);
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 0 6px 6px 0;
-      }
-      
-      .app-title {
-        color: var(--secondary);
-        margin-bottom: 5px;
-        font-weight: 700;
-      }
-      
-      .app-subtitle {
-        color: #7f8c8d;
-        font-size: 16px;
-        margin-bottom: 20px;
-      }
-      
-      .progress-bar {
-        height: 10px;
-        margin-top: 5px;
-        border-radius: 4px;
-      }
-      
-      .large-file-warning {
-        color: var(--danger);
-        font-weight: bold;
-      }
-      
-      .file-input-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: var(--secondary);
-      }
-      
-      .numeric-input-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: var(--secondary);
-      }
-      
-      .section-title {
-        color: var(--secondary);
-        border-bottom: 2px solid var(--light);
-        padding-bottom: 8px;
-        margin-bottom: 15px;
-        font-weight: 600;
-      }
-      
-      .status-card {
-        background-color: white;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid var(--primary);
-      }
-      
-      .status-title {
-        font-size: 14px;
-        color: #7f8c8d;
-        margin-bottom: 5px;
-      }
-      
-      .status-value {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--secondary);
-      }
-      
-      .download-section {
-        background-color: #f8fafc;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 20px;
-        border: 1px dashed #d1d8e0;
-      }
-      
-      .download-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--secondary);
-        margin-bottom: 15px;
-      }
-      
-      .action-btn {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-      
-      .data-table {
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      
-      .selected-row {
-        background-color: #e8f5e9 !important;
-      }
-      
-      .randomization-card {
-        background-color: white;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid var(--info);
-      }
-      
-      .randomization-header {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--secondary);
-        margin-bottom: 15px;
-      }
-      
-      .randomization-description {
-        font-size: 14px;
-        color: #7f8c8d;
-        margin-bottom: 15px;
-      }
-      
-      .group-allocation-box {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 15px;
-        border: 1px solid #e9ecef;
-      }
-      
-      .group-allocation-row {
-        margin-bottom: 10px;
-      }
-    "))
+  :root {
+    --primary: #2A9D8F;      /* Sophisticated teal */
+    --primary-dark: #1D7874; /* Darker teal */
+    --primary-light: #E8F4F2; /* Light teal */
+    --secondary: #E76F51;    /* Coral accent */
+    --secondary-dark: #D45B3E; /* Darker coral */
+    --accent: #F4A261;       /* Warm gold */
+    --accent-dark: #E58C45;  /* Darker gold */
+    --neutral-light: #F8F9FA; /* Light background */
+    --neutral-medium: #E9ECEF; /* Medium background */
+    --neutral-dark: #495057;  /* Dark text */
+    --success: #2A9D8F;      /* Success in teal */
+    --warning: #F4A261;      /* Warning in gold */
+    --alert: #E76F51;        /* Alert in coral */
+    --info: #84A9C0;         /* Soft blue for info */
+  }
+  
+  body {
+    font-family: 'Segoe UI', 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--neutral-light);
+    color: var(--neutral-dark);
+    line-height: 1.6;
+  }
+  
+  .navbar {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+    border-bottom: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  .navbar-brand {
+    font-weight: 700;
+    color: white !important;
+    font-size: 1.4rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  .navbar-nav > li > a {
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .navbar-nav > li > a:hover {
+    color: white !important;
+    transform: translateY(-1px);
+  }
+  
+  .navbar-default .navbar-nav > .active > a, 
+  .navbar-default .navbar-nav > .active > a:focus, 
+  .navbar-default .navbar-nav > .active > a:hover {
+    background-color: rgba(255,255,255,0.15) !important;
+    color: white !important;
+    border-radius: 4px;
+  }
+  
+  .sidebar-panel {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-top: 3px solid var(--primary);
+  }
+  
+  .main-panel {
+    background-color: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+    border: none;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(42,157,143,0.3);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(to bottom, var(--primary-dark), var(--primary));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(42,157,143,0.4);
+    color: white;
+  }
+  
+  .btn-success {
+    background: linear-gradient(to bottom, var(--success), var(--primary-dark));
+    border: none;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(42,157,143,0.3);
+  }
+  
+  .btn-info {
+    background: linear-gradient(to bottom, var(--info), #6A8FA5);
+    border: none;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(132,169,192,0.3);
+  }
+  
+  .btn-warning {
+    background: linear-gradient(to bottom, var(--warning), var(--accent-dark));
+    border: none;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 6px;
+    color: white;
+    box-shadow: 0 2px 4px rgba(244,162,97,0.3);
+  }
+  
+  .footer {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 25px;
+    font-size: 14px;
+    color: var(--neutral-dark);
+    box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
+    border-top: 1px solid var(--neutral-medium);
+  }
+  
+  .info-box {
+    background-color: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 0 6px 6px 0;
+  }
+  
+  .alert-box {
+    background-color: #FEF2F2;
+    border-left: 4px solid var(--alert);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 0 6px 6px 0;
+  }
+  
+  .app-title {
+    color: var(--primary-dark);
+    margin-bottom: 5px;
+    font-weight: 700;
+    font-size: 1.8rem;
+  }
+  
+  .app-subtitle {
+    color: var(--neutral-dark);
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  
+  .progress-bar {
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 4px;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+  }
+  
+  .large-file-warning {
+    color: var(--alert);
+    font-weight: bold;
+  }
+  
+  .file-input-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--primary-dark);
+  }
+  
+  .numeric-input-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--primary-dark);
+  }
+  
+  .section-title {
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--neutral-medium);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 1.3rem;
+  }
+  
+  .status-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--primary);
+    transition: transform 0.2s ease;
+  }
+  
+  .status-card:hover {
+    transform: translateY(-3px);
+  }
+  
+  .status-title {
+    font-size: 14px;
+    color: var(--neutral-dark);
+    margin-bottom: 5px;
+    opacity: 0.8;
+  }
+  
+  .status-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+  
+  .download-section {
+    background-color: var(--neutral-light);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    border: 1px dashed var(--neutral-medium);
+  }
+  
+  .download-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+  }
+  
+  .action-btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .data-table {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--neutral-medium);
+  }
+  
+  .selected-row {
+    background-color: rgba(42,157,143,0.1) !important;
+  }
+  
+  .randomization-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--accent);
+  }
+  
+  .randomization-header {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent-dark);
+    margin-bottom: 15px;
+  }
+  
+  .randomization-description {
+    font-size: 14px;
+    color: var(--neutral-dark);
+    margin-bottom: 15px;
+    opacity: 0.8;
+  }
+  
+  .group-allocation-box {
+    background-color: var(--neutral-light);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    border: 1px solid var(--neutral-medium);
+  }
+  
+  .group-allocation-row {
+    margin-bottom: 10px;
+  }
+  
+  .logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .tagline {
+    font-style: italic;
+    font-weight: 500;
+    margin-top: 5px;
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  
+  input[type='number'], select, .form-control {
+    border-radius: 6px;
+    border: 1px solid var(--neutral-medium);
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+  }
+  
+  input[type='number']:focus, select:focus, .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(42,157,143,0.25);
+  }
+  
+  .well {
+    background-color: var(--neutral-light);
+    border: 1px solid var(--neutral-medium);
+    border-radius: 8px;
+    box-shadow: none;
+  }
+  
+  .nav-tabs > li > a {
+    color: var(--neutral-dark);
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+  }
+  
+  .nav-tabs > li.active > a,
+  .nav-tabs > li.active > a:focus,
+  .nav-tabs > li.active > a:hover {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    background-color: transparent;
+  }
+  
+  .dropdown-menu {
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid var(--neutral-medium);
+  }
+  
+  .dropdown-menu > li > a {
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+  }
+  
+  .dropdown-menu > li > a:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+  }
+"))
   ),
   
   navbarPage(
-    title = "TagSelect",
-    windowTitle = "TagSelect: High-Capacity Random Sampler",
+    title = div(
+      style = "display: flex; align-items: center;",
+      img(src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTkgMmg2TTkgNmg2TTQgMTBoMTZNNCAxNGgxNk00IDE4aDE2Ij48L3BhdGg+PC9zdmc+",
+          style = "height: 30px; margin-right: 10px; filter: brightness(0) invert(1);"),
+      "TagSelect"
+    ),
+    windowTitle = "TagSelect: Research Participant Selection Tool",
     collapsible = TRUE,
-    inverse = FALSE,
+    inverse = TRUE,
     fluid = TRUE,
+    header = div(
+      class = "logo-container",
+      h2("TagSelect: Research Participant Selection Tool", style = "margin: 0; font-weight: 700;"),
+      p("A tool for participant selection in research studies", class = "tagline")
+    ),
     
     tabPanel(
       "Simple Randomization",
       div(
         class = "container-fluid",
         style = "padding-top:20px;",
-        
-        fluidRow(
-          column(
-            12,
-            h1(class = "app-title", "TagSelect: High-Capacity Random Sampler"),
-            h4(class = "app-subtitle", "Efficient participant selection for research studies of all sizes"),
-            hr(style = "border-top:1px solid #eee;")
-          )
-        ),
         
         fluidRow(
           column(
@@ -936,220 +1077,220 @@ server <- function(input, output, session) {
       showNotification(paste("Error in randomization:", e$message), type = "error")
     })
   })
+  
+  output$file_info_box <- renderUI({
+    req(input$file)
     
-    output$file_info_box <- renderUI({
-      req(input$file)
-      
-      size <- file.size(input$file$datapath)
-      size_text <- format(structure(size, class = "object_size"), units = "auto")
-      
-      if (size > 5e6) {  # 5MB
-        size_text <- tagList(
-          span(size_text, style = "color:#e74c3c;"),
-          icon("exclamation-triangle", style = "color:#e74c3c;")
+    size <- file.size(input$file$datapath)
+    size_text <- format(structure(size, class = "object_size"), units = "auto")
+    
+    if (size > 5e6) {  # 5MB
+      size_text <- tagList(
+        span(size_text, style = "color:#e74c3c;"),
+        icon("exclamation-triangle", style = "color:#e74c3c;")
+      )
+    }
+    
+    tagList(
+      div(style = "margin-bottom:5px;",
+          strong("File: "), input$file$name
+      ),
+      div(style = "margin-bottom:5px;",
+          strong("Size: "), size_text
+      ),
+      if (!is.null(data())) {
+        div(
+          strong("Dimensions: "), 
+          nrow(data()), "participants ×", ncol(data()), "variables"
         )
       }
-      
-      tagList(
-        div(style = "margin-bottom:5px;",
-            strong("File: "), input$file$name
-        ),
-        div(style = "margin-bottom:5px;",
-            strong("Size: "), size_text
-        ),
-        if (!is.null(data())) {
-          div(
-            strong("Dimensions: "), 
-            nrow(data()), "participants ×", ncol(data()), "variables"
-          )
+    )
+  })
+  
+  output$total_count <- renderText({
+    if (is.null(data())) {
+      "0"
+    } else {
+      format(nrow(data()), big.mark = ",")
+    }
+  })
+  
+  output$selected_count <- renderText({
+    if (is.null(data())) {
+      "0"
+    } else {
+      format(sum(data()$Selected), big.mark = ",")
+    }
+  })
+  
+  output$table <- renderDT({
+    req(data())
+    datatable(
+      data(),
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        scrollY = "500px",
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel', 'pdf'),
+        deferRender = TRUE,
+        scroller = TRUE,
+        rowCallback = JS(
+          "function(row, data) {",
+          "  if (data[data.length - 1] === true) {",
+          "    $(row).addClass('selected-row');",
+          "  }",
+          "}")
+      ),
+      rownames = FALSE,
+      filter = 'top',
+      class = 'hover stripe nowrap',
+      selection = 'none'
+    )
+  })
+  
+  output$randomized_table <- renderDT({
+    req(randomized_data())
+    datatable(
+      randomized_data(),
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        scrollY = "500px",
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel', 'pdf'),
+        deferRender = TRUE,
+        scroller = TRUE
+      ),
+      rownames = FALSE,
+      filter = 'top',
+      class = 'hover stripe nowrap',
+      selection = 'none'
+    )
+  })
+  
+  # Excel downloads
+  output$download_all_excel <- downloadHandler(
+    filename = function() { 
+      paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".xlsx") 
+    },
+    content = function(file) {
+      withProgress(
+        message = 'Preparing Excel file',
+        detail = 'This may take a moment...',
+        value = 0,
+        {
+          incProgress(0.3)
+          write_xlsx(data(), path = file)
+          incProgress(1)
         }
       )
-    })
-    
-    output$total_count <- renderText({
-      if (is.null(data())) {
-        "0"
-      } else {
-        format(nrow(data()), big.mark = ",")
-      }
-    })
-    
-    output$selected_count <- renderText({
-      if (is.null(data())) {
-        "0"
-      } else {
-        format(sum(data()$Selected), big.mark = ",")
-      }
-    })
-    
-    output$table <- renderDT({
-      req(data())
-      datatable(
-        data(),
-        options = list(
-          pageLength = 10,
-          scrollX = TRUE,
-          scrollY = "500px",
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel', 'pdf'),
-          deferRender = TRUE,
-          scroller = TRUE,
-          rowCallback = JS(
-            "function(row, data) {",
-            "  if (data[data.length - 1] === true) {",
-            "    $(row).addClass('selected-row');",
-            "  }",
-            "}")
-        ),
-        rownames = FALSE,
-        filter = 'top',
-        class = 'hover stripe nowrap',
-        selection = 'none'
+    }
+  )
+  
+  output$download_selected_excel <- downloadHandler(
+    filename = function() { 
+      paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".xlsx") 
+    },
+    content = function(file) {
+      selected_data <- data() %>% filter(Selected == TRUE)
+      withProgress(
+        message = 'Preparing Excel file',
+        detail = 'This may take a moment...',
+        value = 0,
+        {
+          incProgress(0.3)
+          write_xlsx(selected_data, path = file)
+          incProgress(1)
+        }
       )
-    })
-    
-    output$randomized_table <- renderDT({
-      req(randomized_data())
-      datatable(
-        randomized_data(),
-        options = list(
-          pageLength = 10,
-          scrollX = TRUE,
-          scrollY = "500px",
-          dom = 'Bfrtip',
-          buttons = c('copy', 'csv', 'excel', 'pdf'),
-          deferRender = TRUE,
-          scroller = TRUE
-        ),
-        rownames = FALSE,
-        filter = 'top',
-        class = 'hover stripe nowrap',
-        selection = 'none'
+    }
+  )
+  
+  # Word downloads
+  output$download_all_word <- downloadHandler(
+    filename = function() { 
+      paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx") 
+    },
+    content = function(file) {
+      withProgress(
+        message = 'Preparing Word document',
+        detail = 'This may take a moment...',
+        value = 0,
+        {
+          incProgress(0.2)
+          doc <- read_docx()
+          incProgress(0.3)
+          doc <- body_add_par(doc, "Full List of Participants (Tagged)", style = "heading 1")
+          doc <- body_add_par(doc, paste("Generated on:", Sys.Date()), style = "Normal")
+          doc <- body_add_par(doc, paste("Total participants:", nrow(data())), style = "Normal")
+          incProgress(0.5)
+          doc <- body_add_flextable(doc, flextable(data()) %>% 
+                                      theme_zebra() %>%
+                                      bg(i = ~ Selected == TRUE, bg = "#d4edda"))
+          incProgress(0.8)
+          print(doc, target = file)
+          incProgress(1)
+        }
       )
-    })
-    
-    # Excel downloads
-    output$download_all_excel <- downloadHandler(
-      filename = function() { 
-        paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".xlsx") 
-      },
-      content = function(file) {
-        withProgress(
-          message = 'Preparing Excel file',
-          detail = 'This may take a moment...',
-          value = 0,
-          {
-            incProgress(0.3)
-            write_xlsx(data(), path = file)
-            incProgress(1)
-          }
-        )
-      }
-    )
-    
-    output$download_selected_excel <- downloadHandler(
-      filename = function() { 
-        paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".xlsx") 
-      },
-      content = function(file) {
-        selected_data <- data() %>% filter(Selected == TRUE)
-        withProgress(
-          message = 'Preparing Excel file',
-          detail = 'This may take a moment...',
-          value = 0,
-          {
-            incProgress(0.3)
-            write_xlsx(selected_data, path = file)
-            incProgress(1)
-          }
-        )
-      }
-    )
-    
-    # Word downloads
-    output$download_all_word <- downloadHandler(
-      filename = function() { 
-        paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx") 
-      },
-      content = function(file) {
-        withProgress(
-          message = 'Preparing Word document',
-          detail = 'This may take a moment...',
-          value = 0,
-          {
-            incProgress(0.2)
-            doc <- read_docx()
-            incProgress(0.3)
-            doc <- body_add_par(doc, "Full List of Participants (Tagged)", style = "heading 1")
-            doc <- body_add_par(doc, paste("Generated on:", Sys.Date()), style = "Normal")
-            doc <- body_add_par(doc, paste("Total participants:", nrow(data())), style = "Normal")
-            incProgress(0.5)
-            doc <- body_add_flextable(doc, flextable(data()) %>% 
-                                        theme_zebra() %>%
-                                        bg(i = ~ Selected == TRUE, bg = "#d4edda"))
-            incProgress(0.8)
-            print(doc, target = file)
-            incProgress(1)
-          }
-        )
-      }
-    )
-    
-    output$download_selected_word <- downloadHandler(
-      filename = function() { 
-        paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx") 
-      },
-      content = function(file) {
-        selected_data <- data() %>% filter(Selected == TRUE)
-        withProgress(
-          message = 'Preparing Word document',
-          detail = 'This may take a moment...',
-          value = 0,
-          {
-            incProgress(0.2)
-            doc <- read_docx()
-            incProgress(0.3)
-            doc <- body_add_par(doc, "Selected Participants Only", style = "heading 1")
-            doc <- body_add_par(doc, paste("Generated on:", Sys.Date()), style = "Normal")
-            doc <- body_add_par(doc, paste("Total selected:", nrow(selected_data)), style = "Normal")
-            incProgress(0.5)
-            doc <- body_add_flextable(doc, flextable(selected_data) %>% theme_zebra())
-            incProgress(0.8)
-            print(doc, target = file)
-            incProgress(1)
-          }
-        )
-      }
-    )
-    
-    # CSV downloads
-    output$download_all_csv <- downloadHandler(
-      filename = function() { 
-        paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv") 
-      },
-      content = function(file) {
-        write.csv(data(), file, row.names = FALSE)
-      }
-    )
-    
-    output$download_selected_csv <- downloadHandler(
-      filename = function() { 
-        paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv") 
-      },
-      content = function(file) {
-        write.csv(data() %>% filter(Selected == TRUE), file, row.names = FALSE)
-      }
-    )
-    
-    # Randomized data download
-    output$download_randomized <- downloadHandler(
-      filename = function() {
-        paste0("RandomizedData_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
-      },
-      content = function(file) {
-        write.csv(randomized_data(), file, row.names = FALSE)
-      }
-    )
+    }
+  )
+  
+  output$download_selected_word <- downloadHandler(
+    filename = function() { 
+      paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx") 
+    },
+    content = function(file) {
+      selected_data <- data() %>% filter(Selected == TRUE)
+      withProgress(
+        message = 'Preparing Word document',
+        detail = 'This may take a moment...',
+        value = 0,
+        {
+          incProgress(0.2)
+          doc <- read_docx()
+          incProgress(0.3)
+          doc <- body_add_par(doc, "Selected Participants Only", style = "heading 1")
+          doc <- body_add_par(doc, paste("Generated on:", Sys.Date()), style = "Normal")
+          doc <- body_add_par(doc, paste("Total selected:", nrow(selected_data)), style = "Normal")
+          incProgress(0.5)
+          doc <- body_add_flextable(doc, flextable(selected_data) %>% theme_zebra())
+          incProgress(0.8)
+          print(doc, target = file)
+          incProgress(1)
+        }
+      )
+    }
+  )
+  
+  # CSV downloads
+  output$download_all_csv <- downloadHandler(
+    filename = function() { 
+      paste0("FullList_Tagged_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv") 
+    },
+    content = function(file) {
+      write.csv(data(), file, row.names = FALSE)
+    }
+  )
+  
+  output$download_selected_csv <- downloadHandler(
+    filename = function() { 
+      paste0("SelectedParticipants_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv") 
+    },
+    content = function(file) {
+      write.csv(data() %>% filter(Selected == TRUE), file, row.names = FALSE)
+    }
+  )
+  
+  # Randomized data download
+  output$download_randomized <- downloadHandler(
+    filename = function() {
+      paste0("RandomizedData_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
+    },
+    content = function(file) {
+      write.csv(randomized_data(), file, row.names = FALSE)
+    }
+  )
 }
 
 shinyApp(ui, server)
