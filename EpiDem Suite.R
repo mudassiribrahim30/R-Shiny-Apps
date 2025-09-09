@@ -67,7 +67,7 @@ ui <- navbarPage(
                hr(class = "my-4"),
                p("Upload your dataset and utilize the tools in the navigation bar to perform descriptive analyses, 
                  calculate disease frequency measures, assess statistical associations, and build regression models."),
-               p("This tool follows established guidelines for epidemiological analysis and reporting."),
+               p("This tool follows established guidelines for epidemiological analysis. Developed by Mudasir Mohammed Ibrahim (BSc, RN)"),
                actionButton("goto_data", "Get Started →", 
                             class = "btn-primary btn-lg", 
                             icon = icon("rocket"))
