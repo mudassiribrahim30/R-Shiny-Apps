@@ -2,11 +2,9 @@ library(shiny)
 library(shinydashboard)
 library(ggplot2)
 library(dplyr)
-library(sf)
 library(ggpubr)
 library(survival)
 library(survminer)
-library(flextable)
 library(officer)
 library(DT)
 library(haven)
@@ -18,529 +16,529 @@ library(tidyverse)
 library(broom)
 library(car)
 library(emmeans)
+library(fresh)
+library(lm.beta)
+library(MASS)
+library(nnet)
+library(dunn.test)
+
+# Helper function for survival object creation
+create_surv_obj <- function(time_var, event_var, data) {
+  time <- data[[time_var]]
+  event <- data[[event_var]]
+  
+  # Convert event to numeric if it's not
+  if (!is.numeric(event)) {
+    event <- as.numeric(as.factor(event)) - 1
+  }
+  
+  Surv(time = time, event = event)
+}
 
 # UI
-ui <- dashboardPage(
-  dashboardHeader(title = "📈 EpiDem Suite™"),
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Data Upload", tabName = "data", icon = icon("database")),
-      menuItem("Descriptive Analyses", tabName = "descriptive", icon = icon("chart-bar"),
-               menuSubItem("Frequencies", tabName = "freq"),
-               menuSubItem("Central Tendency", tabName = "central"),
-               menuSubItem("Epidemic Curves", tabName = "epicurve"),
-               menuSubItem("Spatial Maps", tabName = "maps"),
-               menuSubItem("Demographics", tabName = "demo")),
-      menuItem("Disease Frequency", tabName = "disease", icon = icon("viruses"),
-               menuSubItem("Incidence/Prevalence", tabName = "incprev"),
-               menuSubItem("Attack Rates", tabName = "attack"),
-               menuSubItem("Mortality Rates", tabName = "mortality"),
-               menuSubItem("Life Table Analysis", tabName = "lifetable")),
-      menuItem("Measures of Association", tabName = "association", icon = icon("balance-scale"),
-               menuSubItem("Risk Ratios", tabName = "risk"),
-               menuSubItem("Odds Ratios", tabName = "odds"),
-               menuSubItem("Attributable Risk", tabName = "ar"),
-               menuSubItem("Poisson Regression", tabName = "poisson")),
-      menuItem("Survival Analysis", tabName = "survival", icon = icon("clock"),
-               menuSubItem("Survival Curve", tabName = "survcurve"),
-               menuSubItem("Cox Regression", tabName = "cox"),
-               menuSubItem("Log-rank Test", tabName = "logrank")),
-      menuItem("Regression Models", tabName = "regression", icon = icon("chart-line"),
-               menuSubItem("Linear Regression", tabName = "linear"),
-               menuSubItem("Logistic Regression", tabName = "logistic")),
-      menuItem("Statistical Tests", tabName = "tests", icon = icon("flask"),
-               menuSubItem("T-tests/Mann-Whitney", tabName = "ttest"),
-               menuSubItem("ANOVA/Kruskal-Wallis", tabName = "anova"),
-               menuSubItem("Chi-square Test", tabName = "chisq")),
-      tags$div(
-        style = "position: absolute; bottom: 0; width: 100%; padding: 10px; background-color: #222d32; color: white; text-align: center;",
-        "Dev: Mudasir Mohammed Ibrahim",
-        br(),
-        "📧: mudassiribrahim30@gmail.com"
-      )
-    )
+ui <- navbarPage(
+  title = div(
+    img(src = "", 
+        height = "30", 
+        style = "margin-right:10px;padding-bottom:3px;"),
+    "📈 EpiDem Suite™"
   ),
-  dashboardBody(
-    tabItems(
-      # Data Upload
-      tabItem(tabName = "data",
-              fluidRow(
-                box(title = "Upload Data", status = "primary", solidHeader = TRUE,
-                    fileInput("file1", "Choose Data File",
-                              accept = c(".csv", ".xlsx", ".xls", ".sav", ".dta")),
-                    conditionalPanel(
-                      condition = "input.file1.type == 'text/csv' || input.file1.type == 'text/comma-separated-values,text/plain'",
-                      checkboxInput("header", "Header", TRUE),
-                      radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","),
-                      radioButtons("quote", "Quote", choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"), selected = '"')
-                    ),
-                    conditionalPanel(
-                      condition = "input.file1.type == 'application/vnd.ms-excel' || input.file1.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-                      numericInput("sheet", "Sheet Number", value = 1)
+  windowTitle = "EpiDem Suite - Epidemiological Analysis Tool",
+  id = "nav",
+  theme = bslib::bs_theme(version = 5, 
+                          bootswatch = "flatly",
+                          primary = "#0C5EA8",   # CDC Blue
+                          secondary = "#CD2026", # CDC Red
+                          success = "#5CB85C",
+                          font_scale = 0.95),
+  
+  # Home/About Tab
+  tabPanel("Home", icon = icon("house"),
+           div(class = "jumbotron",
+               style = "background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), 
+                        url('');
+                        background-size: cover; 
+                        padding: 3rem 2rem; 
+                        margin-bottom: 2rem; 
+                        border-radius: 0.3rem;",
+               h1("EpiDem Suite", class = "display-4"),
+               p("A comprehensive epidemiological analysis platform for public health professionals.", 
+                 class = "lead"),
+               hr(class = "my-4"),
+               p("Upload your dataset and utilize the tools in the navigation bar to perform descriptive analyses, 
+                 calculate disease frequency measures, assess statistical associations, and build regression models."),
+               p("This tool follows established guidelines for epidemiological analysis and reporting."),
+               actionButton("goto_data", "Get Started →", 
+                            class = "btn-primary btn-lg", 
+                            icon = icon("rocket"))
+           ),
+           
+           fluidRow(
+             column(4,
+                    div(class = "card",
+                        div(class = "card-body",
+                            h3("Descriptive Analysis", class = "card-title"),
+                            p("Explore frequency distributions, summary statistics, and create epidemic curves to understand your data's basic characteristics."),
+                            actionButton("goto_descriptive", "Learn More", class = "btn-outline-primary")
+                        )
                     )
-                ),
-                box(title = "Data Preview", status = "info", solidHeader = TRUE,
-                    DTOutput("contents")
-                )
-              )
-      ),
-      
-      # Frequencies
-      tabItem(tabName = "freq",
-              fluidRow(
-                box(title = "Frequency Analysis", status = "primary", solidHeader = TRUE,
-                    selectInput("freq_var", "Select Variable:", choices = NULL),
-                    radioButtons("freq_type", "Output Type:", choices = c("Table", "Plot"), selected = "Table"),
-                    conditionalPanel(
-                      condition = "input.freq_type == 'Plot'",
-                      colourpicker::colourInput("freq_color", "Select Color:", value = "steelblue"),
-                      textInput("freq_title", "Plot Title:", value = "Frequency Plot"),
-                      numericInput("freq_title_size", "Title Size:", value = 14),
-                      numericInput("freq_x_size", "X-axis Label Size:", value = 12),
-                      numericInput("freq_y_size", "Y-axis Label Size:", value = 12)
+             ),
+             column(4,
+                    div(class = "card",
+                        div(class = "card-body",
+                            h3("Disease Metrics", class = "card-title"),
+                            p("Calculate incidence rates, prevalence, attack rates, and mortality measures to quantify disease burden in populations."),
+                            actionButton("goto_disease", "Learn More", class = "btn-outline-primary")
+                        )
                     )
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    conditionalPanel(
-                      condition = "input.freq_type == 'Table'",
-                      DTOutput("freq_table")
-                    ),
-                    conditionalPanel(
-                      condition = "input.freq_type == 'Plot'",
-                      plotlyOutput("freq_plot")
-                    ),
-                    downloadButton("download_freq", "Download Results")
-                )
-              )
-      ),
-      
-      # Central Tendency
-      tabItem(tabName = "central",
-              fluidRow(
-                box(title = "Central Tendency", status = "primary", solidHeader = TRUE,
-                    selectInput("central_var", "Select Numeric Variable:", choices = NULL),
-                    radioButtons("central_type", "Output Type:", 
-                                 choices = c("Table", "Boxplot", "Histogram"), 
-                                 selected = "Table"),
-                    conditionalPanel(
-                      condition = "input.central_type != 'Table'",
-                      colourpicker::colourInput("central_color", "Select Color:", value = "steelblue"),
-                      textInput("central_title", "Plot Title:", value = "Distribution Plot"),
-                      numericInput("central_title_size", "Title Size:", value = 14),
-                      numericInput("central_x_size", "X-axis Label Size:", value = 12),
-                      numericInput("central_y_size", "Y-axis Label Size:", value = 12),
-                      conditionalPanel(
-                        condition = "input.central_type == 'Histogram'",
-                        numericInput("central_bins", "Number of Bins:", value = 30)
+             ),
+             column(4,
+                    div(class = "card",
+                        div(class = "card-body",
+                            h3("Statistical Tools", class = "card-title"),
+                            p("Perform association tests, regression analyses, and survival analysis to identify risk factors and measure effects."),
+                            actionButton("goto_statistics", "Learn More", class = "btn-outline-primary")
+                        )
+                    )
+             )
+           )
+  ),
+  
+  # Data Upload Tab
+  tabPanel("Data Upload", icon = icon("database"),
+           sidebarLayout(
+             sidebarPanel(
+               fileInput("file1", "Choose File",
+                         accept = c(".csv", ".xls", ".xlsx", ".sav", ".dta")),
+               tags$hr(),
+               checkboxInput("header", "Header", TRUE),
+               selectInput("sep", "Separator",
+                           choices = c(Comma = ",", Semicolon = ";", Tab = "\t"),
+                           selected = ","),
+               selectInput("quote", "Quote",
+                           choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"),
+                           selected = '"'),
+               conditionalPanel(
+                 condition = "input.file1 != null && (input.file1.type == 'xls' || input.file1.type == 'xlsx')",
+                 numericInput("sheet", "Sheet Number", value = 1)
+               )
+             ),
+             mainPanel(
+               DTOutput("contents")
+             )
+           )
+  ),
+  
+  # Descriptive Analysis Tab
+  tabPanel("Descriptive Analysis", icon = icon("chart-bar"),
+           tabsetPanel(
+             tabPanel("Frequency Analysis",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("freq_var", "Select Variable:", choices = NULL),
+                          colourInput("freq_color", "Bar Color:", value = "#0C5EA8"),
+                          textInput("freq_title", "Plot Title:", value = "Frequency Distribution"),
+                          numericInput("freq_title_size", "Title Size:", value = 16),
+                          numericInput("freq_x_size", "X-axis Label Size:", value = 14),
+                          numericInput("freq_y_size", "Y-axis Label Size:", value = 14),
+                          radioButtons("freq_type", "Download Format:",
+                                       choices = c("Table", "Plot"), selected = "Table"),
+                          downloadButton("download_freq", "Download Results")
+                        ),
+                        mainPanel(
+                          DTOutput("freq_table"),
+                          plotlyOutput("freq_plot")
+                        )
                       )
-                    )
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    conditionalPanel(
-                      condition = "input.central_type == 'Table'",
-                      DTOutput("central_table")
-                    ),
-                    conditionalPanel(
-                      condition = "input.central_type == 'Boxplot'",
-                      plotlyOutput("central_boxplot")
-                    ),
-                    conditionalPanel(
-                      condition = "input.central_type == 'Histogram'",
-                      plotlyOutput("central_histogram")
-                    ),
-                    downloadButton("download_central", "Download Results")
-                )
-              )
-      ),
-      
-      # Epidemic Curve
-      tabItem(tabName = "epicurve",
-              fluidRow(
-                box(title = "Epidemic Curve", status = "primary", solidHeader = TRUE,
-                    selectInput("epi_date", "Select Date Variable:", choices = NULL),
-                    selectInput("epi_case", "Select Case Variable:", choices = NULL),
-                    selectInput("epi_group", "Group By (optional):", choices = NULL),
-                    radioButtons("epi_interval", "Time Interval:", 
-                                 choices = c("Day", "Week", "Month", "Year"), selected = "Week"),
-                    colourpicker::colourInput("epi_color", "Select Color:", value = "steelblue"),
-                    textInput("epi_title", "Plot Title:", value = "Epidemic Curve"),
-                    numericInput("epi_title_size", "Title Size:", value = 14),
-                    numericInput("epi_x_size", "X-axis Label Size:", value = 12),
-                    numericInput("epi_y_size", "Y-axis Label Size:", value = 12)
-                ),
-                box(title = "Epidemic Curve", status = "info", solidHeader = TRUE,
-                    plotlyOutput("epi_curve"),
-                    downloadButton("download_epicurve", "Download Plot")
-                )
-              )
-      ),
-      
-      # Spatial Maps
-      tabItem(tabName = "maps",
-              fluidRow(
-                box(title = "Spatial Distribution", status = "primary", solidHeader = TRUE,
-                    selectInput("map_var", "Select Variable to Map:", choices = NULL),
-                    selectInput("map_region", "Select Region Variable:", choices = NULL),
-                    radioButtons("map_type", "Map Type:", choices = c("Choropleth", "Point"), selected = "Choropleth"),
-                    colourpicker::colourInput("map_color", "Select Color:", value = "steelblue"),
-                    textInput("map_title", "Plot Title:", value = "Spatial Distribution"),
-                    numericInput("map_title_size", "Title Size:", value = 14),
-                    numericInput("map_x_size", "X-axis Label Size:", value = 12),
-                    numericInput("map_y_size", "Y-axis Label Size:", value = 12)
-                ),
-                box(title = "Map", status = "info", solidHeader = TRUE,
-                    plotlyOutput("map_plot"),
-                    downloadButton("download_map", "Download Map")
-                )
-              )
-      ),
-      
-      # Demographics
-      tabItem(tabName = "demo",
-              fluidRow(
-                box(title = "Demographic Breakdown", status = "primary", solidHeader = TRUE,
-                    selectInput("demo_var", "Select Outcome Variable:", choices = NULL),
-                    selectInput("demo_group", "Select Grouping Variable(s):", choices = NULL, multiple = TRUE)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    div(style = 'overflow-x: scroll', DTOutput("demo_table")),
-                    downloadButton("download_demo", "Download Table")
-                )
-              )
-      ),
-      
-      # Incidence/Prevalence
-      tabItem(tabName = "incprev",
-              fluidRow(
-                box(title = "Incidence/Prevalence", status = "primary", solidHeader = TRUE,
-                    selectInput("ip_case", "Select Case Variable:", choices = NULL),
-                    selectInput("ip_pop", "Select Population Variable:", choices = NULL),
-                    selectInput("ip_time", "Select Time Variable:", choices = NULL),
-                    radioButtons("ip_measure", "Measure:", 
-                                 choices = c("Incidence Rate", "Cumulative Incidence", "Prevalence"), 
-                                 selected = "Incidence Rate")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    DTOutput("ip_table"),
-                    downloadButton("download_ip", "Download Table")
-                )
-              )
-      ),
-      
-      # Attack Rates
-      tabItem(tabName = "attack",
-              fluidRow(
-                box(title = "Attack Rate", status = "primary", solidHeader = TRUE,
-                    selectInput("ar_case", "Select Case Variable:", choices = NULL),
-                    selectInput("ar_pop", "Select Population Variable:", choices = NULL),
-                    selectInput("ar_group", "Group By (optional):", choices = NULL),
-                    radioButtons("ar_format", "Output Format:", 
-                                 choices = c("Table", "Detailed Table"), 
-                                 selected = "Table")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    conditionalPanel(
-                      condition = "input.ar_format == 'Table'",
-                      DTOutput("ar_table")
-                    ),
-                    conditionalPanel(
-                      condition = "input.ar_format == 'Detailed Table'",
-                      DTOutput("ar_detailed_table")
-                    ),
-                    downloadButton("download_ar", "Download Table")
-                )
-              )
-      ),
-      
-      # Mortality Rates
-      tabItem(tabName = "mortality",
-              fluidRow(
-                box(title = "Mortality Rates", status = "primary", solidHeader = TRUE,
-                    selectInput("mort_case", "Select Death Variable:", choices = NULL),
-                    selectInput("mort_pop", "Select Population Variable:", choices = NULL),
-                    radioButtons("mort_measure", "Measure:", 
-                                 choices = c("Mortality Rate", "Case Fatality Rate"), 
-                                 selected = "Mortality Rate")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    DTOutput("mort_table"),
-                    downloadButton("download_mort", "Download Table")
-                )
-              )
-      ),
-      
-      # Life Table Analysis
-      tabItem(tabName = "lifetable",
-              fluidRow(
-                box(title = "Life Table Analysis", status = "primary", solidHeader = TRUE,
-                    selectInput("lt_time", "Select Time Variable:", choices = NULL),
-                    selectInput("lt_event", "Select Event Variable:", choices = NULL),
-                    textInput("lt_breaks", "Time Breaks (comma separated):", value = "0,10,20,30,40,50,60,70,80"),
-                    textInput("lt_title", "Table Title:", value = "Life Table Analysis")
-                ),
-                box(title = "Life Table Results", status = "info", solidHeader = TRUE,
-                    div(style = 'overflow-x: scroll', DTOutput("lifetable_results")),
-                    downloadButton("download_lifetable", "Download Table")
-                )
-              )
-      ),
-      
-      # Risk Ratios
-      tabItem(tabName = "risk",
-              fluidRow(
-                box(title = "Risk Ratio", status = "primary", solidHeader = TRUE,
-                    selectInput("rr_outcome", "Select Outcome Variable:", choices = NULL),
-                    selectInput("rr_exposure", "Select Exposure Variable:", choices = NULL),
-                    numericInput("rr_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01),
-                    textInput("rr_exposed_label", "Exposed Group Label:", value = "Exposed"),
-                    textInput("rr_unexposed_label", "Unexposed Group Label:", value = "Unexposed")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("rr_results"),
-                    DTOutput("rr_table"),
-                    downloadButton("download_rr", "Download Table")
-                )
-              )
-      ),
-      
-      # Odds Ratios
-      tabItem(tabName = "odds",
-              fluidRow(
-                box(title = "Odds Ratio", status = "primary", solidHeader = TRUE,
-                    selectInput("or_outcome", "Select Outcome Variable:", choices = NULL),
-                    selectInput("or_exposure", "Select Exposure Variable:", choices = NULL),
-                    numericInput("or_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01),
-                    textInput("or_exposed_label", "Exposed Group Label:", value = "Exposed"),
-                    textInput("or_unexposed_label", "Unexposed Group Label:", value = "Unexposed")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("or_results"),
-                    DTOutput("or_table"),
-                    downloadButton("download_or", "Download Table")
-                )
-              )
-      ),
-      
-      # Attributable Risk
-      tabItem(tabName = "ar",
-              fluidRow(
-                box(title = "Attributable Risk", status = "primary", solidHeader = TRUE,
-                    selectInput("ar_outcome", "Select Outcome Variable:", choices = NULL),
-                    selectInput("ar_exposure", "Select Exposure Variable:", choices = NULL),
-                    numericInput("ar_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01),
-                    checkboxInput("ar_paf", "Calculate Population Attributable Fraction", value = FALSE),
-                    textInput("ar_exposed_label", "Exposed Group Label:", value = "Exposed"),
-                    textInput("ar_unexposed_label", "Unexposed Group Label:", value = "Unexposed")
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("ar_results"),
-                    DTOutput("ar_table"),
-                    downloadButton("download_arisk", "Download Table")
-                )
-              )
-      ),
-      
-      # Poisson Regression
-      tabItem(tabName = "poisson",
-              fluidRow(
-                box(title = "Poisson Regression", status = "primary", solidHeader = TRUE,
-                    selectInput("poisson_outcome", "Select Outcome Count Variable:", choices = NULL),
-                    selectInput("poisson_offset", "Select Offset Variable (log transform will be applied):", choices = NULL),
-                    selectInput("poisson_vars", "Select Predictor Variables:", choices = NULL, multiple = TRUE),
-                    uiOutput("poisson_ref_ui"),
-                    numericInput("poisson_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01),
-                    checkboxInput("poisson_irr", "Show Incidence Rate Ratios (IRR)", value = TRUE)
-                ),
-                box(title = "Poisson Regression Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("poisson_summary"),
-                    DTOutput("poisson_table"),
-                    downloadButton("download_poisson", "Download Results")
-                )
-              )
-      ),
-      
-      # Survival Curve (Kaplan-Meier)
-      tabItem(tabName = "survcurve",
-              fluidRow(
-                box(title = "Survival Analysis", status = "primary", solidHeader = TRUE,
-                    selectInput("surv_time", "Select Time Variable:", choices = NULL),
-                    selectInput("surv_event", "Select Event Variable:", choices = NULL),
-                    selectInput("surv_group", "Group By (optional):", choices = NULL),
-                    numericInput("surv_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01),
-                    checkboxInput("surv_median", "Show Median Survival", value = TRUE),
-                    checkboxInput("surv_mean", "Show Mean Survival", value = FALSE),
-                    checkboxInput("surv_hazard", "Show Hazard Ratio", value = FALSE),
-                    checkboxInput("surv_ph", "Test Proportional Hazards", value = FALSE),
-                    colourpicker::colourInput("surv_color1", "Color for Group 1:", value = "#E41A1C"),
-                    colourpicker::colourInput("surv_color2", "Color for Group 2:", value = "#377EB8"),
-                    textInput("surv_title", "Plot Title:", value = "Time-to-Event Survival Curve"),
-                    numericInput("surv_title_size", "Title Size:", value = 14),
-                    numericInput("surv_x_size", "X-axis Label Size:", value = 12),
-                    numericInput("surv_y_size", "Y-axis Label Size:", value = 12),
-                    numericInput("surv_break_time", "Break Time By:", value = NULL, min = 1),
-                    textInput("surv_xlab", "X-axis Label:", value = "Time"),
-                    textInput("surv_ylab", "Y-axis Label:", value = "Survival Probability"),
-                    textInput("surv_legend_title", "Legend Title:", value = "Group"),
-                    textInput("surv_legend_labels", "Legend Labels (comma separated):", value = "")
-                ),
-                box(title = "Survival Analysis Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("surv_summary"),
-                    plotOutput("surv_plot"),
-                    downloadButton("download_surv", "Download Plot")
-                )
-              )
-      ),
-      
-      # Log-Rank Test
-      tabItem(tabName = "logrank",
-              fluidRow(
-                box(title = "Log-Rank Test", status = "primary", solidHeader = TRUE,
-                    selectInput("lr_time", "Select Time Variable:", choices = NULL),
-                    selectInput("lr_event", "Select Event Variable:", choices = NULL),
-                    selectInput("lr_group", "Select Grouping Variable:", choices = NULL)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("logrank_results"),
-                    downloadButton("download_logrank", "Download Results")
-                )
-              )
-      ),
-      
-      # Cox Regression
-      tabItem(tabName = "cox",
-              fluidRow(
-                box(title = "Cox Regression", status = "primary", solidHeader = TRUE,
-                    selectInput("cox_time", "Select Time Variable:", choices = NULL),
-                    selectInput("cox_event", "Select Event Variable:", choices = NULL),
-                    selectInput("cox_vars", "Select Predictor Variables:", choices = NULL, multiple = TRUE),
-                    uiOutput("cox_ref_ui"),
-                    numericInput("cox_conf", "Confidence Level:", value = 0.95, min = 0.5, max = 0.99, step = 0.01)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("cox_summary"),
-                    DTOutput("cox_table"),
-                    downloadButton("download_cox", "Download Results")
-                )
-              )
-      ),
-      
-      # Linear Regression
-      tabItem(tabName = "linear",
-              fluidRow(
-                box(
-                  title = "Linear Regression", status = "primary", solidHeader = TRUE, width = 6,
-                  selectInput("linear_outcome", "Select Outcome Variable:", choices = NULL),
-                  selectInput("linear_vars", "Select Predictor Variables:", choices = NULL, multiple = TRUE),
-                  uiOutput("linear_ref_ui"),
-                  checkboxInput("linear_std", "Show Standardized Estimates", value = TRUE)
-                ),
-                box(
-                  title = "Results", status = "info", solidHeader = TRUE, width = 6,
-                  div(style = "overflow-x: auto;",
-                      verbatimTextOutput("linear_summary")
-                  ),
-                  div(style = "overflow-x: auto;",
-                      DTOutput("linear_table")
-                  ),
-                  downloadButton("download_linear", "Download Results")
-                )
-              )
-      ),
-      
-      
-      # Logistic Regression
-      tabItem(tabName = "logistic",
-              fluidRow(
-                box(title = "Logistic Regression", status = "primary", solidHeader = TRUE,
-                    radioButtons("logistic_type", "Regression Type:",
-                                 choices = c("Binary" = "binary", 
-                                             "Ordinal" = "ordinal",
-                                             "Multinomial" = "multinomial"),
-                                 selected = "binary"),
-                    selectInput("logistic_outcome", "Select Outcome Variable:", choices = NULL),
-                    selectInput("logistic_vars", "Select Predictor Variables:", choices = NULL, multiple = TRUE),
-                    uiOutput("logistic_ref_ui"),
-                    checkboxInput("logistic_or", "Show Odds Ratios", value = TRUE)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("logistic_summary"),
-                    DTOutput("logistic_table"),
-                    downloadButton("download_logistic", "Download Results")
-                )
-              )
-      ),
-      
-      # T-tests/Mann-Whitney
-      tabItem(tabName = "ttest",
-              fluidRow(
-                box(title = "T-test/Mann-Whitney", status = "primary", solidHeader = TRUE,
-                    radioButtons("ttest_type", "Test Type:",
-                                 choices = c("One Sample t-test" = "one.sample",
-                                             "Two Sample t-test" = "two.sample",
-                                             "Paired t-test" = "paired",
-                                             "Mann-Whitney U Test" = "mannwhitney"),
-                                 selected = "two.sample"),
-                    selectInput("ttest_var", "Select Variable:", choices = NULL),
-                    conditionalPanel(
-                      condition = "input.ttest_type != 'one.sample'",
-                      selectInput("ttest_group", "Select Grouping Variable:", choices = NULL)
-                    ),
-                    conditionalPanel(
-                      condition = "input.ttest_type == 'one.sample'",
-                      numericInput("ttest_mu", "Comparison Mean:", value = 0)
-                    ),
-                    conditionalPanel(
-                      condition = "input.ttest_type == 'two.sample'",
-                      checkboxInput("ttest_var_equal", "Assume Equal Variances", value = FALSE)
-                    )
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("ttest_results"),
-                    downloadButton("download_ttest", "Download Results")
-                )
-              )
-      ),
-      
-      # ANOVA/Kruskal-Wallis
-      tabItem(tabName = "anova",
-              fluidRow(
-                box(title = "ANOVA/Kruskal-Wallis", status = "primary", solidHeader = TRUE,
-                    radioButtons("anova_type", "Test Type:",
-                                 choices = c("One-way ANOVA" = "anova",
-                                             "Kruskal-Wallis" = "kruskal"),
-                                 selected = "anova"),
-                    selectInput("anova_var", "Select Variable:", choices = NULL),
-                    selectInput("anova_group", "Select Grouping Variable:", choices = NULL),
-                    checkboxInput("anova_posthoc", "Perform Post-hoc Tests", value = TRUE)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("anova_results"),
-                    conditionalPanel(
-                      condition = "input.anova_posthoc",
-                      verbatimTextOutput("posthoc_results")
-                    ),
-                    downloadButton("download_anova", "Download Results")
-                )
-              )
-      ),
-      
-      # Chi-square Test
-      tabItem(tabName = "chisq",
-              fluidRow(
-                box(title = "Chi-square Test", status = "primary", solidHeader = TRUE,
-                    selectInput("chisq_var1", "Select First Variable:", choices = NULL),
-                    selectInput("chisq_var2", "Select Second Variable:", choices = NULL),
-                    checkboxInput("chisq_expected", "Show Expected Counts", value = FALSE),
-                    checkboxInput("chisq_residuals", "Show Residuals", value = FALSE)
-                ),
-                box(title = "Results", status = "info", solidHeader = TRUE,
-                    verbatimTextOutput("chisq_results"),
-                    DTOutput("chisq_table"),
-                    downloadButton("download_chisq", "Download Results")
-                )
-              )
-      )
-    )
+             ),
+             tabPanel("Central Tendency",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("central_var", "Select Numeric Variable:", choices = NULL),
+                          colourInput("central_color", "Plot Color:", value = "#0C5EA8"),
+                          textInput("central_title", "Plot Title:", value = "Central Tendency"),
+                          numericInput("central_bins", "Number of Bins:", value = 30),
+                          numericInput("central_title_size", "Title Size:", value = 16),
+                          numericInput("central_x_size", "X-axis Label Size:", value = 14),
+                          numericInput("central_y_size", "Y-axis Label Size:", value = 14),
+                          radioButtons("central_type", "Download Format:",
+                                       choices = c("Table", "Boxplot", "Histogram"), selected = "Table"),
+                          downloadButton("download_central", "Download Results")
+                        ),
+                        mainPanel(
+                          DTOutput("central_table"),
+                          plotlyOutput("central_boxplot"),
+                          plotlyOutput("central_histogram")
+                        )
+                      )
+             ),
+             tabPanel("Epidemic Curve",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("epi_date", "Date Variable:", choices = NULL),
+                          selectInput("epi_case", "Case Count Variable:", choices = NULL),
+                          selectInput("epi_group", "Grouping Variable (Optional):", choices = NULL),
+                          selectInput("epi_interval", "Time Interval:",
+                                      choices = c("Day", "Week", "Month", "Year"), selected = "Week"),
+                          colourInput("epi_color", "Bar Color:", value = "#CD2026"),
+                          textInput("epi_title", "Plot Title:", value = "Epidemic Curve"),
+                          numericInput("epi_title_size", "Title Size:", value = 16),
+                          numericInput("epi_x_size", "X-axis Label Size:", value = 14),
+                          numericInput("epi_y_size", "Y-axis Label Size:", value = 14),
+                          downloadButton("download_epicurve", "Download Plot")
+                        ),
+                        mainPanel(
+                          plotlyOutput("epi_curve")
+                        )
+                      )
+             ),
+             tabPanel("Spatial Analysis",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("map_var", "Variable to Map:", choices = NULL),
+                          selectInput("map_region", "Region Variable:", choices = NULL),
+                          selectInput("map_type", "Map Type:",
+                                      choices = c("Choropleth", "Point Map"), selected = "Choropleth"),
+                          colourInput("map_color", "Point Color:", value = "#0C5EA8"),
+                          textInput("map_title", "Plot Title:", value = "Spatial Distribution"),
+                          numericInput("map_title_size", "Title Size:", value = 16),
+                          numericInput("map_x_size", "X-axis Label Size:", value = 14),
+                          numericInput("map_y_size", "Y-axis Label Size:", value = 14),
+                          downloadButton("download_map", "Download Plot")
+                        ),
+                        mainPanel(
+                          plotlyOutput("map_plot")
+                        )
+                      )
+             ),
+             tabPanel("Demographic Breakdown",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("demo_var", "Analysis Variable:", choices = NULL),
+                          selectizeInput("demo_group", "Grouping Variables:", choices = NULL, multiple = TRUE),
+                          downloadButton("download_demo", "Download Table")
+                        ),
+                        mainPanel(
+                          DTOutput("demo_table")
+                        )
+                      )
+             )
+           )
+  ),
+  
+  # Disease Frequency Tab
+  tabPanel("Disease Frequency", icon = icon("viruses"),
+           tabsetPanel(
+             tabPanel("Incidence/Prevalence",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("ip_measure", "Select Measure:",
+                                      choices = c("Incidence Rate", "Cumulative Incidence", "Prevalence"),
+                                      selected = "Incidence Rate"),
+                          selectInput("ip_case", "Case Count Variable:", choices = NULL),
+                          selectInput("ip_pop", "Population Variable:", choices = NULL),
+                          conditionalPanel(
+                            condition = "input.ip_measure == 'Incidence Rate'",
+                            selectInput("ip_time", "Person-Time Variable:", choices = NULL)
+                          ),
+                          downloadButton("download_ip", "Download Results")
+                        ),
+                        mainPanel(
+                          DTOutput("ip_table")
+                        )
+                      )
+             ),
+             tabPanel("Attack Rates",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("ar_case", "Case Count Variable:", choices = NULL),
+                          selectInput("ar_pop", "Population Variable:", choices = NULL),
+                          selectInput("ar_group", "Grouping Variable (Optional):", choices = NULL),
+                          radioButtons("ar_format", "Output Format:",
+                                       choices = c("Table", "Detailed with CI"), selected = "Table"),
+                          downloadButton("download_ar", "Download Results")
+                        ),
+                        mainPanel(
+                          DTOutput("ar_table"),
+                          DTOutput("ar_detailed_table")
+                        )
+                      )
+             ),
+             tabPanel("Mortality Rates",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("mort_measure", "Select Measure:",
+                                      choices = c("Mortality Rate", "Case Fatality Rate"),
+                                      selected = "Mortality Rate"),
+                          selectInput("mort_case", "Death Count Variable:", choices = NULL),
+                          selectInput("mort_pop", "Population Variable:", choices = NULL),
+                          downloadButton("download_mort", "Download Results")
+                        ),
+                        mainPanel(
+                          DTOutput("mort_table")
+                        )
+                      )
+             ),
+             tabPanel("Life Table Analysis",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("lt_time", "Time Variable:", choices = NULL),
+                          selectInput("lt_event", "Event Variable:", choices = NULL),
+                          textInput("lt_breaks", "Time Points (comma-separated):", value = "0,1,2,3,4,5"),
+                          textInput("lt_title", "Table Title:", value = "Life Table Analysis"),
+                          downloadButton("download_lifetable", "Download Table")
+                        ),
+                        mainPanel(
+                          DTOutput("lifetable_results")
+                        )
+                      )
+             )
+           )
+  ),
+  
+  # Statistical Associations Tab
+  tabPanel("Statistical Associations", icon = icon("calculator"),
+           tabsetPanel(
+             tabPanel("Risk Ratios",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("rr_outcome", "Outcome Variable:", choices = NULL),
+                          selectInput("rr_exposure", "Exposure Variable:", choices = NULL),
+                          sliderInput("rr_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
+                          downloadButton("download_rr", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("rr_results"),
+                          DTOutput("rr_table")
+                        )
+                      )
+             ),
+             tabPanel("Odds Ratios",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("or_outcome", "Outcome Variable:", choices = NULL),
+                          selectInput("or_exposure", "Exposure Variable:", choices = NULL),
+                          sliderInput("or_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
+                          downloadButton("download_or", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("or_results"),
+                          DTOutput("or_table")
+                        )
+                      )
+             ),
+             tabPanel("Attributable Risk",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("ar_outcome", "Outcome Variable:", choices = NULL),
+                          selectInput("ar_exposure", "Exposure Variable:", choices = NULL),
+                          sliderInput("ar_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
+                          checkboxInput("ar_paf", "Calculate Population Attributable Fraction", FALSE),
+                          downloadButton("download_arisk", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("ar_results"),
+                          DTOutput("ar_table")
+                        )
+                      )
+             ),
+             tabPanel("Poisson Regression",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("poisson_outcome", "Outcome Variable (Count):", choices = NULL),
+                          selectInput("poisson_offset", "Offset Variable (Optional):", choices = NULL),
+                          selectizeInput("poisson_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
+                          uiOutput("poisson_ref_ui"),
+                          sliderInput("poisson_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
+                          checkboxInput("poisson_irr", "Exponentiate Coefficients (IRR)", TRUE),
+                          downloadButton("download_poisson", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("poisson_summary"),
+                          DTOutput("poisson_table")
+                        )
+                      )
+             )
+           )
+  ),
+  
+  # Survival Analysis Tab
+  tabPanel("Survival Analysis", icon = icon("heartbeat"),
+           tabsetPanel(
+             tabPanel("Kaplan-Meier",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("surv_time", "Time Variable:", choices = NULL),
+                          selectInput("surv_event", "Event Variable:", choices = NULL),
+                          selectInput("surv_group", "Grouping Variable (Optional):", choices = NULL),
+                          checkboxInput("surv_median", "Show Median Survival", TRUE),
+                          checkboxInput("surv_mean", "Show Mean Survival", FALSE),
+                          checkboxInput("surv_hazard", "Show Hazard Ratio", FALSE),
+                          checkboxInput("surv_ph", "Test Proportional Hazards", FALSE),
+                          colourInput("surv_color1", "Group 1 Color:", value = "#0C5EA8"),
+                          colourInput("surv_color2", "Group 2 Color:", value = "#CD2026"),
+                          textInput("surv_title", "Plot Title:", value = "Kaplan-Meier Curve"),
+                          textInput("surv_xlab", "X-axis Label:", value = "Time"),
+                          textInput("surv_ylab", "Y-axis Label:", value = "Survival Probability"),
+                          textInput("surv_legend_title", "Legend Title:", value = "Group"),
+                          textInput("surv_legend_labels", "Legend Labels (comma-separated):", value = ""),
+                          numericInput("surv_break_time", "Time Break Interval:", value = NULL),
+                          numericInput("surv_title_size", "Title Size:", value = 16),
+                          numericInput("surv_x_size", "X-axis Label Size:", value = 14),
+                          numericInput("surv_y_size", "Y-axis Label Size:", value = 14),
+                          downloadButton("download_surv", "Download Plot")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("surv_summary"),
+                          plotOutput("surv_plot", height = "600px")
+                        )
+                      )
+             ),
+             tabPanel("Log-Rank Test",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("lr_time", "Time Variable:", choices = NULL),
+                          selectInput("lr_event", "Event Variable:", choices = NULL),
+                          selectInput("lr_group", "Grouping Variable:", choices = NULL),
+                          downloadButton("download_logrank", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("logrank_results")
+                        )
+                      )
+             ),
+             tabPanel("Cox Regression",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("cox_time", "Time Variable:", choices = NULL),
+                          selectInput("cox_event", "Event Variable:", choices = NULL),
+                          selectizeInput("cox_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
+                          uiOutput("cox_ref_ui"),
+                          sliderInput("cox_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
+                          downloadButton("download_cox", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("cox_summary"),
+                          DTOutput("cox_table")
+                        )
+                      )
+             )
+           )
+  ),
+  
+  # Regression Analysis Tab
+  tabPanel("Regression Analysis", icon = icon("line-chart"),
+           tabsetPanel(
+             tabPanel("Linear Regression",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("linear_outcome", "Outcome Variable:", choices = NULL),
+                          selectizeInput("linear_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
+                          uiOutput("linear_ref_ui"),
+                          checkboxInput("linear_std", "Show Standardized Coefficients", FALSE),
+                          downloadButton("download_linear", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("linear_summary"),
+                          DTOutput("linear_table")
+                        )
+                      )
+             ),
+             tabPanel("Logistic Regression",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("logistic_outcome", "Outcome Variable:", choices = NULL),
+                          selectInput("logistic_type", "Regression Type:",
+                                      choices = c("binary" = "binary", "ordinal" = "ordinal", "multinomial" = "multinomial"),
+                                      selected = "binary"),
+                          selectizeInput("logistic_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
+                          uiOutput("logistic_ref_ui"),
+                          checkboxInput("logistic_or", "Show Odds Ratios", TRUE),
+                          downloadButton("download_logistic", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("logistic_summary"),
+                          DTOutput("logistic_table")
+                        )
+                      )
+             )
+           )
+  ),
+  
+  # Statistical Tests Tab
+  tabPanel("Statistical Tests", icon = icon("check-square"),
+           tabsetPanel(
+             tabPanel("T-tests",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("ttest_var", "Variable to Test:", choices = NULL),
+                          selectInput("ttest_type", "Test Type:",
+                                      choices = c("One Sample" = "one.sample",
+                                                  "Two Sample" = "two.sample",
+                                                  "Paired" = "paired",
+                                                  "Mann-Whitney" = "mann.whitney"),
+                                      selected = "two.sample"),
+                          conditionalPanel(
+                            condition = "input.ttest_type == 'one.sample'",
+                            numericInput("ttest_mu", "Null Hypothesis Value:", value = 0)
+                          ),
+                          conditionalPanel(
+                            condition = "input.ttest_type == 'two.sample' || input.ttest_type == 'paired' || input.ttest_type == 'mann.whitney'",
+                            selectInput("ttest_group", "Grouping Variable:", choices = NULL)
+                          ),
+                          conditionalPanel(
+                            condition = "input.ttest_type == 'two.sample'",
+                            checkboxInput("ttest_var_equal", "Assume Equal Variances", FALSE)
+                          ),
+                          downloadButton("download_ttest", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("ttest_results")
+                        )
+                      )
+             ),
+             tabPanel("ANOVA",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("anova_var", "Variable to Test:", choices = NULL),
+                          selectInput("anova_group", "Grouping Variable:", choices = NULL),
+                          selectInput("anova_type", "Test Type:",
+                                      choices = c("ANOVA" = "anova", "Kruskal-Wallis" = "kruskal"),
+                                      selected = "anova"),
+                          checkboxInput("anova_posthoc", "Perform Post-hoc Tests", FALSE),
+                          conditionalPanel(
+                            condition = "input.anova_posthoc",
+                            selectInput("anova_posthoc_type", "Post-hoc Test:",
+                                        choices = c("Tukey HSD" = "tukey", "Dunn's Test" = "dunn"),
+                                        selected = "tukey")
+                          ),
+                          downloadButton("download_anova", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("anova_results"),
+                          conditionalPanel(
+                            condition = "input.anova_posthoc",
+                            verbatimTextOutput("posthoc_results")
+                          )
+                        )
+                      )
+             ),
+             tabPanel("Chi-square Test",
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("chisq_var1", "Variable 1:", choices = NULL),
+                          selectInput("chisq_var2", "Variable 2:", choices = NULL),
+                          checkboxInput("chisq_expected", "Show Expected Counts", FALSE),
+                          checkboxInput("chisq_residuals", "Show Residuals", FALSE),
+                          downloadButton("download_chisq", "Download Results")
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("chisq_results"),
+                          DTOutput("chisq_table")
+                        )
+                      )
+             )
+           )
   )
 )
 
@@ -669,9 +667,9 @@ server <- function(input, output, session) {
         names(freq_table) <- c(input$freq_var, "Frequency")
         freq_table$Proportion <- freq_table$Frequency / sum(freq_table$Frequency)
         
-        ft <- flextable(freq_table)
+        ft <- flextable::flextable(freq_table)
         doc <- read_docx() %>% 
-          body_add_flextable(ft)
+          officer::body_add_flextable(ft)
         print(doc, target = file)
       } else {
         df <- data()
@@ -779,9 +777,9 @@ server <- function(input, output, session) {
                     get_mode(var))
         )
         
-        ft <- flextable(central_table)
+        ft <- flextable::flextable(central_table)
         doc <- read_docx() %>% 
-          body_add_flextable(ft)
+          officer::body_add_flextable(ft)
         print(doc, target = file)
       } else if(input$central_type == "Boxplot") {
         p <- ggplot(df, aes(y = .data[[input$central_var]])) +
@@ -915,6 +913,7 @@ server <- function(input, output, session) {
       ggsave(file, plot = p, device = "png", width = 10, height = 6)
     }
   )
+  
   # Spatial maps (simplified - would need spatial data for full implementation)
   output$map_plot <- renderPlotly({
     req(input$map_var, input$map_region)
@@ -1072,12 +1071,13 @@ server <- function(input, output, session) {
           )
       }
       
-      ft <- flextable(demo_table)
+      ft <- flextable::flextable(demo_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
+  
   # Incidence/Prevalence
   output$ip_table <- renderDT({
     req(input$ip_case, input$ip_pop)
@@ -1182,12 +1182,13 @@ server <- function(input, output, session) {
         )
       }
       
-      ft <- flextable(result)
+      ft <- flextable::flextable(result)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
+  
   # Attack Rates Table
   output$ar_table <- renderDT({
     req(input$ar_case, input$ar_pop)
@@ -1298,9 +1299,9 @@ server <- function(input, output, session) {
         }
       }
       
-      ft <- flextable(ar_data)
+      ft <- flextable::flextable(ar_data)
       doc <- read_docx() %>%
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1378,9 +1379,9 @@ server <- function(input, output, session) {
         )
       }
       
-      ft <- flextable(result)
+      ft <- flextable::flextable(result)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1437,12 +1438,12 @@ server <- function(input, output, session) {
         Upper_CI = lt_summary$upper
       )
       
-      ft <- flextable(lifetable) %>%
-        set_caption(input$lt_title) %>%
-        theme_zebra()
+      ft <- flextable::flextable(lifetable) %>%
+        flextable::set_caption(input$lt_title) %>%
+        flextable::theme_zebra()
       
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1456,7 +1457,7 @@ server <- function(input, output, session) {
     tab <- table(df[[input$rr_exposure]], df[[input$rr_outcome]])
     
     # Calculate risk ratio with confidence intervals
-    rr <- riskratio(tab, conf.level = input$rr_conf)
+    rr <- epitools::riskratio(tab, conf.level = input$rr_conf)
     
     print(rr)
   })
@@ -1466,7 +1467,7 @@ server <- function(input, output, session) {
     df <- data()
     
     tab <- table(df[[input$rr_exposure]], df[[input$rr_outcome]])
-    rr <- riskratio(tab, conf.level = input$rr_conf)
+    rr <- epitools::riskratio(tab, conf.level = input$rr_conf)
     
     # Create summary table
     rr_table <- data.frame(
@@ -1485,16 +1486,16 @@ server <- function(input, output, session) {
       df <- data()
       
       tab <- table(df[[input$rr_exposure]], df[[input$rr_outcome]])
-      rr <- riskratio(tab, conf.level = input$rr_conf)
+      rr <- epitools::riskratio(tab, conf.level = input$rr_conf)
       
       rr_table <- data.frame(
         Measure = c("Risk Ratio", "Lower CI", "Upper CI"),
         Value = c(rr$measure[2,1], rr$measure[2,2], rr$measure[2,3])
       )
       
-      ft <- flextable(rr_table)
+      ft <- flextable::flextable(rr_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1508,7 +1509,7 @@ server <- function(input, output, session) {
     tab <- table(df[[input$or_exposure]], df[[input$or_outcome]])
     
     # Calculate odds ratio with confidence intervals
-    or <- oddsratio(tab, conf.level = input$or_conf)
+    or <- epitools::oddsratio(tab, conf.level = input$or_conf)
     
     print(or)
   })
@@ -1518,7 +1519,7 @@ server <- function(input, output, session) {
     df <- data()
     
     tab <- table(df[[input$or_exposure]], df[[input$or_outcome]])
-    or <- oddsratio(tab, conf.level = input$or_conf)
+    or <- epitools::oddsratio(tab, conf.level = input$or_conf)
     
     # Create summary table
     or_table <- data.frame(
@@ -1537,16 +1538,16 @@ server <- function(input, output, session) {
       df <- data()
       
       tab <- table(df[[input$or_exposure]], df[[input$or_outcome]])
-      or <- oddsratio(tab, conf.level = input$or_conf)
+      or <- epitools::oddsratio(tab, conf.level = input$or_conf)
       
       or_table <- data.frame(
         Measure = c("Odds Ratio", "Lower CI", "Upper CI"),
         Value = c(or$measure[2,1], or$measure[2,2], or$measure[2,3])
       )
       
-      ft <- flextable(or_table)
+      ft <- flextable::flextable(or_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1560,7 +1561,7 @@ server <- function(input, output, session) {
     tab <- table(df[[input$ar_exposure]], df[[input$ar_outcome]])
     
     # Calculate attributable risk
-    ar <- riskratio(tab, conf.level = input$ar_conf)
+    ar <- epitools::riskratio(tab, conf.level = input$ar_conf)
     
     print(ar)
   })
@@ -1570,7 +1571,7 @@ server <- function(input, output, session) {
     df <- data()
     
     tab <- table(df[[input$ar_exposure]], df[[input$ar_outcome]])
-    ar <- riskratio(tab, conf.level = input$ar_conf)
+    ar <- epitools::riskratio(tab, conf.level = input$ar_conf)
     
     # Create summary table
     ar_table <- data.frame(
@@ -1595,7 +1596,7 @@ server <- function(input, output, session) {
       df <- data()
       
       tab <- table(df[[input$ar_exposure]], df[[input$ar_outcome]])
-      ar <- riskratio(tab, conf.level = input$ar_conf)
+      ar <- epitools::riskratio(tab, conf.level = input$ar_conf)
       
       ar_table <- data.frame(
         Measure = c("Attributable Risk", "Lower CI", "Upper CI"),
@@ -1607,9 +1608,9 @@ server <- function(input, output, session) {
         ar_table <- rbind(ar_table, data.frame(Measure = "Population Attributable Fraction", Value = paf))
       }
       
-      ft <- flextable(ar_table)
+      ft <- flextable::flextable(ar_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1732,7 +1733,7 @@ server <- function(input, output, session) {
       
       ft <- flextable::flextable(poisson_table)
       doc <- officer::read_docx() %>%
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1743,7 +1744,7 @@ server <- function(input, output, session) {
     df <- data()
     
     # Create survival object
-    surv_obj <- Surv(df[[input$surv_time]], df[[input$surv_event]])
+    surv_obj <- create_surv_obj(input$surv_time, input$surv_event, df)
     
     # Fit survival model
     if(input$surv_group != "None") {
@@ -1758,13 +1759,14 @@ server <- function(input, output, session) {
     # Show median survival if requested
     if(input$surv_median) {
       cat("\nMedian Survival:\n")
-      print(surv_median(surv_fit))
+      print(survminer::surv_median(surv_fit))
     }
     
     # Show mean survival if requested
     if(input$surv_mean) {
       cat("\nMean Survival:\n")
-      print(surv_mean(surv_fit))
+      mean_surv <- survfit(surv_obj ~ 1)
+      print(mean(mean_surv$time))
     }
     
     # Show hazard ratio if requested and groups exist
@@ -1777,7 +1779,8 @@ server <- function(input, output, session) {
     # Test proportional hazards if requested
     if(input$surv_ph && input$surv_group != "None") {
       cat("\nProportional Hazards Test:\n")
-      print(cox.zph(coxph(surv_obj ~ .data[[input$surv_group]], data = df)))
+      cox_model <- coxph(surv_obj ~ .data[[input$surv_group]], data = df)
+      print(cox.zph(cox_model))
     }
   })
   
@@ -1786,7 +1789,7 @@ server <- function(input, output, session) {
     df <- data()
     
     # Create survival object
-    surv_obj <- Surv(df[[input$surv_time]], df[[input$surv_event]])
+    surv_obj <- create_surv_obj(input$surv_time, input$surv_event, df)
     
     # Fit survival model
     if(input$surv_group != "None") {
@@ -1805,7 +1808,7 @@ server <- function(input, output, session) {
     }
     
     # Create plot
-    p <- ggsurvplot(
+    p <- survminer::ggsurvplot(
       surv_fit,
       data = df,
       risk.table = TRUE,
@@ -1835,7 +1838,7 @@ server <- function(input, output, session) {
     content = function(file) {
       df <- data()
       
-      surv_obj <- Surv(df[[input$surv_time]], df[[input$surv_event]])
+      surv_obj <- create_surv_obj(input$surv_time, input$surv_event, df)
       
       if(input$surv_group != "None") {
         surv_fit <- survfit(surv_obj ~ .data[[input$surv_group]], data = df)
@@ -1851,7 +1854,7 @@ server <- function(input, output, session) {
         legend_labels <- NULL
       }
       
-      p <- ggsurvplot(
+      p <- survminer::ggsurvplot(
         surv_fit,
         data = df,
         risk.table = TRUE,
@@ -1880,14 +1883,7 @@ server <- function(input, output, session) {
     req(input$lr_time, input$lr_event, input$lr_group)
     df <- data()
     
-    surv_obj <- tryCatch({
-      create_surv_obj(input$lr_time, input$lr_event, df)
-    }, error = function(e) {
-      # Fallback to simple creation if specialized function fails
-      time <- df[[input$lr_time]]
-      event <- df[[input$lr_event]]
-      Surv(time = time, event = as.numeric(event))
-    })
+    surv_obj <- create_surv_obj(input$lr_time, input$lr_event, df)
     
     fit <- survdiff(surv_obj ~ df[[input$lr_group]])
     
@@ -1900,22 +1896,15 @@ server <- function(input, output, session) {
     content = function(file) {
       df <- data()
       
-      surv_obj <- tryCatch({
-        create_surv_obj(input$lr_time, input$lr_event, df)
-      }, error = function(e) {
-        # Fallback to simple creation if specialized function fails
-        time <- df[[input$lr_time]]
-        event <- df[[input$lr_event]]
-        Surv(time = time, event = as.numeric(event))
-      })
+      surv_obj <- create_surv_obj(input$lr_time, input$lr_event, df)
       
       fit <- survdiff(surv_obj ~ df[[input$lr_group]])
       
       # Convert to flextable
       res <- capture.output(fit)
-      ft <- flextable(data.frame(Results = res))
+      ft <- flextable::flextable(data.frame(Results = res))
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -1954,7 +1943,7 @@ server <- function(input, output, session) {
     }
     
     # Create survival object
-    surv_obj <- Surv(df[[input$cox_time]], df[[input$cox_event]])
+    surv_obj <- create_surv_obj(input$cox_time, input$cox_event, df)
     
     # Create formula
     formula <- as.formula(paste("surv_obj ~", paste(input$cox_vars, collapse = "+")))
@@ -1979,7 +1968,7 @@ server <- function(input, output, session) {
     }
     
     # Create survival object
-    surv_obj <- Surv(df[[input$cox_time]], df[[input$cox_event]])
+    surv_obj <- create_surv_obj(input$cox_time, input$cox_event, df)
     
     # Create formula
     formula <- as.formula(paste("surv_obj ~", paste(input$cox_vars, collapse = "+")))
@@ -1988,7 +1977,7 @@ server <- function(input, output, session) {
     model <- coxph(formula, data = df)
     
     # Create tidy table
-    cox_table <- tidy(model, conf.int = TRUE, conf.level = input$cox_conf, exponentiate = TRUE)
+    cox_table <- broom::tidy(model, conf.int = TRUE, conf.level = input$cox_conf, exponentiate = TRUE)
     
     datatable(cox_table)
   })
@@ -2008,15 +1997,15 @@ server <- function(input, output, session) {
         }
       }
       
-      surv_obj <- Surv(df[[input$cox_time]], df[[input$cox_event]])
+      surv_obj <- create_surv_obj(input$cox_time, input$cox_event, df)
       formula <- as.formula(paste("surv_obj ~", paste(input$cox_vars, collapse = "+")))
       model <- coxph(formula, data = df)
       
-      cox_table <- tidy(model, conf.int = TRUE, conf.level = input$cox_conf, exponentiate = TRUE)
+      cox_table <- broom::tidy(model, conf.int = TRUE, conf.level = input$cox_conf, exponentiate = TRUE)
       
-      ft <- flextable(cox_table)
+      ft <- flextable::flextable(cox_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -2163,12 +2152,12 @@ server <- function(input, output, session) {
           rename(`Standardized Coefficient` = std_estimate)
       }
       
-      ft <- flextable(results) %>%
-        set_caption("Linear Regression Results") %>%
-        theme_zebra()
+      ft <- flextable::flextable(results) %>%
+        flextable::set_caption("Linear Regression Results") %>%
+        flextable::theme_zebra()
       
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -2212,10 +2201,8 @@ server <- function(input, output, session) {
     if(input$logistic_type == "binary") {
       model <- glm(formula, family = binomial(link = "logit"), data = df)
     } else if(input$logistic_type == "ordinal") {
-      req(requireNamespace("MASS", quietly = TRUE))
       model <- MASS::polr(formula, data = df, Hess = TRUE)
     } else {
-      req(requireNamespace("nnet", quietly = TRUE))
       model <- nnet::multinom(formula, data = df)
     }
     
@@ -2257,17 +2244,15 @@ server <- function(input, output, session) {
       
       # Create tidy table
       if(input$logistic_or) {
-        logistic_table <- tidy(model, conf.int = TRUE, exponentiate = TRUE)
+        logistic_table <- broom::tidy(model, conf.int = TRUE, exponentiate = TRUE)
       } else {
-        logistic_table <- tidy(model, conf.int = TRUE)
+        logistic_table <- broom::tidy(model, conf.int = TRUE)
       }
     } else if(input$logistic_type == "ordinal") {
-      req(requireNamespace("MASS", quietly = TRUE))
       model <- MASS::polr(formula, data = df, Hess = TRUE)
       logistic_table <- as.data.frame(coef(summary(model)))
       logistic_table$p.value <- pnorm(abs(logistic_table[, "t value"]), lower.tail = FALSE) * 2
     } else {
-      req(requireNamespace("nnet", quietly = TRUE))
       model <- nnet::multinom(formula, data = df)
       logistic_table <- as.data.frame(coef(summary(model)))
     }
@@ -2296,24 +2281,22 @@ server <- function(input, output, session) {
         model <- glm(formula, family = binomial(link = "logit"), data = df)
         
         if(input$logistic_or) {
-          logistic_table <- tidy(model, conf.int = TRUE, exponentiate = TRUE)
+          logistic_table <- broom::tidy(model, conf.int = TRUE, exponentiate = TRUE)
         } else {
-          logistic_table <- tidy(model, conf.int = TRUE)
+          logistic_table <- broom::tidy(model, conf.int = TRUE)
         }
       } else if(input$logistic_type == "ordinal") {
-        req(requireNamespace("MASS", quietly = TRUE))
         model <- MASS::polr(formula, data = df, Hess = TRUE)
         logistic_table <- as.data.frame(coef(summary(model)))
         logistic_table$p.value <- pnorm(abs(logistic_table[, "t value"]), lower.tail = FALSE) * 2
       } else {
-        req(requireNamespace("nnet", quietly = TRUE))
         model <- nnet::multinom(formula, data = df)
         logistic_table <- as.data.frame(coef(summary(model)))
       }
       
-      ft <- flextable(logistic_table)
+      ft <- flextable::flextable(logistic_table)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -2397,9 +2380,9 @@ server <- function(input, output, session) {
         )
       }
       
-      ft <- flextable(results)
+      ft <- flextable::flextable(results)
       doc <- read_docx() %>% 
-        body_add_flextable(ft)
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
@@ -2411,11 +2394,13 @@ server <- function(input, output, session) {
     
     if(input$anova_type == "anova") {
       # One-way ANOVA
-      anova_model <- aov(df[[input$anova_var]] ~ df[[input$anova_group]])
+      anova_model <- aov(df[[input$anova_var]] ~ as.factor(df[[input$anova_group]]))
+      cat("ANOVA Results:\n")
       print(summary(anova_model))
     } else {
       # Kruskal-Wallis test
-      kw_test <- kruskal.test(df[[input$anova_var]] ~ df[[input$anova_group]])
+      kw_test <- kruskal.test(df[[input$anova_var]] ~ as.factor(df[[input$anova_group]]))
+      cat("Kruskal-Wallis Test Results:\n")
       print(kw_test)
     }
   })
@@ -2424,17 +2409,18 @@ server <- function(input, output, session) {
     req(input$anova_var, input$anova_group, input$anova_posthoc)
     df <- data()
     
-    if(input$anova_type == "anova") {
-      # Tukey HSD post-hoc
-      anova_model <- aov(df[[input$anova_var]] ~ df[[input$anova_group]])
-      tukey <- TukeyHSD(anova_model)
-      print(tukey)
+    if(input$anova_posthoc_type == "tukey") {
+      # Tukey HSD post-hoc test
+      anova_model <- aov(df[[input$anova_var]] ~ as.factor(df[[input$anova_group]]))
+      cat("\nTukey HSD Post-hoc Test:\n")
+      print(TukeyHSD(anova_model))
     } else {
-      # Dunn's test for Kruskal-Wallis
-      req(requireNamespace("dunn.test", quietly = TRUE))
-      dunn <- dunn.test::dunn.test(df[[input$anova_var]], df[[input$anova_group]], 
-                                   method = "bonferroni")
-      print(dunn)
+      # Dunn's test
+      cat("\nDunn's Test (Post-hoc for Kruskal-Wallis):\n")
+      dunn_result <- dunn.test::dunn.test(df[[input$anova_var]], 
+                                          as.factor(df[[input$anova_group]]),
+                                          method = "bonferroni")
+      print(dunn_result)
     }
   })
   
@@ -2446,53 +2432,31 @@ server <- function(input, output, session) {
       df <- data()
       
       if(input$anova_type == "anova") {
-        anova_model <- aov(df[[input$anova_var]] ~ df[[input$anova_group]])
-        anova_table <- as.data.frame(summary(anova_model)[[1]])
-        
-        if(input$anova_posthoc) {
-          tukey <- as.data.frame(TukeyHSD(anova_model)[[1]])
-          tukey$Comparison <- rownames(tukey)
-          rownames(tukey) <- NULL
-        }
+        anova_model <- aov(df[[input$anova_var]] ~ as.factor(df[[input$anova_group]]))
+        results <- data.frame(
+          Test = "One-way ANOVA",
+          DF = summary(anova_model)[[1]]["Df"],
+          FValue = summary(anova_model)[[1]]["F value"],
+          PValue = summary(anova_model)[[1]]["Pr(>F)"]
+        )
       } else {
-        kw_test <- kruskal.test(df[[input$anova_var]] ~ df[[input$anova_group]])
-        anova_table <- data.frame(
-          Test = "Kruskal-Wallis",
+        kw_test <- kruskal.test(df[[input$anova_var]] ~ as.factor(df[[input$anova_group]]))
+        results <- data.frame(
+          Test = "Kruskal-Wallis Test",
           ChiSquared = kw_test$statistic,
           DF = kw_test$parameter,
           PValue = kw_test$p.value
         )
-        
-        if(input$anova_posthoc) {
-          req(requireNamespace("dunn.test", quietly = TRUE))
-          dunn <- dunn.test::dunn.test(df[[input$anova_var]], df[[input$anova_group]], 
-                                       method = "bonferroni")
-          tukey <- data.frame(
-            Comparison = dunn$comparisons,
-            Z = dunn$Z,
-            PValue = dunn$P.adjusted
-          )
-        }
       }
       
-      ft1 <- flextable(anova_table)
-      
-      if(input$anova_posthoc) {
-        ft2 <- flextable(tukey)
-        doc <- read_docx() %>% 
-          body_add_flextable(ft1) %>% 
-          body_add_par("Post-hoc Tests:", style = "heading 2") %>% 
-          body_add_flextable(ft2)
-      } else {
-        doc <- read_docx() %>% 
-          body_add_flextable(ft1)
-      }
-      
+      ft <- flextable::flextable(results)
+      doc <- read_docx() %>% 
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
   
-  # Chi-square Test
+  # Chi-square test
   output$chisq_results <- renderPrint({
     req(input$chisq_var1, input$chisq_var2)
     df <- data()
@@ -2503,16 +2467,14 @@ server <- function(input, output, session) {
     # Perform chi-square test
     chisq_test <- chisq.test(tab)
     
-    # Print results
+    cat("Chi-square Test Results:\n")
     print(chisq_test)
     
-    # Show expected counts if requested
     if(input$chisq_expected) {
       cat("\nExpected Counts:\n")
       print(chisq_test$expected)
     }
     
-    # Show residuals if requested
     if(input$chisq_residuals) {
       cat("\nPearson Residuals:\n")
       print(chisq_test$residuals)
@@ -2523,9 +2485,8 @@ server <- function(input, output, session) {
     req(input$chisq_var1, input$chisq_var2)
     df <- data()
     
-    # Create contingency table
+    # Create and display contingency table
     tab <- as.data.frame.matrix(table(df[[input$chisq_var1]], df[[input$chisq_var2]]))
-    
     datatable(tab)
   })
   
@@ -2539,6 +2500,7 @@ server <- function(input, output, session) {
       tab <- table(df[[input$chisq_var1]], df[[input$chisq_var2]])
       chisq_test <- chisq.test(tab)
       
+      # Create results table
       results <- data.frame(
         Test = "Chi-square Test",
         Statistic = chisq_test$statistic,
@@ -2546,31 +2508,29 @@ server <- function(input, output, session) {
         PValue = chisq_test$p.value
       )
       
-      ft1 <- flextable(results)
-      ft2 <- flextable(as.data.frame.matrix(tab))
-      
+      ft <- flextable::flextable(results)
       doc <- read_docx() %>% 
-        body_add_flextable(ft1) %>% 
-        body_add_par("Contingency Table:", style = "heading 2") %>% 
-        body_add_flextable(ft2)
-      
-      if(input$chisq_expected) {
-        ft3 <- flextable(as.data.frame.matrix(chisq_test$expected))
-        doc <- doc %>% 
-          body_add_par("Expected Counts:", style = "heading 2") %>% 
-          body_add_flextable(ft3)
-      }
-      
-      if(input$chisq_residuals) {
-        ft4 <- flextable(as.data.frame.matrix(chisq_test$residuals))
-        doc <- doc %>% 
-          body_add_par("Pearson Residuals:", style = "heading 2") %>% 
-          body_add_flextable(ft4)
-      }
-      
+        officer::body_add_flextable(ft)
       print(doc, target = file)
     }
   )
+  
+  # Navigation buttons
+  observeEvent(input$goto_data, {
+    updateNavbarPage(session, "nav", selected = "Data Upload")
+  })
+  
+  observeEvent(input$goto_descriptive, {
+    updateNavbarPage(session, "nav", selected = "Descriptive Analysis")
+  })
+  
+  observeEvent(input$goto_disease, {
+    updateNavbarPage(session, "nav", selected = "Disease Frequency")
+  })
+  
+  observeEvent(input$goto_statistics, {
+    updateNavbarPage(session, "nav", selected = "Statistical Associations")
+  })
 }
 
 # Run the application
