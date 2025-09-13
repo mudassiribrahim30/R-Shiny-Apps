@@ -22,7 +22,7 @@ library(MASS)
 library(nnet)
 library(foreign)
 library(rstatix)
-library(flextable)
+#library(flextable)
 library(officer)
 library(openxlsx)
 library(ggpubr)
@@ -188,6 +188,19 @@ ui <- dashboardPage(
         .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover {
           color: ", spss_blue, ";
         }
+        /* FIX FOR SUB-MENU ITEMS - Make background clear like main tabs */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .treeview-menu {
+          background-color: #F8F9FA !important;
+        }
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .treeview-menu li a {
+          color: #444 !important;
+          background-color: #F8F9FA !important;
+        }
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .treeview-menu li.active a,
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .treeview-menu li a:hover {
+          color: ", spss_blue, " !important;
+          background-color: #E9ECEF !important;
+        }
         .export-btn {
           margin-right: 5px;
           margin-bottom: 5px;
@@ -195,6 +208,7 @@ ui <- dashboardPage(
       ")))
     ),
     
+
     tabItems(
       # Data Manager Tab
       tabItem(
