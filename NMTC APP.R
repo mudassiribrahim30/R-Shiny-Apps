@@ -40,7 +40,7 @@ spss_dark_gray <- "#7F7F7F"
 ui <- dashboardPage(
   skin = "blue",
   dashboardHeader(
-    title = span(icon("chart-bar"), "SPSS Statistics", style = paste0("color: white; font-weight: bold; font-size: 18px; background-color:", spss_blue)),
+    title = span(icon("chart-bar"), "TNMTC DataLab", style = paste0("color: white; font-weight: bold; font-size: 18px; background-color:", spss_blue)),
     titleWidth = 250,
     dropdownMenu(
       type = "messages",
