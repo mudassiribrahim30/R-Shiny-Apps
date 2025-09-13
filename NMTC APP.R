@@ -48,7 +48,7 @@ ui <- dashboardPage(
       icon = icon("question-circle"),
       messageItem(
         from = "Help",
-        message = "SPSS Statistics Help",
+        message = "TNMTC DataLab Help",
         icon = icon("question")
       )
     )
