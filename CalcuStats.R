@@ -18,20 +18,10 @@ if (!file.exists(counter_file)) saveRDS(0, counter_file)
 counter <- readRDS(counter_file) + 1
 saveRDS(counter, counter_file)
 
-getGreeting <- function() {
-  hour <- as.numeric(format(Sys.time(), "%H"))
-  if (hour < 12) {
-    return("Good morning!")
-  } else if (hour < 18) {
-    return("Good afternoon!")
-  } else {
-    return("Good evening!")
-  }
-}
 
-# WHO-inspired CSS
+# Enhanced Professional CSS with animations
 who_css <- "
-/* WHO-inspired color scheme */
+/* Enhanced Professional Color Scheme */
 :root {
   --who-blue: #0092D0;
   --who-light-blue: #6BC1E0;
@@ -39,215 +29,336 @@ who_css <- "
   --who-green: #7CC242;
   --who-gray: #6D6E71;
   --who-light-gray: #F1F1F2;
+  --professional-gold: #D4AF37;
+  --professional-silver: #C0C0C0;
+  --professional-bronze: #CD7F32;
 }
 
-/* WHO-style header and navigation */
+/* Enhanced animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Enhanced professional header */
 .navbar {
-  background-color: var(--who-blue) !important;
-  border: none;
-  border-radius: 0;
-  margin-bottom: 0;
+  background: linear-gradient(135deg, #00689D 0%, #0092D0 100%) !important;
+  border-bottom: 3px solid var(--professional-gold) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .navbar .navbar-nav > li > a {
   color: white !important;
   font-weight: 500;
   font-size: 15px;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  margin: 2px 5px;
 }
 
 .navbar .navbar-nav > li > a:hover {
-  background-color: var(--who-dark-blue) !important;
+  background-color: rgba(255,255,255,0.2) !important;
   color: white !important;
+  transform: translateY(-1px);
 }
 
 .navbar .navbar-brand {
   color: white !important;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* WHO-style panels and cards */
+/* Enhanced panels and cards */
 .panel {
   border: none;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.panel:hover {
+  box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
 }
 
 .panel-heading {
-  background-color: var(--who-blue) !important;
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-dark-blue) 100%) !important;
   color: white !important;
   border: none;
-  border-radius: 4px 4px 0 0;
-  font-weight: bold;
+  border-radius: 8px 8px 0 0 !important;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 15px 20px;
 }
 
 .who-info-box {
-  background-color: #E8F4FC;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-left: 4px solid var(--who-blue);
-  padding: 15px;
-  margin-bottom: 20px;
-  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .who-formula-box {
   background-color: #F8F9FA;
   border: 1px solid #DEE2E6;
-  padding: 15px;
-  margin-bottom: 20px;
-  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 8px;
   font-family: 'Courier New', monospace;
+  border-left: 4px solid var(--professional-gold);
 }
 
-/* WHO-style buttons */
+/* Enhanced buttons */
 .btn-who {
-  background-color: var(--who-blue);
+  background: linear-gradient(135deg, var(--who-blue) 0%, var(--who-dark-blue) 100%);
   color: white;
   border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .btn-who:hover {
-  background-color: var(--who-dark-blue);
+  background: linear-gradient(135deg, var(--who-dark-blue) 0%, #004A70 100%);
   color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .btn-who-secondary {
-  background-color: var(--who-green);
+  background: linear-gradient(135deg, var(--who-green) 0%, #6BA83A 100%);
   color: white;
   border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
 }
 
 .btn-who-secondary:hover {
-  background-color: #6BA83A;
+  background: linear-gradient(135deg, #6BA83A 0%, #5A8C2E 100%);
   color: white;
+  transform: translateY(-2px);
 }
 
-/* WHO-style footer */
+/* Enhanced footer */
 .who-footer {
-  background-color: var(--who-gray);
+  background: linear-gradient(135deg, var(--who-gray) 0%, #5D5E60 100%);
   color: white;
-  padding: 15px 0;
+  padding: 25px 0;
   text-align: center;
-  margin-top: 30px;
+  margin-top: 40px;
+  border-top: 3px solid var(--professional-gold);
 }
 
 .who-footer a {
   color: var(--who-light-blue);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.who-footer a:hover {
+  color: white;
   text-decoration: underline;
 }
 
-/* Improved form controls */
+/* Enhanced form controls */
 .form-control {
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #CED4DA;
+  padding: 10px 15px;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .form-control:focus {
   border-color: var(--who-light-blue);
-  box-shadow: 0 0 0 0.2rem rgba(0, 146, 208, 0.25);
+  box-shadow: 0 0 0 0.3rem rgba(0, 146, 208, 0.15);
+  transform: translateY(-1px);
 }
 
-/* Calculation sections - WHITE BACKGROUND WITH BLACK TEXT - LARGER FONT */
+/* Enhanced calculation sections */
 .shiny-text-output, 
 .verbatimTextOutput,
 pre {
   background-color: white !important;
   color: black !important;
-  padding: 20px !important;
-  border-radius: 6px !important;
+  padding: 25px !important;
+  border-radius: 8px !important;
   border: 2px solid #E8F4FC !important;
-  font-family: 'Arial', sans-serif !important;  /* Changed to Arial for better readability */
-  font-size: 18px !important;  /* Increased font size */
+  font-family: 'Arial', sans-serif !important;
+  font-size: 16px !important;
   line-height: 1.6 !important;
-  margin-bottom: 20px !important;
+  margin-bottom: 25px !important;
   white-space: pre-wrap !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-}
-
-/* Specific styling for calculation steps */
-.shiny-text-output pre,
-.verbatimTextOutput pre {
-  font-size: 18px !important;  /* Increased font size */
-  line-height: 1.8 !important;
-  margin: 15px 0 !important;
-  padding: 20px !important;
-  background-color: #ffffff !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
   border-left: 4px solid var(--who-blue) !important;
 }
 
-/* Table styling for calculation results */
+/* Enhanced table styling */
 .table-responsive table {
   background-color: white !important;
   color: black !important;
   border: 2px solid #E8F4FC !important;
-  font-size: 18px !important;  /* Increased font size */
-  margin: 20px 0 !important;
+  font-size: 14px !important;
+  margin: 25px 0 !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .table-responsive th {
-  background-color: var(--who-light-blue) !important;
+  background: linear-gradient(135deg, var(--who-light-blue) 0%, var(--who-blue) 100%) !important;
   color: black !important;
-  font-size: 18px !important;  /* Increased font size */
-  font-weight: bold !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
   padding: 15px !important;
   text-align: center !important;
+  border: none !important;
 }
 
 .table-responsive td {
   background-color: white !important;
   color: black !important;
-  border: 1px solid #ddd !important;
-  font-size: 18px !important;  /* Increased font size */
+  border: 1px solid #e9ecef !important;
+  font-size: 14px !important;
   padding: 12px 15px !important;
 }
 
-/* Headings above calculation sections */
+/* Enhanced headings */
 h3, h4 {
   color: var(--who-dark-blue) !important;
-  margin-top: 25px !important;
-  margin-bottom: 15px !important;
+  margin-top: 30px !important;
+  margin-bottom: 20px !important;
+  font-weight: 600;
 }
 
 h3 {
-  font-size: 26px !important;  /* Increased font size */
-  font-weight: bold !important;
+  font-size: 24px !important;
+  border-bottom: 2px solid var(--professional-gold);
+  padding-bottom: 10px;
 }
 
 h4 {
-  font-size: 22px !important;  /* Increased font size */
-  font-weight: 600 !important;
+  font-size: 20px !important;
 }
 
-/* Fluid row spacing for calculation outputs */
-.fluid-row {
-  margin-bottom: 25px !important;
+
+/* Home page animations */
+.welcome-hero {
+  background: linear-gradient(135deg, #0092D0 0%, #00689D 100%);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+  border-radius: 15px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
 }
 
-.fluid-row .col-md-6 {
-  margin-bottom: 20px !important;
+.welcome-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  animation: shimmer 3s infinite linear;
 }
 
-/* Welcome header and date styling */
-.welcome-header {
-  text-align: right;
-  padding: 10px 20px !important;  /* Increased padding */
-  background-color: #f8f9fa;
-  font-size: 16px !important;  /* Increased font size */
-  color: #00689D;
-  border-bottom: 1px solid #E8F4FC;
-  font-family: 'Arial', sans-serif !important;  /* Added font family */
+.animated-features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+  margin-top: 40px;
 }
 
-.welcome-header div {
+.feature-box {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  padding: 25px;
+  border-radius: 12px;
+  width: 220px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.feature-box:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.feature-box h4 {
+  color: white !important;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.feature-box p {
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Professional contact section */
+.professional-contact {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid var(--professional-gold);
+  padding: 30px;
+  margin: 40px 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.professional-contact h4 {
+  color: var(--who-dark-blue);
+  margin-bottom: 20px;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.professional-contact p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+  margin-bottom: 15px;
+}
+
+.professional-contact .contact-email {
+  background: linear-gradient(135deg, var(--professional-gold) 0%, var(--professional-bronze) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px 0;
   display: inline-block;
-  margin-right: 15px !important;  /* Increased margin */
 }
 
-.welcome-header div:last-child {
-  border-left: 1px solid #ccc;
-  padding-left: 15px !important;  /* Increased padding */
-}
-
-/* Responsive adjustments for better mobile viewing */
+/* Enhanced responsive design */
 @media (max-width: 768px) {
   .sidebar-panel {
     margin-bottom: 20px;
@@ -256,50 +367,95 @@ h4 {
   .shiny-text-output, 
   .verbatimTextOutput,
   pre {
-    padding: 15px !important;
-    font-size: 16px !important;  /* Adjusted for mobile */
-    line-height: 1.5 !important;
-    margin-bottom: 15px !important;
+    padding: 20px !important;
+    font-size: 14px !important;
+    margin-bottom: 20px !important;
   }
   
   .table-responsive th,
   .table-responsive td {
-    font-size: 16px !important;  /* Adjusted for mobile */
+    font-size: 12px !important;
     padding: 10px !important;
   }
   
   h3 {
-    font-size: 22px !important;  /* Adjusted for mobile */
+    font-size: 20px !important;
   }
   
   h4 {
-    font-size: 20px !important;  /* Adjusted for mobile */
+    font-size: 18px !important;
   }
   
   .welcome-header {
-    font-size: 14px !important;  /* Adjusted for mobile */
-    padding: 8px 15px !important;
+    font-size: 12px !important;
+    padding: 10px 15px !important;
+    text-align: center;
+  }
+  
+  .animated-features {
+    gap: 15px;
+  }
+  
+  .feature-box {
+    width: 100%;
+    max-width: 280px;
   }
 }
 
-/* Additional spacing for better readability */
+/* Additional professional enhancements */
 .container-fluid {
-  padding: 0 20px !important;
+  padding: 0 25px !important;
 }
 
 .main-panel {
-  padding: 20px !important;
+  padding: 25px !important;
 }
 
-/* Highlight important numbers in calculations */
+/* Highlight important numbers */
 strong {
   color: var(--who-dark-blue) !important;
-  font-weight: bold !important;
+  font-weight: 700 !important;
 }
 
 em {
   color: #2C3E50 !important;
   font-style: italic !important;
+}
+
+/* Loading animations */
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--who-blue);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 2s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success states */
+.success-message {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-left: 4px solid #28a745;
+  color: #155724;
+  padding: 15px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+/* Error states */
+.error-message {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border-left: 4px solid #dc3545;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 6px;
+  margin: 10px 0;
 }
 "
 
@@ -307,40 +463,58 @@ ui <- navbarPage(
   title = div(icon("chart-bar"), "CalcuStats"),
   theme = shinytheme("flatly"),
   header = tags$head(
-    tags$style(HTML(who_css)),
-    tags$div(
-      class = "welcome-header",
-      div(style = "display: inline-block; margin-right: 15px;", 
-          textOutput("welcomeMessage")),
-      div(style = "display: inline-block; border-left: 1px solid #ccc; padding-left: 15px;", 
-          textOutput("currentDateTime"))
-    )
+    tags$style(HTML(who_css))
   ),
-  # ... rest of the UI code remains the same
-  footer = div(
-    class = "who-footer",
-    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
-         <a href='https://github.com/mudassiribrahim30' target='_blank'>GitHub Profile</a></p>"),
-    div(
-      style = "margin-top: 10px; font-size: 0.9em; color: #fff;",
-      "Your Companion for Sample Size Calculation and Descriptive Analytics"
-    )
-  ),
-  useShinyjs(),
+
   
-  # Home/Introduction Tab
+  # Enhanced Home Tab with Professional Design
   tabPanel("Home",
            div(class = "container-fluid",
+               # Animated Hero Section
+               div(class = "row",
+                   div(class = "col-md-12",
+                       div(class = "welcome-hero",
+                           h1("Welcome to CalcuStats", 
+                              style = "font-size: 3.5em; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"),
+                           p("Your Comprehensive Statistical Companion for Research Excellence",
+                             style = "font-size: 1.5em; margin-bottom: 40px; font-weight: 300;"),
+                           
+                           # Animated Feature Boxes
+                           div(class = "animated-features",
+                               div(class = "feature-box", style = "animation: float 3s ease-in-out infinite;",
+                                   h4("Sample Size Calculators"),
+                                   p("Precise calculations for various study designs with professional reporting")
+                               ),
+                               div(class = "feature-box", style = "animation: float 3s ease-in-out infinite 0.5s;",
+                                   h4("Power Analysis"),
+                                   p("Optimize your study's statistical power with robust calculations")
+                               ),
+                               div(class = "feature-box", style = "animation: float 3s ease-in-out infinite 1s;",
+                                   h4("Descriptive Statistics"),
+                                   p("Comprehensive data analysis and professional visualization")
+                               ),
+                               div(class = "feature-box", style = "animation: float 3s ease-in-out infinite 1.5s;",
+                                   h4("Professional Reports"),
+                                   p("Download detailed reports and visualizations for publications")
+                               )
+                           )
+                       )
+                   )
+               ),
+               
+               # Main Content Area
                div(class = "row",
                    div(class = "col-md-8 col-md-offset-2",
-                       div(class = "jumbotron", style = "background-color: #E8F4FC; padding: 30px;",
-                           h1("Welcome to CalcuStats", style = "color: #00689D;"),
-                           p("A comprehensive statistical tool for sample size calculation, power analysis, and descriptive statistics."),
-                           hr(),
-                           p("This application provides researchers and healthcare professionals with reliable methods for determining appropriate sample sizes for various study designs."),
-                           p("Developed by Mudasir Mohammed Ibrahim, BSc, RN")
+                       div(class = "jumbotron", style = "background: linear-gradient(135deg, #E8F4FC 0%, #D4E8F7 100%); padding: 40px; border-radius: 15px;",
+                           h2("Sample Size Calculation, Power Analysis, and Descriptive Analysis Made Simple", style = "color: #00689D; text-align: center;"),
+                           p("CalcuStats provides researchers, healthcare professionals, and students with reliable, validated methods for sample size determination, power analysis, and descriptive statistics (Developed by Mudasir Mohammed Ibrahim, BSc, RN).", 
+                             style = "font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 30px;"),
+                           hr(style = "border-color: #0092D0;"),
+                           p("This application combines statistical rigor with user-friendly design to support evidence-based research and decision-making.", 
+                             style = "font-size: 15px; line-height: 1.6;")
                        ),
                        
+                       # Feature Cards
                        div(class = "row",
                            div(class = "col-md-4",
                                div(class = "panel panel-default",
@@ -348,11 +522,13 @@ ui <- navbarPage(
                                        h3("Sample Size Calculators", class = "panel-title")
                                    ),
                                    div(class = "panel-body",
-                                       p("Determine appropriate sample sizes using:"),
+                                       p("Determine appropriate sample sizes using validated methods:"),
                                        tags$ul(
                                          tags$li("Taro Yamane formula"),
                                          tags$li("Cochran's formula"),
-                                         tags$li("Proportional allocation"),
+                                         tags$li("Single Population Proportion"),
+                                         tags$li("Case-Control Studies"),
+                                         tags$li("Cohort Studies"),
                                          tags$li("Various other statistical formulas")
                                        )
                                    )
@@ -364,13 +540,14 @@ ui <- navbarPage(
                                        h3("Power Analysis", class = "panel-title")
                                    ),
                                    div(class = "panel-body",
-                                       p("Calculate statistical power for:"),
+                                       p("Calculate statistical power for various study designs:"),
                                        tags$ul(
-                                         tags$li("t-tests"),
-                                         tags$li("ANOVA"),
+                                         tags$li("t-tests (independent, paired, one-sample)"),
+                                         tags$li("ANOVA (one-way, two-way)"),
                                          tags$li("Correlation studies"),
                                          tags$li("Regression analysis"),
-                                         tags$li("Chi-square tests")
+                                         tags$li("Chi-square tests"),
+                                         tags$li("Proportion comparisons")
                                        )
                                    )
                                )
@@ -386,25 +563,34 @@ ui <- navbarPage(
                                          tags$li("Central tendency measures"),
                                          tags$li("Dispersion metrics"),
                                          tags$li("Distribution characteristics"),
-                                         tags$li("Data visualization options")
+                                         tags$li("Data visualization"),
+                                         tags$li("Professional reporting")
                                        )
                                    )
                                )
                            )
                        ),
                        
-                       div(class = "who-info-box",
-                           h4("Getting Started"),
-                           p("1. Select the appropriate calculator from the navigation menu"),
-                           p("2. Enter your study parameters"),
-                           p("3. Review the results and download reports"),
-                           p("4. Use the flowchart features to visualize your sampling strategy")
+                       # Professional Contact Section
+                       div(class = "professional-contact",
+                           h4("Contribute to CalcuStats Continuous Development"),
+                           p("We are continuously working to enhance CalcuStats with new features and formulas. Your input is valuable in making this tool more comprehensive and useful for the research community."),
+                           p("If you have suggestions for additional formulas or statistical methods that could benefit researchers, or if you encounter any issues, please don't hesitate to share them with us."),
+                           p("We welcome:"),
+                           tags$ul(
+                             tags$li("New formula suggestions for sample size calculation"),
+                             tags$li("Any feedback to improve user experience")
+                           ),
+                           p("Contact us at:"),
+                           div(class = "contact-email", "mudassiribrahim30@gmail.com"),
+                           p("Your contributions help make CalcuStats a better tool for everyone in the research community.")
                        )
                    )
                )
            )
   ),
   
+  # Proportional Allocation Tab (unchanged but with enhanced styling)
   tabPanel("Proportional Allocation",
            sidebarLayout(
              sidebarPanel(
@@ -548,6 +734,7 @@ ui <- navbarPage(
            )
   ),
   
+  # Taro Yamane Tab (unchanged)
   tabPanel("Taro Yamane",
            sidebarLayout(
              sidebarPanel(
@@ -691,6 +878,7 @@ ui <- navbarPage(
            )
   ),
   
+  # Cochran Formula Tab (unchanged)
   tabPanel("Cochran Formula",
            sidebarLayout(
              sidebarPanel(
@@ -829,7 +1017,7 @@ ui <- navbarPage(
            )
   ),
   
-  # REVISED: Other Formulas Tab
+  # UPDATED: Other Formulas Tab with Single Population Proportion
   tabPanel("Other Formulas",
            sidebarLayout(
              sidebarPanel(
@@ -845,7 +1033,8 @@ ui <- navbarPage(
                                     icon = icon("refresh"))
                      ),
                      selectInput("formula_type", "Select Study Design:",
-                                 choices = c("Mean Estimation (Known Variance)" = "mean_known_var",
+                                 choices = c("Single Population Proportion (EPI INFO)" = "single_proportion",
+                                             "Mean Estimation (Known Variance)" = "mean_known_var",
                                              "Mean Estimation (Unknown Variance)" = "mean_unknown_var",
                                              "Proportion Difference" = "proportion_diff",
                                              "Correlation Coefficient" = "correlation",
@@ -969,6 +1158,7 @@ ui <- navbarPage(
            )
   ),
   
+  # UPDATED: Power Analysis Tab with Enhanced Simple Linear Regression Support
   tabPanel("Power Analysis",
            sidebarLayout(
              sidebarPanel(
@@ -987,14 +1177,66 @@ ui <- navbarPage(
                                  choices = c("Independent t-test", "Paired t-test", "One-sample t-test", "One-Way ANOVA",
                                              "Two-Way ANOVA", "Proportion", "Correlation", "Chi-squared",
                                              "Simple Linear Regression", "Multiple Linear Regression")),
-                     numericInput("effectSize", "Effect Size", value = 0.5),
-                     numericInput("alpha", "Significance Level (alpha)", value = 0.05),
-                     numericInput("power", "Desired Power", value = 0.8),
+                     
+                     # Effect size input with dynamic labels
+                     conditionalPanel(
+                       condition = "input.testType == 'Simple Linear Regression' || input.testType == 'Multiple Linear Regression'",
+                       numericInput("effectSize", "Effect Size (f²)", value = 0.15, min = 0.01, step = 0.01)
+                     ),
+                     conditionalPanel(
+                       condition = "input.testType != 'Simple Linear Regression' && input.testType != 'Multiple Linear Regression'",
+                       numericInput("effectSize", "Effect Size", value = 0.3, min = 0.01, step = 0.01)
+                     ),
+                     
+                     numericInput("alpha", "Significance Level (alpha)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
+                     numericInput("power", "Desired Power", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
+                     
+                     # Test-specific parameters
                      conditionalPanel(
                        condition = "input.testType == 'Multiple Linear Regression'",
-                       numericInput("predictors", "Number of Predictors", value = 2, min = 1)
+                       numericInput("predictors", "Number of Predictors (u)", value = 2, min = 1, step = 1)
+                     ),
+                     conditionalPanel(
+                       condition = "input.testType == 'Simple Linear Regression'",
+                       div(class = "who-info-box",
+                           style = "margin-top: 10px; font-size: 12px;",
+                           HTML("<strong>Effect Size Guidelines (f²):</strong><br>
+                              Small: 0.02<br>
+                              Medium: 0.15<br>
+                              Large: 0.35")
+                       )
+                     ),
+                     conditionalPanel(
+                       condition = "input.testType == 'One-Way ANOVA' || input.testType == 'Two-Way ANOVA'",
+                       numericInput("groups", "Number of Groups", value = 3, min = 2)
+                     ),
+                     conditionalPanel(
+                       condition = "input.testType == 'Chi-squared'",
+                       numericInput("df", "Degrees of Freedom", value = 1, min = 1),
+                       numericInput("nrow", "Number of Rows", value = 2, min = 2),
+                       numericInput("ncol", "Number of Columns", value = 2, min = 2)
                      ),
                      actionButton("runPower", "Run Power Analysis", class = "btn-who")
+                 )
+               ),
+               
+               div(
+                 class = "panel panel-default",
+                 div(class = "panel-heading", "Effect Size Help"),
+                 div(class = "panel-body",
+                     conditionalPanel(
+                       condition = "input.testType == 'Simple Linear Regression'",
+                       HTML("
+                       <strong>Simple Linear Regression Effect Size (f²):</strong><br>
+                       f² = R² / (1 - R²)<br><br>
+                       <strong>Where:</strong><br>
+                       R² = proportion of variance explained<br><br>
+                       <strong>Common values:</strong><br>
+                       • Small: 0.02 (R² ≈ 2%)<br>
+                       • Medium: 0.15 (R² ≈ 13%)<br>
+                       • Large: 0.35 (R² ≈ 26%)
+                     ")
+                     )
                  )
                ),
                
@@ -1020,14 +1262,49 @@ ui <- navbarPage(
               <li><strong>Sample size:</strong> The number of observations in your study</li>
               <li><strong>Significance level (α):</strong> The probability of a Type I error (false positive)</li>
             </ul>
+            <p><strong>Effect Size Guidelines:</strong></p>
+            <ul>
+              <li><strong>t-tests:</strong> Cohen's d (small: 0.2, medium: 0.5, large: 0.8)</li>
+              <li><strong>ANOVA:</strong> Cohen's f (small: 0.1, medium: 0.25, large: 0.4)</li>
+              <li><strong>Correlation:</strong> r (small: 0.1, medium: 0.3, large: 0.5)</li>
+              <li><strong>Chi-squared:</strong> w (small: 0.1, medium: 0.3, large: 0.5)</li>
+              <li><strong>Simple Linear Regression:</strong> f² (small: 0.02, medium: 0.15, large: 0.35)</li>
+              <li><strong>Multiple Linear Regression:</strong> f² (small: 0.02, medium: 0.15, large: 0.35)</li>
+            </ul>
             <p>A power of 0.8 (80%) is generally considered acceptable in most research contexts.</p>
           ")
                ),
-               div(style = "font-size: 14px;", verbatimTextOutput("powerResult"))
+               div(style = "font-size: 14px;", verbatimTextOutput("powerResult")),
+               conditionalPanel(
+                 condition = "output.powerError",
+                 div(class = "error-message",
+                     textOutput("powerError")
+                 )
+               ),
+               conditionalPanel(
+                 condition = "input.testType == 'Simple Linear Regression'",
+                 div(class = "who-info-box",
+                     style = "margin-top: 20px;",
+                     HTML("
+                     <strong>Simple Linear Regression Power Analysis:</strong><br>
+                     <p>This calculates the sample size needed to detect a significant relationship between a single predictor variable and an outcome variable.</p>
+                     <p><strong>Formula:</strong> n = (Zα + Zβ)² / f² + 2</p>
+                     <p><strong>Where:</strong></p>
+                     <ul>
+                       <li>Zα = Z-score for alpha (Type I error rate)</li>
+                       <li>Zβ = Z-score for beta (Type II error rate)</li>
+                       <li>f² = R² / (1 - R²)</li>
+                       <li>n = total sample size</li>
+                     </ul>
+                     <p>The calculation accounts for the 2 parameters being estimated (intercept and slope).</p>
+                   ")
+                 )
+               )
              )
            )
   ),
   
+  # Descriptive Statistics Tab (unchanged)
   tabPanel("Descriptive Statistics",
            sidebarLayout(
              sidebarPanel(
@@ -1111,7 +1388,7 @@ ui <- navbarPage(
            )
   ),
   
-  # User Guide Tab (now properly maintained as its own tab)
+  # User Guide Tab
   tabPanel("User Guide",
            fluidPage(
              div(
@@ -1132,7 +1409,7 @@ ui <- navbarPage(
                
                h3("About the Developer"),
                p("CalcuStats was developed by Mudasir Mohammed Ibrahim, a Registered Nurse with a Bachelor of Science degree and Diploma qualifications."),
-               p("With expertise in both healthcare and data analysis, Mudasir created this tool to help researchers and students perform essential statistical calculations with ease."),
+               p("With expertise in both healthcare and data analysis, Mudasir created this tool to help researchers and students perform essential sample size and statistical calculations with ease."),
                p("Connect with Mudasir on GitHub:", 
                  tags$a(href="https://github.com/mudassiribrahim30", target="_blank", "github.com/mudassiribrahim30")),
                
@@ -1175,19 +1452,26 @@ ui <- navbarPage(
                p("Thank you for using CalcuStats!")
              )
            )
+  ),
+  
+  footer = div(
+    class = "who-footer",
+    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
+         <a href='https://github.com/mudassiribrahim30' target='_blank'>GitHub Profile</a> | 
+         <a href='mailto:mudassiribrahim30@gmail.com'>Contact Developer</a></p>"),
+    div(
+      style = "margin-top: 10px; font-size: 0.9em; color: #fff;",
+      "Your Professional Companion for Statistical Analysis and Sample Size Calculation"
+    ),
+    div(
+      style = "margin-top: 15px; font-size: 0.8em; color: #ccc;",
+      "We welcome suggestions for new formulas and features. Contact us to contribute!"
+    )
   )
 )
 
-
+# Server logic with all the requested improvements
 server <- function(input, output, session) {
-  # Welcome message and date/time
-  output$welcomeMessage <- renderText({
-    paste(getGreeting(), "Welcome to CalcuStats!")
-  })
-  
-  output$currentDateTime <- renderText({
-    format(Sys.time(), "%A, %B %d, %Y %I:%M %p")
-  })
   
   # Initialize reactive values for storing inputs
   initValues <- reactiveValues(
@@ -1216,12 +1500,13 @@ server <- function(input, output, session) {
       stratum_pops = c(100)
     ),
     other = list(
-      formula_type = "mean_known_var",
+      formula_type = "single_proportion",
       alpha_other = 0.05,
       power_other = 0.8,
       effect_size_other = 0.5,
       sigma_other = 1,
       d_other = 0.1,
+      p_other = 0.5,
       p1_other = 0.5,
       p2_other = 0.3,
       r_other = 0.3,
@@ -1313,6 +1598,7 @@ server <- function(input, output, session) {
         updateNumericInput(session, "effect_size_other", value = other_vals$effect_size_other)
         updateNumericInput(session, "sigma_other", value = other_vals$sigma_other)
         updateNumericInput(session, "d_other", value = other_vals$d_other)
+        updateNumericInput(session, "p_other", value = other_vals$p_other)
         updateNumericInput(session, "p1_other", value = other_vals$p1_other)
         updateNumericInput(session, "p2_other", value = other_vals$p2_other)
         updateNumericInput(session, "r_other", value = other_vals$r_other)
@@ -1401,6 +1687,7 @@ server <- function(input, output, session) {
       effect_size_other = input$effect_size_other,
       sigma_other = input$sigma_other,
       d_other = input$d_other,
+      p_other = input$p_other,
       p1_other = input$p1_other,
       p2_other = input$p2_other,
       r_other = input$r_other,
@@ -1487,6 +1774,7 @@ server <- function(input, output, session) {
     updateNumericInput(session, "effect_size_other", value = initValues$other$effect_size_other)
     updateNumericInput(session, "sigma_other", value = initValues$other$sigma_other)
     updateNumericInput(session, "d_other", value = initValues$other$d_other)
+    updateNumericInput(session, "p_other", value = initValues$other$p_other)
     updateNumericInput(session, "p1_other", value = initValues$other$p1_other)
     updateNumericInput(session, "p2_other", value = initValues$other$p2_other)
     updateNumericInput(session, "r_other", value = initValues$other$r_other)
@@ -3525,6 +3813,7 @@ $(document).ready(function() {
       writeLines(steps, file)
     }
   )
+  
   # Other Formulas section variables
   rv_other <- reactiveValues(
     stratumCount = 1,
@@ -3573,10 +3862,16 @@ $(document).ready(function() {
     sum(sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]]), na.rm = TRUE)
   })
   
+  # UPDATED: Formula parameters with Single Population Proportion
   output$formula_params <- renderUI({
     formula_type <- input$formula_type
     
     params <- switch(formula_type,
+                     "single_proportion" = tagList(
+                       numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
+                       numericInput("p_other", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
+                       numericInput("d_other", "Margin of Error (d)", value = 0.05, min = 0.01, step = 0.01)
+                     ),
                      "mean_known_var" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("sigma_other", "Standard Deviation (σ)", value = 1, min = 0.01, step = 0.1),
@@ -3640,12 +3935,26 @@ $(document).ready(function() {
     return(params)
   })
   
+  # UPDATED: Formula descriptions with Single Population Proportion
   output$formula_description <- renderUI({
     formula_type <- input$formula_type
     
     description <- switch(formula_type,
+                          "single_proportion" = div(
+                            class = "who-info-box",
+                            HTML("
+                <strong>Single Population Proportion (EPI INFO 7.2.2.6):</strong><br>
+                <em>n = Z² × p × (1-p) / d²</em><br>
+                <ul>
+                  <li><strong>Z</strong> = Z-score for desired confidence level</li>
+                  <li><strong>p</strong> = estimated proportion</li>
+                  <li><strong>d</strong> = margin of error</li>
+                </ul>
+                Use this formula for estimating a single proportion with specified precision.
+              ")
+                          ),
                           "mean_known_var" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Mean Estimation with Known Variance:</strong><br>
                 <em>n = (Z² × σ²) / d²</em><br>
@@ -3658,7 +3967,7 @@ $(document).ready(function() {
               ")
                           ),
                           "mean_unknown_var" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Mean Estimation with Unknown Variance:</strong><br>
                 <em>n = (t² × s²) / d²</em> (approximated using power analysis)<br>
@@ -3671,7 +3980,7 @@ $(document).ready(function() {
               ")
                           ),
                           "proportion_diff" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Difference Between Two Proportions:</strong><br>
                 <em>n = [Zα√(2p(1-p)) + Zβ√(p₁(1-p₁) + p₂(1-p₂))]² / (p₁ - p₂)²</em><br>
@@ -3685,7 +3994,7 @@ $(document).ready(function() {
               ")
                           ),
                           "correlation" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Correlation Coefficient:</strong><br>
                 <em>n = [(Zα + Zβ) / (0.5 × ln((1+r)/(1-r)))]² + 3</em><br>
@@ -3698,7 +4007,7 @@ $(document).ready(function() {
               ")
                           ),
                           "regression" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Regression Coefficient:</strong><br>
                 <em>n = (Zα + Zβ)² / (f²) + k + 1</em><br>
@@ -3712,7 +4021,7 @@ $(document).ready(function() {
               ")
                           ),
                           "odds_ratio" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Odds Ratio:</strong><br>
                 <em>n = [Zα√(2p(1-p)) + Zβ√(p₁(1-p₁) + p₂(1-p₂))]² / (ln(OR))²</em><br>
@@ -3728,7 +4037,7 @@ $(document).ready(function() {
               ")
                           ),
                           "relative_risk" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Relative Risk:</strong><br>
                 <em>n = [Zα√(2p(1-p)) + Zβ√(p₁(1-p₁) + p₂(1-p₂))]² / (ln(RR))²</em><br>
@@ -3744,7 +4053,7 @@ $(document).ready(function() {
               ")
                           ),
                           "prevalence" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Prevalence Study:</strong><br>
                 <em>n = (Z² × p × (1-p)) / d²</em><br>
@@ -3757,7 +4066,7 @@ $(document).ready(function() {
               ")
                           ),
                           "case_control" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Case-Control Study:</strong><br>
                 <em>n = [Zα√(2p(1-p)) + Zβ√(p₁(1-p₁) + p₂(1-p₂))]² / (p₁ - p₂)²</em><br>
@@ -3773,7 +4082,7 @@ $(document).ready(function() {
               ")
                           ),
                           "cohort" = div(
-                            style = "padding: 10px; background-color: #f0f8ff; border-left: 5px solid #1A5276; margin-bottom: 20px; font-size: 14px;",
+                            class = "who-info-box",
                             HTML("
                 <strong>Cohort Study:</strong><br>
                 <em>n = [Zα√(2p(1-p)) + Zβ√(p₁(1-p₁) + p₂(1-p₂))]² / (p₁ - p₂)²</em><br>
@@ -3793,11 +4102,19 @@ $(document).ready(function() {
     return(description)
   })
   
+  # UPDATED: Sample size calculation with Single Population Proportion and fixed Case-Control/Cohort
   otherSampleSize <- reactive({
     formula_type <- input$formula_type
     
     tryCatch({
       result <- switch(formula_type,
+                       "single_proportion" = {
+                         alpha <- input$alpha_other
+                         p <- input$p_other
+                         d <- input$d_other
+                         z <- qnorm(1 - alpha/2)
+                         ceiling((z^2 * p * (1 - p)) / (d^2))
+                       },
                        "mean_known_var" = {
                          alpha <- input$alpha_other
                          sigma <- input$sigma_other
@@ -3872,11 +4189,27 @@ $(document).ready(function() {
                          or <- input$or_other
                          p1 <- input$p1_other
                          r <- input$r_other  # case:control ratio
-                         p2 <- p1 * or / (1 + p1 * (or - 1))
-                         result <- pwr.2p2n.test(h = ES.h(p1, p2), n1 = NULL, n2 = r, 
-                                                 sig.level = alpha, power = power, 
-                                                 alternative = "two.sided")
-                         ceiling(result$n1 + result$n2)  # Total sample size
+                         
+                         # FIXED: Ensure valid proportions and calculate p2 correctly
+                         p1 <- max(0.01, min(0.99, p1))
+                         p2 <- (p1 * or) / (1 + p1 * (or - 1))
+                         p2 <- max(0.01, min(0.99, p2))
+                         
+                         # FIXED: Use proper sample size calculation for case-control
+                         p_bar <- (p1 + p2) / 2
+                         q_bar <- 1 - p_bar
+                         q1 <- 1 - p1
+                         q2 <- 1 - p2
+                         
+                         z_alpha <- qnorm(1 - alpha/2)
+                         z_beta <- qnorm(power)
+                         
+                         n_per_group <- ((z_alpha * sqrt(2 * p_bar * q_bar) + 
+                                            z_beta * sqrt(p1 * q1 + p2 * q2))^2) / ((p1 - p2)^2)
+                         
+                         n_cases <- ceiling(n_per_group)
+                         n_controls <- ceiling(n_cases * r)
+                         n_cases + n_controls  # Total sample size
                        },
                        "cohort" = {
                          alpha <- input$alpha_other
@@ -3884,11 +4217,27 @@ $(document).ready(function() {
                          rr <- input$rr_other
                          p1 <- input$p1_other
                          r <- input$r_other  # exposed:unexposed ratio
+                         
+                         # FIXED: Ensure valid proportions and calculate p2 correctly
+                         p1 <- max(0.01, min(0.99, p1))
                          p2 <- p1 * rr
-                         result <- pwr.2p2n.test(h = ES.h(p1, p2), n1 = NULL, n2 = r, 
-                                                 sig.level = alpha, power = power, 
-                                                 alternative = "two.sided")
-                         ceiling(result$n1 + result$n2)  # Total sample size
+                         p2 <- max(0.01, min(0.99, p2))
+                         
+                         # FIXED: Use proper sample size calculation for cohort
+                         p_bar <- (p1 + p2) / 2
+                         q_bar <- 1 - p_bar
+                         q1 <- 1 - p1
+                         q2 <- 1 - p2
+                         
+                         z_alpha <- qnorm(1 - alpha/2)
+                         z_beta <- qnorm(power)
+                         
+                         n_per_group <- ((z_alpha * sqrt(2 * p_bar * q_bar) + 
+                                            z_beta * sqrt(p1 * q1 + p2 * q2))^2) / ((p1 - p2)^2)
+                         
+                         n_exposed <- ceiling(n_per_group)
+                         n_unexposed <- ceiling(n_exposed * r)
+                         n_exposed + n_unexposed  # Total sample size
                        }
       )
       
@@ -3907,10 +4256,26 @@ $(document).ready(function() {
     ceiling(n / (1 - non_response_rate))
   })
   
+  # UPDATED: Formula explanations with Single Population Proportion and fixed Case-Control/Cohort
   output$formulaExplanation_other <- renderText({
     formula_type <- input$formula_type
     
     explanation <- switch(formula_type,
+                          "single_proportion" = {
+                            alpha <- input$alpha_other
+                            p <- input$p_other
+                            d <- input$d_other
+                            z <- qnorm(1 - alpha/2)
+                            n <- ceiling((z^2 * p * (1 - p)) / (d^2))
+                            paste(
+                              "Single Population Proportion Formula (EPI INFO 7.2.2.6):\n",
+                              "Formula: n = Z² × p × (1-p) / d²\n",
+                              "Calculation: (", round(z, 3), "² × ", p, " × (1-", p, ")) / ", d, "²\n",
+                              "Step-by-step: (", round(z^2, 3), " × ", p, " × ", (1-p), ") / ", d^2, "\n",
+                              "Result: ", (z^2 * p * (1-p)), " / ", d^2, " = ", (z^2 * p * (1-p)) / d^2, "\n",
+                              "Apply ceiling function: ", n
+                            )
+                          },
                           "mean_known_var" = {
                             alpha <- input$alpha_other
                             sigma <- input$sigma_other
@@ -4044,21 +4409,37 @@ $(document).ready(function() {
                             or <- input$or_other
                             p1 <- input$p1_other
                             r <- input$r_other
-                            p2 <- p1 * or / (1 + p1 * (or - 1))
-                            result <- pwr.2p2n.test(h = ES.h(p1, p2), n1 = NULL, n2 = r, 
-                                                    sig.level = alpha, power = power, 
-                                                    alternative = "two.sided")
+                            
+                            # FIXED calculations
+                            p1 <- max(0.01, min(0.99, p1))
+                            p2 <- (p1 * or) / (1 + p1 * (or - 1))
+                            p2 <- max(0.01, min(0.99, p2))
+                            
+                            p_bar <- (p1 + p2) / 2
+                            q_bar <- 1 - p_bar
+                            q1 <- 1 - p1
+                            q2 <- 1 - p2
+                            
+                            z_alpha <- qnorm(1 - alpha/2)
+                            z_beta <- qnorm(power)
+                            
+                            n_per_group <- ((z_alpha * sqrt(2 * p_bar * q_bar) + 
+                                               z_beta * sqrt(p1 * q1 + p2 * q2))^2) / ((p1 - p2)^2)
+                            
+                            n_cases <- ceiling(n_per_group)
+                            n_controls <- ceiling(n_cases * r)
+                            total_n <- n_cases + n_controls
+                            
                             paste(
-                              "Case-Control Study:\n",
+                              "Case-Control Study (Fixed):\n",
                               "Odds ratio: ", or, "\n",
                               "Control proportion: ", p1, "\n",
                               "Case proportion: ", round(p2, 3), "\n",
                               "Case:Control ratio: ", r, "\n",
-                              "Effect size (h): ", round(ES.h(p1, p2), 3), "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
-                              "Cases needed: ", ceiling(result$n1), "\n",
-                              "Controls needed: ", ceiling(result$n2), "\n",
-                              "Total sample size: ", ceiling(result$n1 + result$n2)
+                              "Cases needed: ", n_cases, "\n",
+                              "Controls needed: ", n_controls, "\n",
+                              "Total sample size: ", total_n
                             )
                           },
                           "cohort" = {
@@ -4067,21 +4448,37 @@ $(document).ready(function() {
                             rr <- input$rr_other
                             p1 <- input$p1_other
                             r <- input$r_other
+                            
+                            # FIXED calculations
+                            p1 <- max(0.01, min(0.99, p1))
                             p2 <- p1 * rr
-                            result <- pwr.2p2n.test(h = ES.h(p1, p2), n1 = NULL, n2 = r, 
-                                                    sig.level = alpha, power = power, 
-                                                    alternative = "two.sided")
+                            p2 <- max(0.01, min(0.99, p2))
+                            
+                            p_bar <- (p1 + p2) / 2
+                            q_bar <- 1 - p_bar
+                            q1 <- 1 - p1
+                            q2 <- 1 - p2
+                            
+                            z_alpha <- qnorm(1 - alpha/2)
+                            z_beta <- qnorm(power)
+                            
+                            n_per_group <- ((z_alpha * sqrt(2 * p_bar * q_bar) + 
+                                               z_beta * sqrt(p1 * q1 + p2 * q2))^2) / ((p1 - p2)^2)
+                            
+                            n_exposed <- ceiling(n_per_group)
+                            n_unexposed <- ceiling(n_exposed * r)
+                            total_n <- n_exposed + n_unexposed
+                            
                             paste(
-                              "Cohort Study:\n",
+                              "Cohort Study (Fixed):\n",
                               "Relative risk: ", rr, "\n",
                               "Unexposed proportion: ", p1, "\n",
                               "Exposed proportion: ", round(p2, 3), "\n",
                               "Exposed:Unexposed ratio: ", r, "\n",
-                              "Effect size (h): ", round(ES.h(p1, p2), 3), "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
-                              "Exposed needed: ", ceiling(result$n1), "\n",
-                              "Unexposed needed: ", ceiling(result$n2), "\n",
-                              "Total sample size: ", ceiling(result$n1 + result$n2)
+                              "Exposed needed: ", n_exposed, "\n",
+                              "Unexposed needed: ", n_unexposed, "\n",
+                              "Total sample size: ", total_n
                             )
                           }
     )
@@ -4166,6 +4563,843 @@ $(document).ready(function() {
   output$allocationTable_other <- renderTable({ allocationData_other() })
   output$interpretationText_other <- renderText({ interpretationText_other() })
   
+  # UPDATED: Power Analysis with robust error handling for Simple Linear Regression
+  observeEvent(input$runPower, {
+    tryCatch({
+      # Input validation
+      if (is.na(input$effectSize) || input$effectSize <= 0) {
+        stop("Effect size must be a positive number")
+      }
+      
+      if (is.na(input$alpha) || input$alpha <= 0 || input$alpha >= 1) {
+        stop("Alpha must be between 0 and 1")
+      }
+      
+      if (is.na(input$power) || input$power <= 0 || input$power >= 1) {
+        stop("Power must be between 0 and 1")
+      }
+      
+      result <- switch(input$testType,
+                       "Independent t-test" = {
+                         pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                    power = input$power, type = "two.sample", 
+                                    alternative = "two.sided")
+                       },
+                       "Paired t-test" = {
+                         pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                    power = input$power, type = "paired", 
+                                    alternative = "two.sided")
+                       },
+                       "One-sample t-test" = {
+                         pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                    power = input$power, type = "one.sample", 
+                                    alternative = "two.sided")
+                       },
+                       "One-Way ANOVA" = {
+                         k <- ifelse(!is.null(input$groups) && !is.na(input$groups), 
+                                     input$groups, 3)
+                         pwr.anova.test(k = k, f = input$effectSize, sig.level = input$alpha, 
+                                        power = input$power)
+                       },
+                       "Two-Way ANOVA" = {
+                         k <- ifelse(!is.null(input$groups) && !is.na(input$groups), 
+                                     input$groups, 4)
+                         pwr.anova.test(k = k, f = input$effectSize, sig.level = input$alpha, 
+                                        power = input$power)
+                       },
+                       "Proportion" = {
+                         p1 <- input$effectSize
+                         p2 <- 0.5
+                         
+                         if (p1 <= 0 || p1 >= 1) {
+                           stop("Proportion must be between 0 and 1")
+                         }
+                         
+                         h_val <- ES.h(p1, p2)
+                         if (is.na(h_val) || !is.finite(h_val)) {
+                           stop("Invalid effect size for proportion test")
+                         }
+                         pwr.2p.test(h = h_val, sig.level = input$alpha, 
+                                     power = input$power, alternative = "two.sided")
+                       },
+                       "Correlation" = {
+                         r_val <- input$effectSize
+                         if (abs(r_val) >= 1) {
+                           stop("Correlation coefficient must be between -1 and 1")
+                         }
+                         pwr.r.test(r = r_val, sig.level = input$alpha, 
+                                    power = input$power, alternative = "two.sided")
+                       },
+                       "Chi-squared" = {
+                         w_val <- input$effectSize
+                         df_val <- ifelse(!is.null(input$df) && !is.na(input$df), 
+                                          input$df, 1)
+                         
+                         if (w_val <= 0 || w_val > 1) {
+                           stop("Effect size for chi-squared (w) must be between 0 and 1")
+                         }
+                         if (df_val <= 0) {
+                           stop("Degrees of freedom must be positive")
+                         }
+                         
+                         pwr.chisq.test(w = w_val, df = df_val, sig.level = input$alpha, 
+                                        power = input$power)
+                       },
+                       "Simple Linear Regression" = {
+                         # ROBUST FIX: Enhanced validation for Simple Linear Regression
+                         f2_val <- input$effectSize
+                         
+                         if (f2_val <= 0) {
+                           stop("Effect size (f²) must be positive for regression")
+                         }
+                         
+                         if (f2_val > 10) {
+                           warning("Very large effect size detected. This may indicate unrealistic expectations.")
+                         }
+                         
+                         # For simple linear regression: u = 1 (one predictor)
+                         result <- pwr.f2.test(u = 1, f2 = f2_val, 
+                                               sig.level = input$alpha, power = input$power)
+                         
+                         # Calculate total sample size: n = v + u + 1
+                         # Where v = denominator degrees of freedom from pwr.f2.test
+                         # u = number of predictors (1 for simple regression)
+                         # +1 accounts for the intercept
+                         total_n <- ceiling(result$v + 1 + 1)
+                         
+                         # Return both the pwr result and calculated total sample size
+                         list(pwr_result = result, total_n = total_n)
+                       },
+                       "Multiple Linear Regression" = {
+                         f2_val <- input$effectSize
+                         predictors <- ifelse(!is.null(input$predictors) && !is.na(input$predictors), 
+                                              input$predictors, 2)
+                         
+                         if (f2_val <= 0) {
+                           stop("Effect size (f²) must be positive for regression")
+                         }
+                         
+                         if (predictors <= 0) {
+                           stop("Number of predictors must be positive")
+                         }
+                         
+                         result <- pwr.f2.test(u = predictors, f2 = f2_val, 
+                                               sig.level = input$alpha, power = input$power)
+                         
+                         # Calculate total sample size: n = v + u + 1
+                         total_n <- ceiling(result$v + predictors + 1)
+                         
+                         list(pwr_result = result, total_n = total_n)
+                       }
+      )
+      
+      # Clear any previous errors
+      output$powerError <- renderText({ "" })
+      outputOptions(output, "powerError", suspendWhenHidden = FALSE)
+      
+      # Format results based on test type
+      if (input$testType %in% c("Simple Linear Regression", "Multiple Linear Regression")) {
+        sample_size <- result$total_n
+        pwr_result <- result$pwr_result
+      } else {
+        sample_size <- if(input$testType %in% c("Independent t-test", "Paired t-test", "Proportion")) {
+          ceiling(result$n * 2)
+        } else if (input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+          ceiling(result$n)
+        } else if (input$testType == "Chi-squared") {
+          ceiling(result$N)
+        } else {
+          ceiling(result$n)
+        }
+        pwr_result <- result
+      }
+      
+      per_group <- if(input$testType %in% c("Independent t-test", "Paired t-test", "Proportion")) {
+        ceiling(pwr_result$n)
+      } else if (input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+        ceiling(pwr_result$n)
+      } else {
+        NULL
+      }
+      
+      output$powerResult <- renderText({
+        result_text <- paste(
+          "Power Analysis Results for", input$testType, "\n",
+          "========================================\n",
+          "Effect size:", round(input$effectSize, 3), 
+          if(input$testType %in% c("Simple Linear Regression", "Multiple Linear Regression")) 
+            paste("(f² =", round(input$effectSize, 3), ")") 
+          else if(input$testType == "Chi-squared") paste("(w =", round(input$effectSize, 3), ")") 
+          else if(input$testType == "Correlation") paste("(r =", round(input$effectSize, 3), ")") 
+          else "",
+          "\n",
+          "Alpha:", input$alpha, "\n",
+          "Power:", input$power, "\n",
+          "Required sample size:", sample_size, "\n"
+        )
+        
+        if (!is.null(per_group)) {
+          result_text <- paste(
+            result_text,
+            if(input$testType %in% c("Independent t-test", "Paired t-test", "Proportion")) {
+              paste("Sample size per group:", per_group)
+            } else if(input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+              paste("Sample size per group:", per_group)
+            } else ""
+          )
+        }
+        
+        if(input$testType == "Multiple Linear Regression") {
+          result_text <- paste(result_text, "\nNumber of predictors:", input$predictors)
+        }
+        
+        if(input$testType == "Simple Linear Regression") {
+          result_text <- paste(result_text, "\nPredictors: 1 (simple linear regression)")
+          
+          # Add R² interpretation for better understanding
+          r_squared <- input$effectSize / (1 + input$effectSize)
+          result_text <- paste(result_text, 
+                               "\nEquivalent R²:", round(r_squared, 4),
+                               "(" , round(r_squared * 100, 1), "% of variance explained)")
+        }
+        
+        if(input$testType == "Chi-squared") {
+          result_text <- paste(result_text, "\nDegrees of freedom:", input$df)
+        }
+        
+        result_text
+      })
+      
+    }, error = function(e) {
+      # Display user-friendly error message
+      output$powerResult <- renderText({ 
+        paste("Power analysis could not be completed.\n",
+              "Please check your input values and try again.")
+      })
+      
+      output$powerError <- renderText({
+        paste("Error:", e$message)
+      })
+      outputOptions(output, "powerError", suspendWhenHidden = FALSE)
+    })
+  })
+  
+  # Enhanced Power Analysis download handler with Simple Linear Regression support
+  output$downloadPowerSteps <- downloadHandler(
+    filename = function() {
+      paste("power_analysis_results_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      tryCatch({
+        # Replicate the power calculation for the download
+        result <- switch(input$testType,
+                         "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                                           power = input$power, type = "two.sample", 
+                                                           alternative = "two.sided"),
+                         "Paired t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                                      power = input$power, type = "paired", 
+                                                      alternative = "two.sided"),
+                         "One-sample t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
+                                                          power = input$power, type = "one.sample", 
+                                                          alternative = "two.sided"),
+                         "One-Way ANOVA" = {
+                           k <- ifelse(!is.null(input$groups) && !is.na(input$groups), 
+                                       input$groups, 3)
+                           pwr.anova.test(k = k, f = input$effectSize, sig.level = input$alpha, 
+                                          power = input$power)
+                         },
+                         "Two-Way ANOVA" = {
+                           k <- ifelse(!is.null(input$groups) && !is.na(input$groups), 
+                                       input$groups, 4)
+                           pwr.anova.test(k = k, f = input$effectSize, sig.level = input$alpha, 
+                                          power = input$power)
+                         },
+                         "Proportion" = {
+                           p1 <- input$effectSize
+                           p2 <- 0.5
+                           h_val <- ES.h(p1, p2)
+                           pwr.2p.test(h = h_val, sig.level = input$alpha, 
+                                       power = input$power, alternative = "two.sided")
+                         },
+                         "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, 
+                                                    power = input$power, alternative = "two.sided"),
+                         "Chi-squared" = {
+                           w_val <- input$effectSize
+                           df_val <- ifelse(!is.null(input$df) && !is.na(input$df), 
+                                            input$df, 1)
+                           pwr.chisq.test(w = w_val, df = df_val, sig.level = input$alpha, 
+                                          power = input$power)
+                         },
+                         "Simple Linear Regression" = {
+                           f2_val <- input$effectSize
+                           result <- pwr.f2.test(u = 1, f2 = f2_val, 
+                                                 sig.level = input$alpha, power = input$power)
+                           total_n <- ceiling(result$v + 1 + 1)
+                           list(pwr_result = result, total_n = total_n)
+                         },
+                         "Multiple Linear Regression" = {
+                           f2_val <- input$effectSize
+                           predictors <- ifelse(!is.null(input$predictors) && !is.na(input$predictors), 
+                                                input$predictors, 2)
+                           result <- pwr.f2.test(u = predictors, f2 = f2_val, 
+                                                 sig.level = input$alpha, power = input$power)
+                           total_n <- ceiling(result$v + predictors + 1)
+                           list(pwr_result = result, total_n = total_n)
+                         }
+        )
+        
+        # Calculate sample size based on test type
+        if (input$testType %in% c("Simple Linear Regression", "Multiple Linear Regression")) {
+          sample_size <- result$total_n
+          pwr_result <- result$pwr_result
+        } else {
+          sample_size <- if(input$testType %in% c("Independent t-test", "Paired t-test", "Proportion")) {
+            ceiling(result$n * 2)
+          } else if (input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+            ceiling(result$n)
+          } else if (input$testType == "Chi-squared") {
+            ceiling(result$N)
+          } else {
+            ceiling(result$n)
+          }
+          pwr_result <- result
+        }
+        
+        steps <- c(
+          "POWER ANALYSIS RESULTS",
+          "======================",
+          paste("Date:", Sys.Date()),
+          paste("Statistical Test:", input$testType),
+          paste("Effect Size:", round(input$effectSize, 4)),
+          paste("Alpha (Significance Level):", input$alpha),
+          paste("Desired Power:", input$power),
+          ""
+        )
+        
+        # Add test-specific parameters
+        if(input$testType == "Multiple Linear Regression") {
+          steps <- c(steps, paste("Number of Predictors:", input$predictors))
+        }
+        
+        if(input$testType == "Simple Linear Regression") {
+          steps <- c(steps, "Number of Predictors: 1")
+          
+          # Add R² conversion for interpretation
+          r_squared <- input$effectSize / (1 + input$effectSize)
+          steps <- c(steps, 
+                     paste("Equivalent R²:", round(r_squared, 4)),
+                     paste("Variance Explained:", round(r_squared * 100, 1), "%"))
+        }
+        
+        if(input$testType == "Chi-squared") {
+          steps <- c(steps, paste("Degrees of Freedom:", input$df))
+        }
+        
+        if(input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+          steps <- c(steps, paste("Number of Groups:", input$groups))
+        }
+        
+        steps <- c(steps,
+                   "",
+                   "RESULTS:",
+                   paste("Required sample size:", sample_size)
+        )
+        
+        if(input$testType %in% c("Independent t-test", "Paired t-test", "Proportion")) {
+          steps <- c(steps, paste("Sample size per group:", ceiling(pwr_result$n)))
+        }
+        
+        if(input$testType %in% c("One-Way ANOVA", "Two-Way ANOVA")) {
+          steps <- c(steps, paste("Sample size per group:", ceiling(pwr_result$n)))
+        }
+        
+        # Add formula explanation for Simple Linear Regression
+        if(input$testType == "Simple Linear Regression") {
+          steps <- c(steps,
+                     "",
+                     "CALCULATION DETAILS:",
+                     "Formula: n = v + u + 1",
+                     "Where:",
+                     "- v = denominator degrees of freedom from power calculation",
+                     "- u = number of predictors (1 for simple linear regression)",
+                     "- +1 accounts for the intercept parameter",
+                     paste("Calculation:", ceiling(pwr_result$v), "+ 1 + 1 =", sample_size)
+          )
+        }
+        
+        steps <- c(steps,
+                   "",
+                   "INTERPRETATION:",
+                   paste("To achieve", input$power * 100, "% power to detect an effect size of", 
+                         round(input$effectSize, 3), "with a significance level of", input$alpha * 100, "%,"),
+                   paste("you need a total sample size of", sample_size, "participants."),
+                   "",
+                   "Note: This calculation assumes the specified parameters and may need adjustment",
+                   "based on your specific research design and assumptions."
+        )
+        
+        writeLines(steps, file)
+        
+      }, error = function(e) {
+        error_steps <- c(
+          "POWER ANALYSIS RESULTS",
+          "======================",
+          paste("Date:", Sys.Date()),
+          paste("Error:", e$message),
+          "",
+          "Please check your input values and try again.",
+          "",
+          "For Simple Linear Regression:",
+          "- Effect size (f²) must be positive",
+          "- f² = R² / (1 - R²)",
+          "- Common values: small=0.02, medium=0.15, large=0.35"
+        )
+        writeLines(error_steps, file)
+      })
+    }
+  )
+  
+  # Descriptive Statistics Section
+  output$dataTypeDetection <- renderUI({
+    if (input$dataInput == "") {
+      return(p("Please enter data to analyze."))
+    }
+    
+    data_text <- input$dataInput
+    lines <- strsplit(data_text, "\n")[[1]]
+    
+    if (length(lines) < 2) {
+      return(p("Please enter at least one data value."))
+    }
+    
+    # Try to detect if there's a header
+    first_line <- lines[1]
+    second_line <- lines[2]
+    
+    # Check if first line might be a header (contains non-numeric characters)
+    has_header <- grepl("[A-Za-z]", first_line) && !grepl("^\\s*\\d+\\s*$", first_line)
+    
+    if (has_header) {
+      data_values <- lines[-1]
+    } else {
+      data_values <- lines
+    }
+    
+    # Clean and parse data
+    clean_data <- gsub("\\s+", " ", data_values)
+    clean_data <- trimws(clean_data)
+    clean_data <- clean_data[clean_data != ""]
+    
+    if (length(clean_data) == 0) {
+      return(p("No valid data found."))
+    }
+    
+    # Try to parse as numeric first
+    numeric_data <- suppressWarnings(as.numeric(clean_data))
+    num_numeric <- sum(!is.na(numeric_data))
+    num_total <- length(clean_data)
+    
+    if (num_numeric == num_total) {
+      data_type <- "numerical"
+      detection_text <- paste("Detected: Numerical/Continuous data (", num_total, " values)", sep = "")
+    } else if (num_numeric == 0) {
+      data_type <- "categorical"
+      detection_text <- paste("Detected: Categorical data (", num_total, " values)", sep = "")
+    } else {
+      data_type <- "mixed"
+      detection_text <- paste("Detected: Mixed data (", num_numeric, " numerical, ", 
+                              num_total - num_numeric, " categorical)", sep = "")
+    }
+    
+    # Override with user selection if not auto
+    if (input$dataType != "auto") {
+      data_type <- input$dataType
+      detection_text <- paste("User specified:", 
+                              switch(input$dataType,
+                                     "numerical" = "Numerical/Continuous",
+                                     "nominal" = "Categorical (Nominal)",
+                                     "ordinal" = "Ordinal"))
+    }
+    
+    output$dataType <- reactive({ data_type })
+    outputOptions(output, "dataType", suspendWhenHidden = FALSE)
+    
+    tagList(
+      p(strong(detection_text)),
+      p("Analysis will provide appropriate statistics for this data type.")
+    )
+  })
+  
+  # Reactive for parsed data
+  parsedData <- reactive({
+    if (input$dataInput == "") return(NULL)
+    
+    data_text <- input$dataInput
+    lines <- strsplit(data_text, "\n")[[1]]
+    
+    # Detect header
+    first_line <- lines[1]
+    has_header <- grepl("[A-Za-z]", first_line) && !grepl("^\\s*\\d+\\s*$", first_line)
+    
+    if (has_header) {
+      data_values <- lines[-1]
+    } else {
+      data_values <- lines
+    }
+    
+    # Clean data
+    clean_data <- gsub("\\s+", " ", data_values)
+    clean_data <- trimws(clean_data)
+    clean_data <- clean_data[clean_data != ""]
+    
+    # Parse based on detected type
+    data_type <- input$dataType
+    if (data_type == "auto") {
+      numeric_data <- suppressWarnings(as.numeric(clean_data))
+      num_numeric <- sum(!is.na(numeric_data))
+      if (num_numeric == length(clean_data)) {
+        data_type <- "numerical"
+      } else if (num_numeric == 0) {
+        data_type <- "categorical"
+      } else {
+        data_type <- "mixed"
+      }
+    }
+    
+    list(
+      values = clean_data,
+      type = data_type,
+      has_header = has_header,
+      header = if(has_header) first_line else NULL
+    )
+  })
+  
+  # Numerical data summary
+  output$numericalSummary <- renderText({
+    data <- parsedData()
+    if (is.null(data) || data$type != "numerical") return("No numerical data to analyze.")
+    
+    values <- as.numeric(data$values)
+    values <- values[!is.na(values)]
+    
+    if (length(values) == 0) return("No valid numerical values found.")
+    
+    n <- length(values)
+    mean_val <- mean(values)
+    median_val <- median(values)
+    sd_val <- sd(values)
+    var_val <- var(values)
+    min_val <- min(values)
+    max_val <- max(values)
+    range_val <- max_val - min_val
+    q1 <- quantile(values, 0.25)
+    q3 <- quantile(values, 0.75)
+    iqr <- q3 - q1
+    
+    # Skewness and Kurtosis
+    skewness_val <- e1071::skewness(values, type = 2)
+    kurtosis_val <- e1071::kurtosis(values, type = 2)
+    
+    paste(
+      "NUMERICAL DATA SUMMARY",
+      "======================",
+      paste("Sample size (n):", n),
+      paste("Mean:", round(mean_val, 4)),
+      paste("Median:", round(median_val, 4)),
+      paste("Standard Deviation:", round(sd_val, 4)),
+      paste("Variance:", round(var_val, 4)),
+      paste("Minimum:", round(min_val, 4)),
+      paste("Maximum:", round(max_val, 4)),
+      paste("Range:", round(range_val, 4)),
+      paste("1st Quartile (Q1):", round(q1, 4)),
+      paste("3rd Quartile (Q3):", round(q3, 4)),
+      paste("Interquartile Range (IQR):", round(iqr, 4)),
+      paste("Skewness:", round(skewness_val, 4)),
+      paste("Kurtosis:", round(kurtosis_val, 4)),
+      "",
+      "INTERPRETATION:",
+      if(skewness_val > 0.5) "Data is positively skewed (right-skewed)" 
+      else if(skewness_val < -0.5) "Data is negatively skewed (left-skewed)"
+      else "Data is approximately symmetric",
+      if(kurtosis_val > 0) "Distribution is leptokurtic (heavy-tailed)"
+      else if(kurtosis_val < 0) "Distribution is platykurtic (light-tailed)"
+      else "Distribution is mesokurtic (normal tails)",
+      sep = "\n"
+    )
+  })
+  
+  # Categorical data summary
+  output$categoricalSummary <- renderText({
+    data <- parsedData()
+    if (is.null(data) || !data$type %in% c("categorical", "nominal")) return("No categorical data to analyze.")
+    
+    values <- data$values
+    freq_table <- table(values)
+    prop_table <- prop.table(freq_table)
+    
+    n <- length(values)
+    n_categories <- length(freq_table)
+    mode_val <- names(freq_table)[which.max(freq_table)]
+    mode_freq <- max(freq_table)
+    
+    summary_text <- paste(
+      "CATEGORICAL DATA SUMMARY",
+      "========================",
+      paste("Sample size (n):", n),
+      paste("Number of categories:", n_categories),
+      paste("Mode:", mode_val, "(frequency:", mode_freq, ")"),
+      "",
+      "FREQUENCY DISTRIBUTION:",
+      sep = "\n"
+    )
+    
+    # Add frequency table
+    for (i in 1:length(freq_table)) {
+      category <- names(freq_table)[i]
+      freq <- freq_table[i]
+      prop <- round(prop_table[i] * 100, 2)
+      summary_text <- paste(summary_text, 
+                            paste(category, ": ", freq, " (", prop, "%)", sep = ""), 
+                            sep = "\n")
+    }
+    
+    summary_text
+  })
+  
+  # Ordinal data summary
+  output$ordinalSummary <- renderText({
+    data <- parsedData()
+    if (is.null(data) || data$type != "ordinal") return("No ordinal data to analyze.")
+    
+    values <- data$values
+    freq_table <- table(values)
+    prop_table <- prop.table(freq_table)
+    
+    n <- length(values)
+    n_categories <- length(freq_table)
+    mode_val <- names(freq_table)[which.max(freq_table)]
+    
+    # For ordinal data, we can calculate median-like statistics
+    ordered_levels <- unique(values)
+    
+    summary_text <- paste(
+      "ORDINAL DATA SUMMARY",
+      "====================",
+      paste("Sample size (n):", n),
+      paste("Number of categories:", n_categories),
+      paste("Mode:", mode_val),
+      "",
+      "FREQUENCY DISTRIBUTION:",
+      sep = "\n"
+    )
+    
+    # Add frequency table
+    for (i in 1:length(freq_table)) {
+      category <- names(freq_table)[i]
+      freq <- freq_table[i]
+      prop <- round(prop_table[i] * 100, 2)
+      summary_text <- paste(summary_text, 
+                            paste(category, ": ", freq, " (", prop, "%)", sep = ""), 
+                            sep = "\n")
+    }
+    
+    summary_text
+  })
+  
+  # Mixed data summary
+  output$mixedSummary <- renderText({
+    data <- parsedData()
+    if (is.null(data) || data$type != "mixed") return("No mixed data to analyze.")
+    
+    values <- data$values
+    numeric_vals <- suppressWarnings(as.numeric(values))
+    numeric_vals <- numeric_vals[!is.na(numeric_vals)]
+    categorical_vals <- values[is.na(suppressWarnings(as.numeric(values)))]
+    
+    n_total <- length(values)
+    n_numeric <- length(numeric_vals)
+    n_categorical <- length(categorical_vals)
+    
+    paste(
+      "MIXED DATA SUMMARY",
+      "==================",
+      paste("Total observations:", n_total),
+      paste("Numerical values:", n_numeric, "(", round(n_numeric/n_total*100, 1), "%)"),
+      paste("Categorical values:", n_categorical, "(", round(n_categorical/n_total*100, 1), "%)"),
+      "",
+      "Please separate numerical and categorical data for proper analysis.",
+      "You can use the data type selector to force a specific analysis.",
+      sep = "\n"
+    )
+  })
+  
+  # Unknown data type
+  output$unknownData <- renderText({
+    "Please enter data to analyze or select a specific data type."
+  })
+  
+  # Plots for numerical data
+  output$numericalPlots <- renderPlot({
+    data <- parsedData()
+    if (is.null(data) || data$type != "numerical") return(NULL)
+    
+    values <- as.numeric(data$values)
+    values <- values[!is.na(values)]
+    
+    if (length(values) < 2) return(NULL)
+    
+    par(mfrow = c(1, 2))
+    
+    # Histogram
+    hist(values, main = "Histogram", xlab = "Values", 
+         col = "#6BAED6", border = "white", freq = FALSE)
+    lines(density(values), col = "#00689D", lwd = 2)
+    
+    # Boxplot
+    boxplot(values, main = "Boxplot", col = "#6BAED6", 
+            ylab = "Values", horizontal = TRUE)
+    
+    par(mfrow = c(1, 1))
+  })
+  
+  # Plots for categorical data
+  output$categoricalPlots <- renderPlot({
+    data <- parsedData()
+    if (is.null(data) || !data$type %in% c("categorical", "nominal")) return(NULL)
+    
+    values <- data$values
+    freq_table <- table(values)
+    
+    if (length(freq_table) == 0) return(NULL)
+    
+    par(mfrow = c(1, 2))
+    
+    # Bar plot
+    barplot(freq_table, main = "Bar Plot", col = "#6BAED6", 
+            las = 2, cex.names = 0.8)
+    
+    # Pie chart
+    pie(freq_table, main = "Pie Chart", col = rainbow(length(freq_table)))
+    
+    par(mfrow = c(1, 1))
+  })
+  
+  # Plots for ordinal data
+  output$ordinalPlots <- renderPlot({
+    data <- parsedData()
+    if (is.null(data) || data$type != "ordinal") return(NULL)
+    
+    values <- data$values
+    freq_table <- table(values)
+    
+    if (length(freq_table) == 0) return(NULL)
+    
+    # Bar plot for ordinal data
+    barplot(freq_table, main = "Ordinal Data Bar Plot", 
+            col = "#6BAED6", las = 2, cex.names = 0.8)
+  })
+  
+  # Download handler for descriptive statistics
+  output$downloadDescSteps <- downloadHandler(
+    filename = function() {
+      paste("descriptive_statistics_", Sys.Date(), ".docx", sep = "")
+    },
+    content = function(file) {
+      withProgress(message = "Generating report", value = 0, {
+        tryCatch({
+          doc <- officer::read_docx()
+          
+          data <- parsedData()
+          if (is.null(data)) {
+            doc <- doc %>%
+              officer::body_add_par("Descriptive Statistics Report", style = "heading 1") %>%
+              officer::body_add_par("No data provided for analysis.", style = "Normal")
+            print(doc, target = file)
+            return()
+          }
+          
+          # Title and basic info
+          doc <- doc %>%
+            officer::body_add_par("Descriptive Statistics Report", style = "heading 1") %>%
+            officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+            officer::body_add_par(paste("Data type:", data$type), style = "Normal") %>%
+            officer::body_add_par(paste("Sample size:", length(data$values)), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # Data preview
+          doc <- doc %>%
+            officer::body_add_par("Data Preview:", style = "heading 2")
+          
+          if (length(data$values) <= 20) {
+            data_preview <- paste(data$values, collapse = ", ")
+            doc <- doc %>% officer::body_add_par(data_preview, style = "Normal")
+          } else {
+            data_preview <- paste(c(data$values[1:20], "..."), collapse = ", ")
+            doc <- doc %>% officer::body_add_par(data_preview, style = "Normal")
+          }
+          
+          doc <- doc %>% officer::body_add_par("", style = "Normal")
+          
+          # Numerical data analysis
+          if (data$type == "numerical") {
+            values <- as.numeric(data$values)
+            values <- values[!is.na(values)]
+            
+            if (length(values) > 0) {
+              doc <- doc %>%
+                officer::body_add_par("Numerical Summary:", style = "heading 2")
+              
+              summary_data <- data.frame(
+                Statistic = c("Mean", "Median", "Standard Deviation", "Variance", 
+                              "Minimum", "Maximum", "Range", "Sample Size"),
+                Value = c(round(mean(values), 4), round(median(values), 4),
+                          round(sd(values), 4), round(var(values), 4),
+                          round(min(values), 4), round(max(values), 4),
+                          round(max(values) - min(values), 4), length(values))
+              )
+              
+              ft <- flextable::flextable(summary_data) %>%
+                flextable::theme_box() %>%
+                flextable::autofit()
+              
+              doc <- flextable::body_add_flextable(doc, ft) %>%
+                officer::body_add_par("", style = "Normal")
+            }
+          }
+          
+          # Categorical data analysis
+          if (data$type %in% c("categorical", "nominal", "ordinal")) {
+            freq_table <- table(data$values)
+            prop_table <- prop.table(freq_table)
+            
+            doc <- doc %>%
+              officer::body_add_par("Frequency Distribution:", style = "heading 2")
+            
+            freq_data <- data.frame(
+              Category = names(freq_table),
+              Frequency = as.numeric(freq_table),
+              Percentage = paste0(round(as.numeric(prop_table) * 100, 2), "%")
+            )
+            
+            ft <- flextable::flextable(freq_data) %>%
+              flextable::theme_box() %>%
+              flextable::autofit()
+            
+            doc <- flextable::body_add_flextable(doc, ft) %>%
+              officer::body_add_par("", style = "Normal")
+          }
+          
+          # Save document
+          print(doc, target = file)
+          
+        }, error = function(e) {
+          showNotification(paste("Error generating report:", e$message), type = "error")
+        })
+      })
+    }
+  )
+  
+  # Flowchart generation for Other Formulas
   generateDotCode_other <- function() {
     if (rv_other$stratumCount <= 1) return("")
     
@@ -4256,7 +5490,7 @@ $(document).ready(function() {
     grViz(dot_code)
   })
   
-  # JavaScript for handling clicks on nodes and edges
+  # JavaScript for handling clicks on nodes and edges for Other Formulas
   jsCode_other <- '
   $(document).ready(function() {
     document.getElementById("flowchart_other").addEventListener("click", function(event) {
@@ -4279,6 +5513,9 @@ $(document).ready(function() {
   observe({
     session$sendCustomMessage(type='jsCode', list(value = jsCode_other))
   })
+  
+  # Similar event handlers for Other Formulas flowchart editing
+  # (Following the same pattern as previous sections)
   
   observeEvent(input$selected_node_other, {
     rv_other$selectedNode <- input$selected_node_other
@@ -4305,7 +5542,6 @@ $(document).ready(function() {
       }
     }
     
-    # Update font size slider for selected node
     if (!is.null(rv_other$nodeFontSizes[[rv_other$selectedNode]])) {
       updateSliderInput(session, "selectedNodeFontSize_other", 
                         value = rv_other$nodeFontSizes[[rv_other$selectedNode]])
@@ -4327,7 +5563,6 @@ $(document).ready(function() {
                       value = paste0("", alloc$Proportional_Sample[edge_num]))
     }
     
-    # Update font size slider for selected edge
     if (!is.null(rv_other$edgeFontSizes[[rv_other$selectedEdge]])) {
       updateSliderInput(session, "selectedEdgeFontSize_other", 
                         value = rv_other$edgeFontSizes[[rv_other$selectedEdge]])
@@ -4336,328 +5571,126 @@ $(document).ready(function() {
     }
   })
   
-  observeEvent(input$editNodeText_other, {
-    if (input$newText_other == "") return()
-    
-    if (!is.null(rv_other$selectedNode)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv_other$nodeTexts[[rv_other$selectedNode]] %||% input$nodeText_other
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- input$newText_other
-      }
-    } else if (!is.null(rv_other$selectedEdge)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv_other$edgeTexts[[rv_other$selectedEdge]] %||% input$nodeText_other
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- input$newText_other
-      }
+  # Download handlers for Other Formulas
+  output$downloadOtherWord <- downloadHandler(
+    filename = function() {
+      paste0("other_formulas_results_", Sys.Date(), ".docx")
+    },
+    content = function(file) {
+      withProgress(message = "Generating Word document", value = 0, {
+        tryCatch({
+          doc <- officer::read_docx()
+          
+          doc <- doc %>% 
+            officer::body_add_par(paste("Sample Size Results -", input$formula_type), style = "heading 1") %>%
+            officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+            officer::body_add_par("", style = "Normal")
+          
+          # Add formula-specific parameters
+          doc <- doc %>%
+            officer::body_add_par("Input Parameters:", style = "heading 2")
+          
+          # Add interpretation
+          interp <- interpretationText_other()
+          if (is.list(interp)) interp <- paste(unlist(interp), collapse = " ")
+          
+          doc <- doc %>%
+            officer::body_add_par("Interpretation:", style = "heading 2") %>%
+            officer::body_add_par(as.character(interp), style = "Normal")
+          
+          # Add allocation table if strata exist
+          if (rv_other$stratumCount > 1) {
+            alloc_data <- allocationData_other()
+            if (!is.null(alloc_data)) {
+              doc <- doc %>%
+                officer::body_add_par("Allocation Results:", style = "heading 2")
+              
+              ft_alloc <- flextable::flextable(alloc_data) %>%
+                flextable::theme_box() %>%
+                flextable::autofit()
+              doc <- flextable::body_add_flextable(doc, ft_alloc)
+            }
+          }
+          
+          print(doc, target = file)
+          
+        }, error = function(e) {
+          showNotification(paste("Error generating document:", e$message), type = "error")
+        })
+      })
     }
-    
-    updateTextInput(session, "newText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
+  )
   
-  observeEvent(input$deleteText_other, {
-    if (!is.null(rv_other$selectedNode)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv_other$nodeTexts[[rv_other$selectedNode]] %||% input$nodeText_other
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- updated_text
-      } else {
-        # Delete entire text
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- NULL
-      }
-    } else if (!is.null(rv_other$selectedEdge)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv_other$edgeTexts[[rv_other$selectedEdge]] %||% input$nodeText_other
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- updated_text
-      } else {
-        # Delete entire text
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- NULL
-      }
-    }
-    
-    updateTextInput(session, "newText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$applyFontSizes_other, {
-    if (!is.null(rv_other$selectedNode)) {
-      rv_other$nodeFontSizes[[rv_other$selectedNode]] <- input$selectedNodeFontSize_other
-    } else if (!is.null(rv_other$selectedEdge)) {
-      rv_other$edgeFontSizes[[rv_other$selectedEdge]] <- input$selectedEdgeFontSize_other
-    }
-    
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$resetDiagramText_other, {
-    rv_other$nodeTexts <- list()
-    rv_other$edgeTexts <- list()
-    rv_other$nodeFontSizes <- list()
-    rv_other$edgeFontSizes <- list()
-    updateTextInput(session, "nodeText_other", value = "")
-    updateTextInput(session, "newText_other", value = "")
-  })
-  
-  output$flowchart_other <- renderGrViz({
-    if (!input$showFlowchart_other || rv_other$stratumCount <= 1) return()
-    
-    dot_code <- generateDotCode_other()
-    grViz(dot_code)
-  })
-  
-  # JavaScript for handling clicks on nodes and edges
-  jsCode_other <- '
-  $(document).ready(function() {
-    document.getElementById("flowchart_other").addEventListener("click", function(event) {
-      var target = event.target;
-      if (target.tagName === "text") {
-        target = target.parentNode;
+  output$downloadOtherSteps <- downloadHandler(
+    filename = function() {
+      paste("other_formulas_calculation_steps_", Sys.Date(), ".txt", sep = "")
+    },
+    content = function(file) {
+      steps <- c(
+        paste("SAMPLE SIZE CALCULATION -", toupper(input$formula_type)),
+        "==========================================",
+        paste("Date:", Sys.Date()),
+        "",
+        "INPUT PARAMETERS:",
+        paste("Formula type:", input$formula_type),
+        paste("Non-response rate:", input$non_response_other, "%"),
+        "",
+        "SAMPLE SIZE CALCULATION:",
+        paste("Required sample size:", otherSampleSize()),
+        paste("Adjusted for non-response:", adjustedSampleSize_other()),
+        "",
+        "STRATUM INFORMATION:"
+      )
+      
+      for (i in 1:rv_other$stratumCount) {
+        steps <- c(steps, 
+                   paste("Stratum", i, ":", input[[paste0("stratum_other", i)]], 
+                         "- Population:", input[[paste0("pop_other", i)]]))
       }
       
-      if (target.getAttribute("class") && target.getAttribute("class").includes("node")) {
-        var nodeId = target.getAttribute("id");
-        Shiny.setInputValue("selected_node_other", nodeId);
-      } else if (target.getAttribute("class") && target.getAttribute("class").includes("edge")) {
-        var pathId = target.getAttribute("id");
-        Shiny.setInputValue("selected_edge_other", pathId);
-      }
-    });
-  });
-  '
-  
-  observe({
-    session$sendCustomMessage(type='jsCode', list(value = jsCode_other))
-  })
-  
-  observeEvent(input$selected_node_other, {
-    rv_other$selectedNode <- input$selected_node_other
-    rv_other$selectedEdge <- NULL
-    
-    if (!is.null(rv_other$nodeTexts[[rv_other$selectedNode]])) {
-      updateTextInput(session, "nodeText_other", value = rv_other$nodeTexts[[rv_other$selectedNode]])
-    } else {
-      node_index <- as.numeric(gsub("node", "", rv_other$selectedNode))
-      if (node_index == 1) {
-        updateTextInput(session, "nodeText_other", value = paste0("Total Population\nN = ", totalPopulation_other()))
-      } else if (node_index == rv_other$stratumCount + 2) {
+      if (rv_other$stratumCount > 1) {
+        steps <- c(steps,
+                   paste("Total population:", totalPopulation_other()),
+                   "",
+                   "PROPORTIONAL ALLOCATION CALCULATIONS:",
+                   "Formula: n_i = (N_i / N) × n"
+        )
+        
         alloc <- allocationData_other()
-        total_sample <- sum(alloc$Proportional_Sample[1:rv_other$stratumCount])
-        updateTextInput(session, "nodeText_other", 
-                        value = paste0("Total Sample\nn = ", total_sample))
-      } else {
-        stratum_num <- node_index - 1
-        strata <- sapply(1:rv_other$stratumCount, function(i) input[[paste0("stratum_other", i)]])
-        pops <- sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]])
-        alloc <- allocationData_other()
-        updateTextInput(session, "nodeText_other", 
-                        value = paste0("Stratum: ", strata[stratum_num], "\nPop: ", pops[stratum_num], "\nSample: ", alloc$Proportional_Sample[stratum_num]))
+        for (i in 1:rv_other$stratumCount) {
+          steps <- c(steps, 
+                     paste("Stratum", i, ":", alloc$Calculation[i]))
+        }
+        
+        steps <- c(steps,
+                   "",
+                   "FINAL ALLOCATION:"
+        )
+        
+        for (i in 1:rv_other$stratumCount) {
+          steps <- c(steps, 
+                     paste("Stratum", i, ":", alloc$Proportional_Sample[i], "samples"))
+        }
+        
+        steps <- c(steps,
+                   paste("Total samples:", sum(alloc$Proportional_Sample[1:rv_other$stratumCount]))
+        )
       }
-    }
-    
-    # Update font size slider for selected node
-    if (!is.null(rv_other$nodeFontSizes[[rv_other$selectedNode]])) {
-      updateSliderInput(session, "selectedNodeFontSize_other", 
-                        value = rv_other$nodeFontSizes[[rv_other$selectedNode]])
-    } else {
-      updateSliderInput(session, "selectedNodeFontSize_other", value = input$nodeFontSize_other)
-    }
-  })
-  
-  observeEvent(input$selected_edge_other, {
-    rv_other$selectedEdge <- input$selected_edge_other
-    rv_other$selectedNode <- NULL
-    
-    if (!is.null(rv_other$edgeTexts[[rv_other$selectedEdge]])) {
-      updateTextInput(session, "nodeText_other", value = rv_other$edgeTexts[[rv_other$selectedEdge]])
-    } else {
-      edge_num <- as.numeric(gsub("edge", "", rv_other$selectedEdge))
-      alloc <- allocationData_other()
-      updateTextInput(session, "nodeText_other", 
-                      value = paste0("", alloc$Proportional_Sample[edge_num]))
-    }
-    
-    # Update font size slider for selected edge
-    if (!is.null(rv_other$edgeFontSizes[[rv_other$selectedEdge]])) {
-      updateSliderInput(session, "selectedEdgeFontSize_other", 
-                        value = rv_other$edgeFontSizes[[rv_other$selectedEdge]])
-    } else {
-      updateSliderInput(session, "selectedEdgeFontSize_other", value = input$edgeFontSize_other)
-    }
-  })
-  
-  observeEvent(input$editNodeText_other, {
-    if (input$newText_other == "") return()
-    
-    if (!is.null(rv_other$selectedNode)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv_other$nodeTexts[[rv_other$selectedNode]] %||% input$nodeText_other
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- input$newText_other
-      }
-    } else if (!is.null(rv_other$selectedEdge)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle replacement pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        old_text <- trimws(parts[1])
-        new_text <- trimws(parts[2])
-        current_text <- rv_other$edgeTexts[[rv_other$selectedEdge]] %||% input$nodeText_other
-        updated_text <- gsub(old_text, new_text, current_text, fixed = TRUE)
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- updated_text
-      } else {
-        # Direct text replacement
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- input$newText_other
-      }
-    }
-    
-    updateTextInput(session, "newText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$deleteText_other, {
-    if (!is.null(rv_other$selectedNode)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv_other$nodeTexts[[rv_other$selectedNode]] %||% input$nodeText_other
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- updated_text
-      } else {
-        # Delete entire text
-        rv_other$nodeTexts[[rv_other$selectedNode]] <- NULL
-      }
-    } else if (!is.null(rv_other$selectedEdge)) {
-      if (grepl("->", input$newText_other)) {
-        # Handle deletion pattern
-        parts <- strsplit(input$newText_other, "->")[[1]]
-        text_to_delete <- trimws(parts[1])
-        current_text <- rv_other$edgeTexts[[rv_other$selectedEdge]] %||% input$nodeText_other
-        updated_text <- gsub(text_to_delete, "", current_text, fixed = TRUE)
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- updated_text
-      } else {
-        # Delete entire text
-        rv_other$edgeTexts[[rv_other$selectedEdge]] <- NULL
-      }
-    }
-    
-    updateTextInput(session, "newText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$applyFontSizes_other, {
-    if (!is.null(rv_other$selectedNode)) {
-      rv_other$nodeFontSizes[[rv_other$selectedNode]] <- input$selectedNodeFontSize_other
-    } else if (!is.null(rv_other$selectedEdge)) {
-      rv_other$edgeFontSizes[[rv_other$selectedEdge]] <- input$selectedEdgeFontSize_other
-    }
-    
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$resetDiagramText_other, {
-    rv_other$nodeTexts <- list()
-    rv_other$edgeTexts <- list()
-    rv_other$nodeFontSizes <- list()
-    rv_other$edgeFontSizes <- list()
-    updateTextInput(session, "nodeText_other", value = "")
-    updateTextInput(session, "newText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  output$nodeEdgeEditorUI_other <- renderUI({
-    if (!is.null(rv_other$selectedNode)) {
-      tagList(
-        p(strong("Editing Node:"), rv_other$selectedNode),
-        textInput("nodeText_other", "Node Text:", value = rv_other$nodeTexts[[rv_other$selectedNode]] %||% ""),
-        actionButton("editNodeText_other", "Update Node Text", class = "btn-info"),
-        actionButton("resetNodeText_other", "Reset This Text", class = "btn-warning")
+      
+      steps <- c(steps,
+                 "",
+                 "INTERPRETATION:",
+                 interpretationText_other()
       )
-    } else if (!is.null(rv_other$selectedEdge)) {
-      tagList(
-        p(strong("Editing Edge:"), rv_other$selectedEdge),
-        textInput("nodeText_other", "Edge Label:", value = rv_other$edgeTexts[[rv_other$selectedEdge]] %||% ""),
-        actionButton("editNodeText_other", "Update Edge Label", class = "btn-info"),
-        actionButton("resetEdgeText_other", "Reset This Text", class = "btn-warning")
-      )
-    } else {
-      p("Click on a node or edge in the diagram to edit it.")
+      
+      writeLines(steps, file)
     }
-  })
+  )
   
-  observeEvent(input$resetNodeText_other, {
-    rv_other$nodeTexts[[rv_other$selectedNode]] <- NULL
-    rv_other$nodeFontSizes[[rv_other$selectedNode]] <- NULL
-    updateTextInput(session, "nodeText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
-  observeEvent(input$resetEdgeText_other, {
-    rv_other$edgeTexts[[rv_other$selectedEdge]] <- NULL
-    rv_other$edgeFontSizes[[rv_other$selectedEdge]] <- NULL
-    updateTextInput(session, "nodeText_other", value = "")
-    output$flowchart_other <- renderGrViz({
-      dot_code <- generateDotCode_other()
-      grViz(dot_code)
-    })
-  })
-  
+  # Add similar download handlers for flowchart exports in Other Formulas section
   output$downloadFlowchartPNG_other <- downloadHandler(
     filename = function() {
-      paste("other_formula_allocation_flowchart_", Sys.Date(), ".png", sep = "")
+      paste("other_formulas_flowchart_", Sys.Date(), ".png", sep = "")
     },
     content = function(file) {
       dot_code <- generateDotCode_other()
@@ -4670,7 +5703,7 @@ $(document).ready(function() {
   
   output$downloadFlowchartSVG_other <- downloadHandler(
     filename = function() {
-      paste("other_formula_allocation_flowchart_", Sys.Date(), ".svg", sep = "")
+      paste("other_formulas_flowchart_", Sys.Date(), ".svg", sep = "")
     },
     content = function(file) {
       dot_code <- generateDotCode_other()
@@ -4680,7 +5713,7 @@ $(document).ready(function() {
   
   output$downloadFlowchartPDF_other <- downloadHandler(
     filename = function() {
-      paste("other_formula_allocation_flowchart_", Sys.Date(), ".pdf", sep = "")
+      paste("other_formulas_flowchart_", Sys.Date(), ".pdf", sep = "")
     },
     content = function(file) {
       dot_code <- generateDotCode_other()
@@ -4690,868 +5723,7 @@ $(document).ready(function() {
       unlink(tmp_file)
     }
   )
-  
-  output$downloadOtherWord <- downloadHandler(
-    filename = function() {
-      paste("other_formula_results_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".docx", sep = "")
-    },
-    content = function(file) {
-      progress <- shiny::Progress$new()
-      progress$set(message = "Generating Word document", value = 0)
-      on.exit(progress$close())
-      
-      tryCatch({
-        doc <- officer::read_docx()
-        
-        # ---- Title ----
-        doc <- doc %>% 
-          officer::body_add_par("Other Formula Sample Size Results", style = "heading 1") %>%
-          officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-          officer::body_add_par("", style = "Normal")
-        
-        # ---- Formula Type ----
-        formula_type_name <- switch(input$formula_type,
-                                    "mean_known_var"   = "Mean Estimation (Known Variance)",
-                                    "mean_unknown_var" = "Mean Estimation (Unknown Variance)",
-                                    "proportion_diff"  = "Difference Between Proportions",
-                                    "correlation"      = "Correlation Coefficient",
-                                    "regression"       = "Regression Coefficient",
-                                    "odds_ratio"       = "Odds Ratio",
-                                    "relative_risk"    = "Relative Risk",
-                                    "prevalence"       = "Prevalence Study",
-                                    "case_control"     = "Case-Control Study",
-                                    "cohort"           = "Cohort Study"
-        )
-        
-        doc <- doc %>%
-          officer::body_add_par(paste("Formula Type:", formula_type_name), style = "heading 2") %>%
-          officer::body_add_par("", style = "Normal")
-        
-        # ---- Input Parameters ----
-        doc <- doc %>% officer::body_add_par("Input Parameters:", style = "heading 2")
-        
-        params_text <- switch(input$formula_type,
-                              "mean_known_var" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Standard Deviation (σ):", input$sigma_other),
-                                paste("Margin of Error (d):", input$d_other)
-                              ),
-                              "mean_unknown_var" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Effect Size (Cohen's d):", input$effect_size_other)
-                              ),
-                              "proportion_diff" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Proportion 1 (p₁):", input$p1_other),
-                                paste("Proportion 2 (p₂):", input$p2_other)
-                              ),
-                              "correlation" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Correlation Coefficient (r):", input$r_other)
-                              ),
-                              "regression" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Effect Size (f²):", input$effect_size_other),
-                                paste("Number of Predictors:", input$predictors_other)
-                              ),
-                              "odds_ratio" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Odds Ratio (OR):", input$or_other),
-                                paste("Proportion in Control Group:", input$p1_other)
-                              ),
-                              "relative_risk" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Relative Risk (RR):", input$rr_other),
-                                paste("Proportion in Control Group:", input$p1_other)
-                              ),
-                              "prevalence" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Precision (d):", input$precision_other),
-                                paste("Expected Prevalence:", input$prevalence_other)
-                              ),
-                              "case_control" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Odds Ratio (OR):", input$or_other),
-                                paste("Proportion in Controls:", input$p1_other),
-                                paste("Case:Control Ratio:", input$r_other)
-                              ),
-                              "cohort" = c(
-                                paste("Alpha (α):", input$alpha_other),
-                                paste("Power (1-β):", input$power_other),
-                                paste("Relative Risk (RR):", input$rr_other),
-                                paste("Proportion in Unexposed:", input$p1_other),
-                                paste("Exposed:Unexposed Ratio:", input$r_other)
-                              )
-        )
-        
-        for (param in params_text) {
-          doc <- doc %>% officer::body_add_par(param, style = "Normal")
-        }
-        
-        doc <- doc %>%
-          officer::body_add_par(paste("Non-response rate:", input$non_response_other, "%"), style = "Normal") %>%
-          officer::body_add_par(paste("Sample size:", otherSampleSize()), style = "Normal") %>%
-          officer::body_add_par(paste("Adjusted sample size:", adjustedSampleSize_other()), style = "Normal") %>%
-          officer::body_add_par("", style = "Normal")
-        
-        progress$set(value = 0.3, detail = "Adding stratum information")
-        
-        # ---- Stratum Info ----
-        doc <- doc %>%
-          officer::body_add_par("Stratum Information:", style = "heading 2")
-        
-        strata_data <- data.frame(
-          Stratum = sapply(1:rv_other$stratumCount, function(i) input[[paste0("stratum_other", i)]]),
-          Population = sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]])
-        )
-        
-        ft <- flextable::flextable(strata_data) %>%
-          flextable::theme_box() %>%
-          flextable::autofit()
-        doc <- flextable::body_add_flextable(doc, ft) %>%
-          officer::body_add_par("", style = "Normal")
-        
-        progress$set(value = 0.6, detail = "Adding allocation results")
-        
-        # ---- Allocation Results ----
-        doc <- doc %>%
-          officer::body_add_par("Allocation Results:", style = "heading 2")
-        
-        alloc_data <- allocationData_other()
-        ft_alloc <- flextable::flextable(alloc_data) %>%
-          flextable::theme_box() %>%
-          flextable::autofit()
-        doc <- flextable::body_add_flextable(doc, ft_alloc) %>%
-          officer::body_add_par("", style = "Normal")
-        
-        progress$set(value = 0.9, detail = "Finalizing document")
-        
-        # ---- Interpretation ----
-        doc <- doc %>%
-          officer::body_add_par("Interpretation:", style = "heading 2") %>%
-          officer::body_add_par(interpretationText_other(), style = "Normal")
-        
-        # Save file
-        print(doc, target = file)
-        
-      }, error = function(e) {
-        showNotification(paste("Error generating document:", e$message), type = "error")
-      })
-    }
-  )
-  
-  output$downloadOtherSteps <- downloadHandler(
-    filename = function() {
-      paste("other_formula_calculation_steps_", Sys.Date(), ".txt", sep = "")
-    },
-    content = function(file) {
-      formula_type_name <- switch(input$formula_type,
-                                  "mean_known_var" = "Mean Estimation (Known Variance)",
-                                  "mean_unknown_var" = "Mean Estimation (Unknown Variance)",
-                                  "proportion_diff" = "Difference Between Proportions",
-                                  "correlation" = "Correlation Coefficient",
-                                  "regression" = "Regression Coefficient",
-                                  "odds_ratio" = "Odds Ratio",
-                                  "relative_risk" = "Relative Risk",
-                                  "prevalence" = "Prevalence Study",
-                                  "case_control" = "Case-Control Study",
-                                  "cohort" = "Cohort Study")
-      
-      steps <- c(
-        paste("OTHER FORMULA SAMPLE SIZE CALCULATION STEPS -", formula_type_name),
-        "================================================================",
-        paste("Date:", Sys.Date()),
-        "",
-        "INPUT PARAMETERS:"
-      )
-      
-      # Add specific parameters based on formula type
-      params_text <- switch(input$formula_type,
-                            "mean_known_var" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Standard Deviation (σ):", input$sigma_other),
-                              paste("Margin of Error (d):", input$d_other)
-                            ),
-                            "mean_unknown_var" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Effect Size (Cohen's d):", input$effect_size_other)
-                            ),
-                            "proportion_diff" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Proportion 1 (p₁):", input$p1_other),
-                              paste("Proportion 2 (p₂):", input$p2_other)
-                            ),
-                            "correlation" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Correlation Coefficient (r):", input$r_other)
-                            ),
-                            "regression" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Effect Size (f²):", input$effect_size_other),
-                              paste("Number of Predictors:", input$predictors_other)
-                            ),
-                            "odds_ratio" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Odds Ratio (OR):", input$or_other),
-                              paste("Proportion in Control Group:", input$p1_other)
-                            ),
-                            "relative_risk" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Relative Risk (RR):", input$rr_other),
-                              paste("Proportion in Control Group:", input$p1_other)
-                            ),
-                            "prevalence" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Precision (d):", input$precision_other),
-                              paste("Expected Prevalence:", input$prevalence_other)
-                            ),
-                            "case_control" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Odds Ratio (OR):", input$or_other),
-                              paste("Proportion in Controls:", input$p1_other),
-                              paste("Case:Control Ratio:", input$r_other)
-                            ),
-                            "cohort" = c(
-                              paste("Alpha (α):", input$alpha_other),
-                              paste("Power (1-β):", input$power_other),
-                              paste("Relative Risk (RR):", input$rr_other),
-                              paste("Proportion in Unexposed:", input$p1_other),
-                              paste("Exposed:Unexposed Ratio:", input$r_other)
-                            ))
-      
-      steps <- c(steps, params_text,
-                 paste("Non-response rate:", input$non_response_other, "%"),
-                 "",
-                 "CALCULATION DETAILS:",
-                 output$formulaExplanation_other(),
-                 "",
-                 "ADJUSTMENT FOR NON-RESPONSE:",
-                 output$adjustedSampleSize_other(),
-                 "",
-                 "STRATUM INFORMATION:"
-      )
-      
-      for (i in 1:rv_other$stratumCount) {
-        steps <- c(steps, 
-                   paste("Stratum", i, ":", input[[paste0("stratum_other", i)]], 
-                         "- Population:", input[[paste0("pop_other", i)]]))
-      }
-      
-      steps <- c(steps,
-                 paste("Total population:", totalPopulation_other()),
-                 "",
-                 "PROPORTIONAL ALLOCATION CALCULATIONS:",
-                 "Formula: n_i = (N_i / N) × n"
-      )
-      
-      alloc <- allocationData_other()
-      for (i in 1:rv_other$stratumCount) {
-        steps <- c(steps, 
-                   paste("Stratum", i, ":", alloc$Calculation[i]))
-      }
-      
-      steps <- c(steps,
-                 "",
-                 "FINAL ALLOCATION:"
-      )
-      
-      for (i in 1:rv_other$stratumCount) {
-        steps <- c(steps, 
-                   paste("Stratum", i, ":", alloc$Proportional_Sample[i], "samples"))
-      }
-      
-      steps <- c(steps,
-                 paste("Total samples:", sum(alloc$Proportional_Sample[1:rv_other$stratumCount])),
-                 "",
-                 "INTERPRETATION:",
-                 interpretationText_other()
-      )
-      
-      writeLines(steps, file)
-    }
-  )
-  
-  # Power Analysis section
-  observeEvent(input$runPower, {
-    tryCatch({
-      result <- switch(input$testType,
-                       "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                         power = input$power, type = "two.sample", 
-                                                         alternative = "two.sided"),
-                       "Paired t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                    power = input$power, type = "paired", 
-                                                    alternative = "two.sided"),
-                       "One-sample t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                        power = input$power, type = "one.sample", 
-                                                        alternative = "two.sided"),
-                       "One-Way ANOVA" = pwr.anova.test(k = 3, f = input$effectSize, sig.level = input$alpha, 
-                                                        power = input$power),
-                       "Two-Way ANOVA" = pwr.anova.test(k = 4, f = input$effectSize, sig.level = input$alpha, 
-                                                        power = input$power),
-                       "Proportion" = pwr.p.test(h = ES.h(input$effectSize, 0.5), sig.level = input$alpha, 
-                                                 power = input$power, alternative = "two.sided"),
-                       "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, 
-                                                  power = input$power, alternative = "two.sided"),
-                       "Chi-squared" = pwr.chisq.test(w = input$effectSize, df = 1, sig.level = input$alpha, 
-                                                      power = input$power),
-                       "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize^2, 
-                                                                sig.level = input$alpha, power = input$power),
-                       "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize^2, 
-                                                                  sig.level = input$alpha, power = input$power)
-      )
-      
-      output$powerResult <- renderText({
-        paste(
-          "Power Analysis Results for", input$testType, "\n",
-          "========================================\n",
-          "Effect size:", input$effectSize, "\n",
-          "Alpha:", input$alpha, "\n",
-          "Power:", input$power, "\n",
-          "Required sample size:", ifelse(input$testType %in% c("Independent t-test", "Paired t-test"), 
-                                          ceiling(result$n * 2), ceiling(result$n)), "\n",
-          ifelse(input$testType %in% c("Independent t-test", "Paired t-test"), 
-                 paste("Sample size per group:", ceiling(result$n)), "")
-        )
-      })
-    }, error = function(e) {
-      output$powerResult <- renderText({
-        paste("Error in power analysis:", e$message)
-      })
-    })
-  })
-  
-  output$downloadPowerSteps <- downloadHandler(
-    filename = function() {
-      paste("power_analysis_results_", Sys.Date(), ".txt", sep = "")
-    },
-    content = function(file) {
-      result_text <- capture.output({
-        cat("POWER ANALYSIS RESULTS\n")
-        cat("=====================\n")
-        cat("Date:", Sys.Date(), "\n\n")
-        cat("Test Type:", input$testType, "\n")
-        cat("Effect Size:", input$effectSize, "\n")
-        cat("Alpha:", input$alpha, "\n")
-        cat("Power:", input$power, "\n")
-        
-        if (input$testType == "Multiple Linear Regression") {
-          cat("Number of Predictors:", input$predictors, "\n")
-        }
-        
-        cat("\n")
-        
-        # Run the analysis again to get results
-        tryCatch({
-          result <- switch(input$testType,
-                           "Independent t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                             power = input$power, type = "two.sample", 
-                                                             alternative = "two.sided"),
-                           "Paired t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                        power = input$power, type = "paired", 
-                                                        alternative = "two.sided"),
-                           "One-sample t-test" = pwr.t.test(d = input$effectSize, sig.level = input$alpha, 
-                                                            power = input$power, type = "one.sample", 
-                                                            alternative = "two.sided"),
-                           "One-Way ANOVA" = pwr.anova.test(k = 3, f = input$effectSize, sig.level = input$alpha, 
-                                                            power = input$power),
-                           "Two-Way ANOVA" = pwr.anova.test(k = 4, f = input$effectSize, sig.level = input$alpha, 
-                                                            power = input$power),
-                           "Proportion" = pwr.p.test(h = ES.h(input$effectSize, 0.5), sig.level = input$alpha, 
-                                                     power = input$power, alternative = "two.sided"),
-                           "Correlation" = pwr.r.test(r = input$effectSize, sig.level = input$alpha, 
-                                                      power = input$power, alternative = "two.sided"),
-                           "Chi-squared" = pwr.chisq.test(w = input$effectSize, df = 1, sig.level = input$alpha, 
-                                                          power = input$power),
-                           "Simple Linear Regression" = pwr.f2.test(u = 1, f2 = input$effectSize^2, 
-                                                                    sig.level = input$alpha, power = input$power),
-                           "Multiple Linear Regression" = pwr.f2.test(u = input$predictors, f2 = input$effectSize^2, 
-                                                                      sig.level = input$alpha, power = input$power)
-          )
-          
-          cat("Required sample size:", ifelse(input$testType %in% c("Independent t-test", "Paired t-test"), 
-                                              ceiling(result$n * 2), ceiling(result$n)), "\n")
-          if (input$testType %in% c("Independent t-test", "Paired t-test")) {
-            cat("Sample size per group:", ceiling(result$n), "\n")
-          }
-          cat("\nDetailed results:\n")
-          print(result)
-        }, error = function(e) {
-          cat("Error in power analysis:", e$message, "\n")
-        })
-      })
-      
-      writeLines(result_text, file)
-    }
-  )
-  
-  # Descriptive Statistics section
-  observeEvent(input$runDesc, {
-    tryCatch({
-      data_text <- input$dataInput
-      if (nchar(trimws(data_text)) == 0) {
-        output$unknownData <- renderText({
-          "Please paste some data into the text area."
-        })
-        output$dataType <- reactive({"unknown"})
-        return()
-      }
-      
-      # Parse the data
-      data_lines <- strsplit(data_text, "\n")[[1]]
-      
-      # Check if data has a header
-      has_header <- length(data_lines) > 1 && 
-        suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
-      
-      if (has_header) {
-        # Remove header for analysis
-        data_values <- data_lines[-1]
-      } else {
-        data_values <- data_lines
-      }
-      
-      # Clean data
-      data_values <- trimws(data_values)
-      data_values <- data_values[data_values != ""]
-      
-      if (length(data_values) == 0) {
-        output$unknownData <- renderText({
-          "No valid data found."
-        })
-        output$dataType <- reactive({"unknown"})
-        return()
-      }
-      
-      # Determine data type
-      detect_data_type <- function(values) {
-        # Try to convert to numeric
-        numeric_test <- suppressWarnings(as.numeric(values))
-        num_numeric <- sum(!is.na(numeric_test))
-        prop_numeric <- num_numeric / length(values)
-        
-        # Check if values are Likert scale (ordinal)
-        likert_pattern <- "^(strongly disagree|disagree|neutral|agree|strongly agree|[1-5])$"
-        is_likert <- all(grepl(likert_pattern, tolower(values), ignore.case = TRUE))
-        
-        if (prop_numeric > 0.8) {
-          return("numerical")
-        } else if (is_likert) {
-          return("ordinal")
-        } else if (prop_numeric < 0.2 && length(unique(values)) < 10) {
-          return("categorical")
-        } else {
-          return("mixed")
-        }
-      }
-      
-      data_type <- input$dataType
-      if (data_type == "auto") {
-        data_type <- detect_data_type(data_values)
-      }
-      
-      output$dataType <- reactive({data_type})
-      outputOptions(output, "dataType", suspendWhenHidden = FALSE)
-      
-      output$dataTypeDetection <- renderUI({
-        div(
-          class = "who-info-box",
-          style = "margin-bottom: 20px;",
-          HTML(paste0(
-            "<strong>Detected Data Type:</strong> ", data_type, "<br>",
-            "<strong>Number of observations:</strong> ", length(data_values), "<br>",
-            "<strong>Missing values:</strong> ", sum(is.na(data_values) | data_values == ""), "<br>"
-          ))
-        )
-      })
-      
-      # Generate appropriate summary based on data type
-      if (data_type == "numerical") {
-        numeric_values <- as.numeric(data_values)
-        numeric_values <- numeric_values[!is.na(numeric_values)]
-        
-        if (length(numeric_values) == 0) {
-          output$numericalSummary <- renderText({
-            "No valid numerical data found."
-          })
-          return()
-        }
-        
-        desc_stats <- list(
-          "Number of observations" = length(numeric_values),
-          "Number of missing values" = sum(is.na(numeric_values)),
-          "Mean" = mean(numeric_values),
-          "Median" = median(numeric_values),
-          "Standard Deviation" = sd(numeric_values),
-          "Variance" = var(numeric_values),
-          "Minimum" = min(numeric_values),
-          "Maximum" = max(numeric_values),
-          "Range" = max(numeric_values) - min(numeric_values),
-          "First Quartile (Q1)" = quantile(numeric_values, 0.25),
-          "Third Quartile (Q3)" = quantile(numeric_values, 0.75),
-          "Interquartile Range (IQR)" = IQR(numeric_values),
-          "Skewness" = e1071::skewness(numeric_values),
-          "Kurtosis" = e1071::kurtosis(numeric_values)
-        )
-        
-        output$numericalSummary <- renderText({
-          paste(
-            "Numerical Data Summary\n",
-            "======================\n",
-            paste(names(desc_stats), sapply(desc_stats, function(x) round(x, 4)), sep = ": ", collapse = "\n"),
-            "\n\nData preview (first 10 values):\n",
-            paste(head(numeric_values, 10), collapse = ", ")
-          )
-        })
-        
-        output$numericalPlots <- renderPlot({
-          par(mfrow = c(1, 2))
-          hist(numeric_values, main = "Histogram", xlab = "Values", col = "#6BAED6")
-          boxplot(numeric_values, main = "Boxplot", col = "#6BAED6")
-        })
-        
-      } else if (data_type %in% c("categorical", "ordinal")) {
-        # For categorical and ordinal data
-        freq_table <- table(data_values)
-        freq_percent <- prop.table(freq_table) * 100
-        cum_freq <- cumsum(freq_table)
-        
-        # Create frequency table
-        freq_df <- data.frame(
-          Category = names(freq_table),
-          Frequency = as.numeric(freq_table),
-          Percentage = round(as.numeric(freq_percent), 2),
-          Cumulative = as.numeric(cum_freq)
-        )
-        
-        mode_val <- names(freq_table)[which.max(freq_table)]
-        
-        output$categoricalSummary <- renderText({
-          paste(
-            ifelse(data_type == "categorical", "Categorical", "Ordinal"), "Data Summary\n",
-            "==================================\n",
-            "Number of observations: ", length(data_values), "\n",
-            "Number of categories: ", nrow(freq_df), "\n",
-            "Mode: ", mode_val, " (", max(freq_table), " occurrences)\n\n",
-            "Frequency Table:\n",
-            paste(capture.output(print(freq_df, row.names = FALSE)), collapse = "\n")
-          )
-        })
-        
-        output$categoricalPlots <- renderPlot({
-          par(mfrow = c(1, 2))
-          barplot(freq_table, main = "Bar Plot", las = 2, col = "#6BAED6")
-          pie(freq_table, main = "Pie Chart", col = rainbow(length(freq_table)))
-        })
-        
-      } else if (data_type == "mixed") {
-        output$mixedSummary <- renderText({
-          "Mixed data types detected. Please specify the data type manually or clean your data."
-        })
-      }
-      
-    }, error = function(e) {
-      output$unknownData <- renderText({
-        paste("Error in data analysis:", e$message)
-      })
-      output$dataType <- reactive({"unknown"})
-    })
-  })
-  
-  output$downloadDescSteps <- downloadHandler(
-    filename = function() {
-      paste("descriptive_statistics_report_", Sys.Date(), ".docx", sep = "")
-    },
-    content = function(file) {
-      # Create progress indicator
-      progress <- shiny::Progress$new()
-      progress$set(message = "Generating Report", value = 0)
-      on.exit(progress$close())
-      
-      tryCatch({
-        # Create a new Word document
-        doc <- officer::read_docx()
-        
-        # Add title
-        doc <- doc %>% 
-          officer::body_add_par("Descriptive Statistics Report", style = "heading 1") %>%
-          officer::body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
-          officer::body_add_par("", style = "Normal")
-        
-        progress$set(value = 0.2, detail = "Processing data...")
-        
-        # Process the data (same logic as in runDesc)
-        data_text <- input$dataInput
-        if (nchar(trimws(data_text)) == 0) {
-          doc <- doc %>% officer::body_add_par("No data available for analysis.", style = "Normal")
-          print(doc, target = file)
-          return()
-        }
-        
-        data_lines <- strsplit(data_text, "\n")[[1]]
-        has_header <- length(data_lines) > 1 && 
-          suppressWarnings(any(is.na(as.numeric(data_lines[1]))))
-        
-        if (has_header) {
-          data_values <- data_lines[-1]
-        } else {
-          data_values <- data_lines
-        }
-        
-        data_values <- trimws(data_values)
-        data_values <- data_values[data_values != ""]
-        
-        if (length(data_values) == 0) {
-          doc <- doc %>% officer::body_add_par("No valid data found.", style = "Normal")
-          print(doc, target = file)
-          return()
-        }
-        
-        # Determine data type
-        detect_data_type <- function(values) {
-          numeric_test <- suppressWarnings(as.numeric(values))
-          num_numeric <- sum(!is.na(numeric_test))
-          prop_numeric <- num_numeric / length(values)
-          
-          likert_pattern <- "^(strongly disagree|disagree|neutral|agree|strongly agree|[1-5])$"
-          is_likert <- all(grepl(likert_pattern, tolower(values), ignore.case = TRUE))
-          
-          if (prop_numeric > 0.8) {
-            return("numerical")
-          } else if (is_likert) {
-            return("ordinal")
-          } else if (prop_numeric < 0.2 && length(unique(values)) < 10) {
-            return("categorical")
-          } else {
-            return("mixed")
-          }
-        }
-        
-        data_type <- input$dataType
-        if (data_type == "auto") {
-          data_type <- detect_data_type(data_values)
-        }
-        
-        # Add data type information
-        doc <- doc %>%
-          officer::body_add_par("Data Overview", style = "heading 2") %>%
-          officer::body_add_par(paste("Data Type:", data_type), style = "Normal") %>%
-          officer::body_add_par(paste("Number of observations:", length(data_values)), style = "Normal") %>%
-          officer::body_add_par(paste("Missing values:", sum(is.na(data_values) | data_values == "")), style = "Normal") %>%
-          officer::body_add_par("", style = "Normal")
-        
-        progress$set(value = 0.4, detail = "Generating statistics...")
-        
-        if (data_type == "numerical") {
-          # Numerical data analysis
-          numeric_values <- as.numeric(data_values)
-          numeric_values <- numeric_values[!is.na(numeric_values)]
-          
-          if (length(numeric_values) > 0) {
-            # Calculate statistics
-            desc_stats <- data.frame(
-              Statistic = c("Number of observations", "Mean", "Median", "Standard Deviation", 
-                            "Variance", "Minimum", "Maximum", "Range", "First Quartile (Q1)", 
-                            "Third Quartile (Q3)", "Interquartile Range (IQR)", "Skewness", "Kurtosis"),
-              Value = c(length(numeric_values),
-                        round(mean(numeric_values), 4),
-                        round(median(numeric_values), 4),
-                        round(sd(numeric_values), 4),
-                        round(var(numeric_values), 4),
-                        round(min(numeric_values), 4),
-                        round(max(numeric_values), 4),
-                        round(max(numeric_values) - min(numeric_values), 4),
-                        round(quantile(numeric_values, 0.25), 4),
-                        round(quantile(numeric_values, 0.75), 4),
-                        round(IQR(numeric_values), 4),
-                        round(e1071::skewness(numeric_values), 4),
-                        round(e1071::kurtosis(numeric_values), 4))
-            )
-            
-            # Add statistics table
-            doc <- doc %>%
-              officer::body_add_par("Descriptive Statistics", style = "heading 2")
-            
-            ft <- flextable::flextable(desc_stats) %>%
-              flextable::theme_box() %>%
-              flextable::autofit()
-            doc <- flextable::body_add_flextable(doc, ft) %>%
-              officer::body_add_par("", style = "Normal")
-            
-            progress$set(value = 0.6, detail = "Creating charts...")
-            
-            # Create and add charts
-            temp_dir <- tempdir()
-            
-            # Histogram
-            hist_file <- file.path(temp_dir, "histogram.png")
-            png(hist_file, width = 6, height = 4, units = "in", res = 300)
-            hist(numeric_values, main = "Histogram", xlab = "Values", col = "#6BAED6")
-            dev.off()
-            
-            # Boxplot
-            box_file <- file.path(temp_dir, "boxplot.png")
-            png(box_file, width = 6, height = 4, units = "in", res = 300)
-            boxplot(numeric_values, main = "Boxplot", col = "#6BAED6")
-            dev.off()
-            
-            # Add charts to document
-            doc <- doc %>%
-              officer::body_add_par("Data Visualization", style = "heading 2") %>%
-              officer::body_add_par("Histogram", style = "heading 3") %>%
-              officer::body_add_img(hist_file, width = 6, height = 4) %>%
-              officer::body_add_par("Boxplot", style = "heading 3") %>%
-              officer::body_add_img(box_file, width = 6, height = 4)
-            
-            # Clean up temp files
-            unlink(c(hist_file, box_file))
-          }
-          
-        } else if (data_type %in% c("categorical", "ordinal")) {
-          # Categorical/Ordinal data analysis
-          freq_table <- table(data_values)
-          freq_percent <- prop.table(freq_table) * 100
-          cum_freq <- cumsum(freq_table)
-          
-          freq_df <- data.frame(
-            Category = names(freq_table),
-            Frequency = as.numeric(freq_table),
-            Percentage = round(as.numeric(freq_percent), 2),
-            Cumulative = as.numeric(cum_freq)
-          )
-          
-          mode_val <- names(freq_table)[which.max(freq_table)]
-          
-          # Add frequency table
-          doc <- doc %>%
-            officer::body_add_par("Frequency Distribution", style = "heading 2") %>%
-            officer::body_add_par(paste("Mode:", mode_val, "(", max(freq_table), "occurrences)"), style = "Normal")
-          
-          ft <- flextable::flextable(freq_df) %>%
-            flextable::theme_box() %>%
-            flextable::autofit()
-          doc <- flextable::body_add_flextable(doc, ft) %>%
-            officer::body_add_par("", style = "Normal")
-          
-          progress$set(value = 0.6, detail = "Creating charts...")
-          
-          # Create and add charts
-          temp_dir <- tempdir()
-          
-          # Bar plot
-          bar_file <- file.path(temp_dir, "barplot.png")
-          png(bar_file, width = 8, height = 6, units = "in", res = 300)
-          par(mar = c(7, 4, 4, 2) + 0.1)  # Increase bottom margin for long labels
-          barplot(freq_table, main = "Bar Plot", las = 2, col = "#6BAED6")
-          dev.off()
-          
-          # Pie chart
-          pie_file <- file.path(temp_dir, "piechart.png")
-          png(pie_file, width = 6, height = 6, units = "in", res = 300)
-          pie(freq_table, main = "Pie Chart", col = rainbow(length(freq_table)))
-          dev.off()
-          
-          # Add charts to document
-          doc <- doc %>%
-            officer::body_add_par("Data Visualization", style = "heading 2") %>%
-            officer::body_add_par("Bar Plot", style = "heading 3") %>%
-            officer::body_add_img(bar_file, width = 8, height = 6) %>%
-            officer::body_add_par("Pie Chart", style = "heading 3") %>%
-            officer::body_add_img(pie_file, width = 6, height = 6)
-          
-          # Clean up temp files
-          unlink(c(bar_file, pie_file))
-          
-        } else {
-          # Mixed or unknown data type
-          doc <- doc %>%
-            officer::body_add_par("Data Analysis", style = "heading 2") %>%
-            officer::body_add_par("Mixed or unknown data type detected. Please specify the data type manually or clean your data.", style = "Normal") %>%
-            officer::body_add_par("Raw data preview:", style = "heading 3") %>%
-            officer::body_add_par(paste(head(data_values, 20), collapse = ", "), style = "Normal")
-        }
-        
-        progress$set(value = 0.9, detail = "Finalizing document...")
-        
-        # Add data preview section
-        doc <- doc %>%
-          officer::body_add_par("Data Preview", style = "heading 2") %>%
-          officer::body_add_par(paste("First 20 values:", paste(head(data_values, 20), collapse = ", ")), style = "Normal")
-        
-        # Save the document
-        print(doc, target = file)
-        
-      }, error = function(e) {
-        showNotification(paste("Error generating report:", e$message), type = "error")
-      })
-    }
-  )
 }
-
-
-
-# Add JavaScript for localStorage functionality
-jscode <- "
-shinyjs.saveValues = function(params) {
-  localStorage.setItem(params.section, params.values);
-}
-
-shinyjs.clearValues = function(params) {
-  localStorage.removeItem(params);
-}
-
-// Initialize values from localStorage when page loads
-$(document).on('shiny:connected', function(event) {
-  // Proportional Allocation
-  var propValues = localStorage.getItem('proportional');
-  if (propValues) {
-    Shiny.setInputValue('proportional_values', propValues);
-  }
-  
-  // Taro Yamane
-  var yamaneValues = localStorage.getItem('yamane');
-  if (yamaneValues) {
-    Shiny.setInputValue('yamane_values', yamaneValues);
-  }
-  
-  // Cochran
-  var cochranValues = localStorage.getItem('cochran');
-  if (cochranValues) {
-    Shiny.setInputValue('cochran_values', cochranValues);
-  }
-  
-  // Other Formulas
-  var otherValues = localStorage.getItem('other');
-  if (otherValues) {
-    Shiny.setInputValue('other_values', otherValues);
-  }
-  
-  // Power Analysis
-  var powerValues = localStorage.getItem('power');
-  if (powerValues) {
-    Shiny.setInputValue('power_values', powerValues);
-  }
-  
-  // Descriptive Statistics
-  var descValues = localStorage.getItem('desc');
-  if (descValues) {
-    Shiny.setInputValue('desc_values', descValues);
-  }
-});
-"
 
 # Run the application
 shinyApp(ui = ui, server = server)
