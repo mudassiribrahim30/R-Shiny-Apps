@@ -4,6 +4,8 @@ library(shiny)
 library(shinythemes)
 library(dplyr)
 library(validate)
+library(rmarkdown)
+library(pagedown)
 
 # Define UI with professional layout
 ui <- fluidPage(
@@ -101,6 +103,13 @@ ui <- fluidPage(
         padding: 10px 16px;
         font-weight: 500;
       }
+      .btn-success {
+        background-color: #28a745;
+        border-color: #1e7e34;
+        font-size: 16px;
+        padding: 10px 16px;
+        font-weight: 500;
+      }
       .form-control {
         font-size: 16px;
         height: 42px;
@@ -124,6 +133,15 @@ ui <- fluidPage(
         font-weight: 500;
         color: #495057;
       }
+      .concentration-inputs {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+      }
+      .concentration-inputs .form-group {
+        flex: 1;
+        margin-bottom: 0;
+      }
     "))
   ),
   
@@ -141,16 +159,19 @@ ui <- fluidPage(
           width = 4,
           div(class = "well",
               h4("Drug Information", icon("flask", style = "color: #0077b6;")),
-              numericInput("drug_concentration", "Drug Concentration", 
-                           value = 1, min = 0.0001, step = 0.1),
-              selectInput("concentration_unit", "Concentration Unit", 
-                          choices = c("mg/mL", "mcg/mL", "IU/mL", "U/mL", "mmol/L", 
-                                      "g/L", "% solution", "mEq/mL", "ng/mL", "μg/mL",
-                                      "ppm", "ppb", "Custom"),
-                          selected = "mg/mL"),
-              conditionalPanel(
-                condition = "input.concentration_unit == 'Custom'",
-                textInput("custom_unit", "Enter Custom Unit", value = "")
+              div(class = "concentration-inputs",
+                  div(
+                    numericInput("drug_amount", "Drug Amount", 
+                                 value = 1, min = 0.0001, step = 0.1),
+                    selectInput("amount_unit", "Amount Unit", 
+                                choices = c("mg", "mcg", "IU", "U", "mmol", "g", "mEq", "ng", "μg"),
+                                selected = "mg")
+                  ),
+                  div(
+                    numericInput("drug_volume", "Per Volume (mL)", 
+                                 value = 1, min = 0.0001, step = 0.1),
+                    p("mL", style = "font-weight: bold; margin-bottom: 15px;")
+                  )
               ),
               
               hr(style = "border-top: 1px solid #e0e0e0;"),
@@ -185,7 +206,13 @@ ui <- fluidPage(
               actionButton("reset", "Reset", 
                            icon = icon("redo"),
                            class = "btn-default btn-block",
-                           style = "margin-top: 10px;")
+                           style = "margin-top: 10px;"),
+              conditionalPanel(
+                condition = "input.calculate > 0",
+                downloadButton("", "",
+                               class = "btn-success btn-block",
+                               style = "margin-top: 10px;")
+              )
           )
         ),
         
@@ -201,12 +228,21 @@ ui <- fluidPage(
           ),
           div(class = "instruction-box",
               h4("Quick Guide", icon("info-circle", style = "color: #28a745;")),
-              p("Enter the drug concentration and select the appropriate unit. Then choose whether to calculate volume to administer or dose from volume."),
+              p("Enter the drug amount and volume to calculate concentration. Then choose whether to calculate volume to administer or dose from volume."),
               p(strong("Examples:")),
               tags$ul(
-                tags$li("For a 50 mg/mL solution and desired dose of 75 mg, you'll get 1.5 mL to administer"),
-                tags$li("For 2.5 mL of a 10,000 IU/mL solution, you'll get 25,000 IU"),
-                tags$li("For 5 mL of a 40 mEq/10mL solution, you'll get 20 mEq")
+                tags$li("For Furosemide 20mg/2mL and desired dose of 40 mg:"),
+                tags$ul(
+                  tags$li("Enter Drug Amount: 20, Amount Unit: mg"),
+                  tags$li("Enter Per Volume: 2 mL"),
+                  tags$li("Desired Dose: 40 mg → Volume to administer: 4 mL")
+                ),
+                tags$li("For 2.5 mL of a 10,000 IU/5mL solution:"),
+                tags$ul(
+                  tags$li("Enter Drug Amount: 10000, Amount Unit: IU"),
+                  tags$li("Enter Per Volume: 5 mL"),
+                  tags$li("Volume to administer: 2.5 mL → Total dose: 5,000 IU")
+                )
               )
           )
         )
@@ -248,10 +284,20 @@ ui <- fluidPage(
               
               hr(style = "border-top: 1px solid #e0e0e0;"),
               h4("Liquid Formulation (Optional)", icon("flask", style = "color: #0077b6;")),
-              numericInput("liquid_med_amount", "Medication amount", 
-                           value = 0, min = 0.0001, step = 0.1),
-              numericInput("liquid_med_volume", "Per volume (mL)", 
-                           value = 0, min = 0.0001, step = 0.1),
+              div(class = "concentration-inputs",
+                  div(
+                    numericInput("liquid_med_amount", "Medication amount", 
+                                 value = 0, min = 0.0001, step = 0.1),
+                    selectInput("liquid_amount_unit", "Amount Unit",
+                                choices = c("mg", "mcg", "IU", "U", "g"),
+                                selected = "mg")
+                  ),
+                  div(
+                    numericInput("liquid_med_volume", "Per volume (mL)", 
+                                 value = 0, min = 0.0001, step = 0.1),
+                    p("mL", style = "font-weight: bold; margin-bottom: 15px;")
+                  )
+              ),
               
               actionButton("calculate_wt", "Calculate", 
                            icon = icon("play-circle"),
@@ -260,7 +306,13 @@ ui <- fluidPage(
               actionButton("reset_wt", "Reset", 
                            icon = icon("redo"),
                            class = "btn-default btn-block",
-                           style = "margin-top: 10px;")
+                           style = "margin-top: 10px;"),
+              conditionalPanel(
+                condition = "input.calculate_wt > 0",
+                downloadButton("download_weight", "Download PDF Report",
+                               class = "btn-success btn-block",
+                               style = "margin-top: 10px;")
+              )
           )
         ),
         
@@ -336,7 +388,13 @@ ui <- fluidPage(
               actionButton("reset_tab", "Reset", 
                            icon = icon("redo"),
                            class = "btn-default btn-block",
-                           style = "margin-top: 10px;")
+                           style = "margin-top: 10px;"),
+              conditionalPanel(
+                condition = "input.calculate_tab > 0",
+                downloadButton("download_tablet", "Download PDF Report",
+                               class = "btn-success btn-block",
+                               style = "margin-top: 10px;")
+              )
           )
         ),
         
@@ -401,7 +459,8 @@ ui <- fluidPage(
             tags$li("Support for custom units"),
             tags$li("Two calculation modes: volume to administer or dose from volume"),
             tags$li("Comprehensive unit conversion reference"),
-            tags$li("Support for over 5 different measurement units")
+            tags$li("Support for over 5 different measurement units"),
+            tags$li("PDF report generation for documentation")
           ),
           h4("Developer:"),
           p(strong("Mudasir Mohammed Ibrahim")),
@@ -429,7 +488,8 @@ server <- function(input, output, session) {
   # Reactive values for standard calculator
   rv <- reactiveValues(
     result = NULL,
-    calculation_details = NULL
+    calculation_details = NULL,
+    concentration = NULL
   )
   
   # Reactive values for weight-based calculator
@@ -446,16 +506,17 @@ server <- function(input, output, session) {
   
   # Reset standard calculator inputs
   observeEvent(input$reset, {
-    updateNumericInput(session, "drug_concentration", value = 1)
-    updateSelectInput(session, "concentration_unit", selected = "mg/mL")
+    updateNumericInput(session, "drug_amount", value = 1)
+    updateNumericInput(session, "drug_volume", value = 1)
+    updateSelectInput(session, "amount_unit", selected = "mg")
     updateRadioButtons(session, "calculation_type", selected = "vol_to_admin")
     updateNumericInput(session, "desired_dose", value = 1)
     updateSelectInput(session, "dose_unit", selected = "mg")
     updateNumericInput(session, "volume_to_admin", value = 1)
-    updateTextInput(session, "custom_unit", value = "")
     updateTextInput(session, "custom_dose_unit", value = "")
     rv$result <- NULL
     rv$calculation_details <- NULL
+    rv$concentration <- NULL
   })
   
   # Reset weight-based calculator inputs
@@ -465,8 +526,8 @@ server <- function(input, output, session) {
     updateNumericInput(session, "dose_per_kg", value = 1)
     updateSelectInput(session, "dose_unit_wt", selected = "mg/kg")
     updateSelectInput(session, "frequency", selected = "q12hr")
-    updateNumericInput(session, "liquid_med_amount", value = NULL)
-    updateNumericInput(session, "liquid_med_volume", value = NULL)
+    updateNumericInput(session, "liquid_med_amount", value = 0)
+    updateNumericInput(session, "liquid_med_volume", value = 0)
     rv_wt$result <- NULL
     rv_wt$calculation_details <- NULL
   })
@@ -488,54 +549,59 @@ server <- function(input, output, session) {
   observeEvent(input$calculate, {
     tryCatch({
       # Validate inputs
-      req(input$drug_concentration > 0, 
+      req(input$drug_amount > 0, input$drug_volume > 0,
           ifelse(input$calculation_type == "vol_to_admin", 
                  input$desired_dose > 0, 
                  input$volume_to_admin > 0))
       
-      # Get units
-      conc_unit <- ifelse(input$concentration_unit == "Custom", 
-                          input$custom_unit, 
-                          input$concentration_unit)
+      # Calculate concentration
+      concentration <- input$drug_amount / input$drug_volume
+      rv$concentration <- concentration
       
+      # Get units
+      amount_unit <- input$amount_unit
       dose_unit <- ifelse(input$calculation_type == "vol_to_admin" && input$dose_unit == "Custom", 
                           input$custom_dose_unit, 
                           ifelse(input$calculation_type == "vol_to_admin", 
                                  input$dose_unit, 
-                                 sub("/mL", "", conc_unit)))
+                                 amount_unit))
       
       # Perform calculation
       if (input$calculation_type == "vol_to_admin") {
         # Volume to administer = Desired dose / Concentration
-        volume <- input$desired_dose / input$drug_concentration
+        volume <- input$desired_dose / concentration
         rv$result <- paste0(
           "Administer ", round(volume, 4), " mL",
-          " of the ", input$drug_concentration, " ", conc_unit, " solution",
+          " of the ", input$drug_amount, " ", amount_unit, "/", input$drug_volume, " mL solution",
           " to achieve a dose of ", input$desired_dose, " ", dose_unit, "."
         )
         
         rv$calculation_details <- data.frame(
-          Parameter = c("Desired Dose", "Drug Concentration", "Volume to Administer"),
-          Value = c(paste(input$desired_dose, dose_unit),
-                    paste(input$drug_concentration, conc_unit),
+          Parameter = c("Drug Concentration", "Desired Dose", "Volume to Administer"),
+          Value = c(paste(round(concentration, 4), amount_unit, "/mL"),
+                    paste(input$desired_dose, dose_unit),
                     paste(round(volume, 4), "mL")),
-          Formula = c("", "", "Volume = Desired Dose / Concentration")
+          Formula = c(paste(input$drug_amount, "/", input$drug_volume), 
+                      "", 
+                      "Volume = Desired Dose / Concentration")
         )
       } else {
         # Dose = Volume * Concentration
-        dose <- input$volume_to_admin * input$drug_concentration
+        dose <- input$volume_to_admin * concentration
         rv$result <- paste0(
           input$volume_to_admin, " mL",
-          " of the ", input$drug_concentration, " ", conc_unit, " solution",
+          " of the ", input$drug_amount, " ", amount_unit, "/", input$drug_volume, " mL solution",
           " contains ", round(dose, 4), " ", dose_unit, "."
         )
         
         rv$calculation_details <- data.frame(
-          Parameter = c("Volume to Administer", "Drug Concentration", "Total Dose"),
-          Value = c(paste(input$volume_to_admin, "mL"),
-                    paste(input$drug_concentration, conc_unit),
+          Parameter = c("Drug Concentration", "Volume to Administer", "Total Dose"),
+          Value = c(paste(round(concentration, 4), amount_unit, "/mL"),
+                    paste(input$volume_to_admin, "mL"),
                     paste(round(dose, 4), dose_unit)),
-          Formula = c("", "", "Dose = Volume × Concentration")
+          Formula = c(paste(input$drug_amount, "/", input$drug_volume), 
+                      "", 
+                      "Dose = Volume × Concentration")
         )
       }
     }, error = function(e) {
@@ -615,7 +681,7 @@ server <- function(input, output, session) {
         details <- rbind(details,
                          data.frame(
                            Parameter = c("Liquid Concentration", "Volume to Administer"),
-                           Value = c(paste(input$liquid_med_amount, sub("/kg", "", input$dose_unit_wt), "/", 
+                           Value = c(paste(input$liquid_med_amount, input$liquid_amount_unit, "/", 
                                            input$liquid_med_volume, "mL"),
                                      liquid_info),
                            Formula = c(paste(input$liquid_med_amount, "/", input$liquid_med_volume),
@@ -741,6 +807,144 @@ server <- function(input, output, session) {
     rv_tab$calculation_details
   }, align = 'l', bordered = TRUE, striped = TRUE, width = "100%")
   
+  # Download handlers for PDF reports
+  output$download_standard <- downloadHandler(
+    filename = function() {
+      paste("standard-calculator-report-", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      # Create a temporary Rmd file
+      temp_rmd <- tempfile(fileext = ".Rmd")
+      
+      # Write the Rmd content
+      writeLines(c(
+        "---",
+        "title: \"Standard Calculator Report\"",
+        "output: pdf_document",
+        "---",
+        "",
+        "## Calculation Result",
+        "",
+        paste(rv$result),
+        "",
+        "## Calculation Details",
+        "",
+        "```{r, echo=FALSE}",
+        "rv$calculation_details",
+        "```",
+        "",
+        "## Input Parameters",
+        "",
+        paste("- Drug Amount:", input$drug_amount, input$amount_unit),
+        paste("- Drug Volume:", input$drug_volume, "mL"),
+        paste("- Calculation Type:", ifelse(input$calculation_type == "vol_to_admin", 
+                                            "Calculate volume to administer", 
+                                            "Calculate dose from volume")),
+        if(input$calculation_type == "vol_to_admin") {
+          paste("- Desired Dose:", input$desired_dose, 
+                ifelse(input$dose_unit == "Custom", input$custom_dose_unit, input$dose_unit))
+        } else {
+          paste("- Volume to Administer:", input$volume_to_admin, "mL")
+        },
+        "",
+        "---",
+        paste("Report generated on:", Sys.Date()),
+        "PharmaCalc Pro - For professional use only"
+      ), temp_rmd)
+      
+      # Render to PDF
+      render(temp_rmd, output_file = file, quiet = TRUE)
+    }
+  )
+  
+  output$download_weight <- downloadHandler(
+    filename = function() {
+      paste("weight-based-report-", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      # Create a temporary Rmd file
+      temp_rmd <- tempfile(fileext = ".Rmd")
+      
+      # Write the Rmd content
+      writeLines(c(
+        "---",
+        "title: \"Weight-Based Dosing Report\"",
+        "output: pdf_document",
+        "---",
+        "",
+        "## Calculation Result",
+        "",
+        paste(gsub("<br>", "  \n", gsub("<[^>]+>", "", rv_wt$result))),
+        "",
+        "## Calculation Details",
+        "",
+        "```{r, echo=FALSE}",
+        "rv_wt$calculation_details",
+        "```",
+        "",
+        "## Input Parameters",
+        "",
+        paste("- Patient Weight:", input$patient_weight, input$weight_unit),
+        paste("- Dosage:", input$dose_per_kg, input$dose_unit_wt),
+        paste("- Frequency:", input$frequency),
+        if(input$liquid_med_amount > 0 && input$liquid_med_volume > 0) {
+          paste("- Liquid Formulation:", input$liquid_med_amount, input$liquid_amount_unit, "/", 
+                input$liquid_med_volume, "mL")
+        },
+        "",
+        "---",
+        paste("Report generated on:", Sys.Date()),
+        "PharmaCalc Pro - For professional use only"
+      ), temp_rmd)
+      
+      # Render to PDF
+      render(temp_rmd, output_file = file, quiet = TRUE)
+    }
+  )
+  
+  output$download_tablet <- downloadHandler(
+    filename = function() {
+      paste("tablet-dosage-report-", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      # Create a temporary Rmd file
+      temp_rmd <- tempfile(fileext = ".Rmd")
+      
+      # Write the Rmd content
+      writeLines(c(
+        "---",
+        "title: \"Tablet Dosage Report\"",
+        "output: pdf_document",
+        "---",
+        "",
+        "## Calculation Result",
+        "",
+        paste(gsub("<br>", "  \n", gsub("<[^>]+>", "", rv_tab$result))),
+        "",
+        "## Calculation Details",
+        "",
+        "```{r, echo=FALSE}",
+        "rv_tab$calculation_details",
+        "```",
+        "",
+        "## Input Parameters",
+        "",
+        paste("- Tablet Strength:", input$tablet_strength, 
+              ifelse(input$tablet_unit == "Custom", input$custom_tablet_unit, input$tablet_unit)),
+        paste("- Prescribed Dose:", input$prescribed_dose, 
+              ifelse(input$prescribed_unit == "Custom", input$custom_prescribed_unit, input$prescribed_unit)),
+        paste("- Allow Partial Tablets:", ifelse(input$allow_partial, "Yes", "No")),
+        "",
+        "---",
+        paste("Report generated on:", Sys.Date()),
+        "PharmaCalc Pro - For professional use only"
+      ), temp_rmd)
+      
+      # Render to PDF
+      render(temp_rmd, output_file = file, quiet = TRUE)
+    }
+  )
+  
   # Unit conversion table
   output$unit_conversion_table <- renderTable({
     data.frame(
@@ -800,4 +1004,5 @@ server <- function(input, output, session) {
 }
 
 # Run the application
+
 shinyApp(ui = ui, server = server)
