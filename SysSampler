@@ -1,0 +1,1272 @@
+# Load required libraries
+library(shiny)
+library(shinyjs)
+library(DT)
+library(openxlsx)
+library(officer)
+library(flextable)
+library(readxl)
+library(haven)
+library(data.table)
+library(randomizr)
+
+# Define UI
+ui <- fluidPage(
+  useShinyjs(),
+  tags$head(
+    tags$style(HTML("
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+      
+      * {
+        font-family: 'Roboto', sans-serif;
+      }
+      
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+      
+      .main-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        padding: 25px;
+        min-height: 95vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slideIn {
+        from { transform: translateY(-30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      .title-animation {
+        animation: slideIn 1s ease-out;
+        text-align: center;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2.5em;
+      }
+      
+      .subtitle-animation {
+        animation: fadeIn 1.5s ease-out;
+        text-align: center;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        font-weight: 300;
+        font-size: 1.2em;
+      }
+      
+      .developer-info {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        text-align: center;
+        animation: fadeIn 2s ease-out;
+      }
+      
+      .formula-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #3498db;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .result-box {
+        background: #e8f6f3;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #27ae60;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .info-box {
+        background: #fff9e6;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #f39c12;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .calculation-box {
+        background: #e8f4f8;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #2980b9;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .random-start-box {
+        background: #f0e6ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #9b59b6;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        animation: fadeIn 0.5s ease-out;
+      }
+      
+      .nav-tabs > li > a {
+        color: #2c3e50;
+        font-weight: 500;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+      }
+      
+      .nav-tabs > li.active > a {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: white !important;
+        border: none;
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+      }
+      
+      .btn-warning {
+        background: linear-gradient(135deg, #f39c12, #e74c3c);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .btn-success {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .sidebar-panel {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .main-panel {
+        padding: 0 25px;
+      }
+      
+      .download-btn {
+        width: 100%; 
+        margin-bottom: 10px; 
+        background: linear-gradient(135deg, #667eea, #764ba2); 
+        color: white; 
+        border: none; 
+        border-radius: 8px; 
+        padding: 10px;
+      }
+      
+      .footer {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: auto;
+        font-size: 0.9em;
+        width: 100%;
+      }
+      
+      .content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 200px);
+      }
+      
+      .main-content-area {
+        flex: 1;
+        margin-bottom: 20px;
+      }
+      
+      .plot-download-btn {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        margin: 10px 5px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      
+      .plot-download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        color: white;
+      }
+      
+      /* Remove scrolling from sidebar and main panel */
+      .sidebar-panel {
+        position: relative;
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+      }
+      
+      .main-panel {
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+      }
+      
+      .file-upload-info {
+        background: #e8f4f8;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-size: 0.9em;
+        border-left: 3px solid #3498db;
+      }
+    "))
+  ),
+  
+  # Main container
+  div(class = "main-container",
+      
+      # Application title
+      div(class = "title-animation",
+          h1("SysSampler - Systematic Random Sampling Calculator")
+      ),
+      
+      div(class = "subtitle-animation",
+          h4("Advanced Research Sampling Tool with Scientific Procedures")
+      ),
+      
+      # Main content wrapper
+      div(class = "content-wrapper",
+          div(class = "main-content-area",
+              sidebarLayout(
+                sidebarPanel(
+                  width = 4,
+                  class = "sidebar-panel",
+                  h3("Sampling Parameters"),
+                  
+                  # Input for population size
+                  numericInput("population", "Population Size (N):", 
+                               value = 1000, min = 1, step = 1),
+                  
+                  # Input for sample size
+                  numericInput("sample_size", "Sample Size (n):", 
+                               value = 100, min = 1, step = 1),
+                  
+                  # Input for random start
+                  numericInput("random_start", "Random Start (r):", 
+                               value = 1, min = 1, step = 1),
+                  
+                  # Scientific procedure options
+                  h4("Scientific Procedures"),
+                  
+                  # Non-response handling
+                  checkboxInput("enable_nonresponse", "Enable Non-Response Handling", value = FALSE),
+                  conditionalPanel(
+                    condition = "input.enable_nonresponse == true",
+                    numericInput("nonresponse_unit", "Unit Number with Non-Response:", 
+                                 value = 3, min = 1, step = 1),
+                    selectInput("replacement_method", "Replacement Method:",
+                                choices = c("Next Available Unit" = "next",
+                                            "Previous Unit" = "previous",
+                                            "Random Replacement" = "random"))
+                  ),
+                  
+                  # Checkbox for population list
+                  checkboxInput("has_list", "Upload Population List", value = FALSE),
+                  
+                  # Conditional panel for file upload
+                  conditionalPanel(
+                    condition = "input.has_list == true",
+                    fileInput("population_file", "Upload File (Excel, CSV, Stata, SAS, RData, SPSS)",
+                              accept = c(".xlsx", ".xls", ".csv", ".dta", ".sas7bdat", ".sav", ".zsav", ".rda", ".rdata")),
+                    textInput("id_column", "ID Column Name:", value = "ID"),
+                    uiOutput("file_info")
+                  ),
+                  
+                  hr(),
+                  
+                  # Action buttons
+                  actionButton("calculate", "Calculate Sample", 
+                               class = "btn-primary", width = "100%"),
+                  br(), br(),
+                  
+                  # Random start selection option
+                  conditionalPanel(
+                    condition = "input.calculate > 0",
+                    div(class = "random-start-box",
+                        h4("Random Start Selection"),
+                        checkboxInput("want_random_start", "Do you want to get a random start?", value = FALSE),
+                        conditionalPanel(
+                          condition = "input.want_random_start == true",
+                          numericInput("available_participants", "Number of Participants Available:", 
+                                       value = 10, min = 1, step = 1),
+                          actionButton("generate_random_start", "Give Me Random Start Number", 
+                                       class = "btn-success", width = "100%"),
+                          br(), br(),
+                          uiOutput("random_start_result")
+                        )
+                    )
+                  ),
+                  
+                  actionButton("reset", "Reset", 
+                               class = "btn-warning", width = "100%"),
+                  
+                  hr(),
+                  
+                  # Download buttons
+                  h4("Export Results"),
+                  downloadButton("download_word", "Word Report", 
+                                 class = "download-btn"),
+                  downloadButton("download_csv", "Sample Data (CSV)", 
+                                 class = "download-btn")
+                ),
+                
+                mainPanel(
+                  width = 8,
+                  class = "main-panel",
+                  tabsetPanel(
+                    tabPanel("Overview",
+                             div(class = "info-box",
+                                 h3("Systematic Random Sampling"),
+                                 p("Systematic sampling is a probability sampling method where researchers select members of the population at a regular interval (k) determined in advance."),
+                                 p("If the population order is random or random-like (e.g., alphabetical), this method will give you a representative sample that can be used to draw conclusions about your population of interest.")
+                             ),
+                             
+                             div(class = "formula-box",
+                                 h3("Sampling Formula"),
+                                 withMathJax(),
+                                 p("The sampling interval \\(k\\) is calculated as:"),
+                                 p("$$k = \\frac{N}{n}$$"),
+                                 p("Where:"),
+                                 tags$ul(
+                                   tags$li("\\(N\\) = Population size"),
+                                   tags$li("\\(n\\) = Sample size")
+                                 ),
+                                 p("Sample units are selected starting from a random point \\(r\\) (where \\(1 \\leq r \\leq k\\)) and then every \\(k^{th}\\) unit thereafter."),
+                                 p("Selected units: \\(r, r+k, r+2k, ..., r+(n-1)k\\)")
+                             ),
+                             
+                             div(class = "info-box",
+                                 h3("When to Use Systematic Sampling"),
+                                 tags$ul(
+                                   tags$li("When you have a complete list of the population"),
+                                   tags$li("When the population list is in random or random-like order"),
+                                   tags$li("When you need a method that's simpler than simple random sampling but maintains probability principles"),
+                                   tags$li("When the population is not ordered cyclically or periodically")
+                                 ),
+                                 p(strong("Note:"), "Avoid systematic sampling if your population has a periodic pattern that aligns with the sampling interval, as this could bias your sample.")
+                             )
+                    ),
+                    
+                    tabPanel("Calculation",
+                             h3("Sampling Results"),
+                             
+                             # Display calculation steps
+                             uiOutput("calculation_steps"),
+                             
+                             # Display sampling interval
+                             uiOutput("interval_result"),
+                             
+                             # Non-response handling results
+                             uiOutput("nonresponse_result"),
+                             
+                             # Display sample
+                             h4("Selected Sample Units"),
+                             dataTableOutput("sample_table"),
+                             
+                             # Interpretation
+                             div(class = "result-box",
+                                 h4("Interpretation"),
+                                 textOutput("interpretation")
+                             )
+                    ),
+                    
+                    tabPanel("Visualization",
+                             h3("Sampling Visualization"),
+                             plotOutput("sampling_plot", height = "500px"),
+                             br(),
+                             div(
+                               downloadButton("download_plot_png", "Download as PNG", 
+                                              class = "plot-download-btn"),
+                               downloadButton("download_plot_jpeg", "Download as JPEG", 
+                                              class = "plot-download-btn")
+                             )
+                    ),
+                    
+                    tabPanel("Scientific Procedures",
+                             div(class = "info-box",
+                                 h3("Scientific Sampling Procedures"),
+                                 p("This section provides scientifically validated procedures for handling common sampling challenges.")
+                             ),
+                             
+                             div(class = "formula-box",
+                                 h4("Non-Response Handling"),
+                                 p("When a selected participant refuses to participate or is unavailable, researchers can use these replacement strategies:"),
+                                 
+                                 h5("1. Next Available Unit Method:"),
+                                 p("Replace the non-responding unit with the next available unit in the sampling frame."),
+                                 
+                                 h5("2. Previous Unit Method:"),
+                                 p("Replace with the previous unit in the sampling frame."),
+                                 
+                                 h5("3. Random Replacement:"),
+                                 p("Select a random replacement from the remaining population."),
+                                 
+                                 p(strong("Best Practice:"), "Document all non-responses and replacements to maintain transparency in your research methodology.")
+                             ),
+                             
+                             div(class = "calculation-box",
+                                 h4("Random Start Selection"),
+                                 p("The random start (r) should be selected using a true random process:"),
+                                 tags$ul(
+                                   tags$li("Use random number generators"),
+                                   tags$li("Random number tables"),
+                                   tags$li("Computer-based randomization")
+                                 ),
+                                 p("This ensures the first selection is truly random and maintains the probability basis of the sampling method."),
+                                 
+                                 h5("RandomizR Package Implementation:"),
+                                 p("This application uses the", strong("randomizr"), "package to generate truly random start numbers."),
+                                 p("The", code("simple_ra()"), "function from randomizr is used to randomly assign one participant as the starting point."),
+                                 p("Key features:"),
+                                 tags$ul(
+                                   tags$li("Uses cryptographically secure random number generation"),
+                                   tags$li("Ensures equal probability of selection for all available participants"),
+                                   tags$li("Provides transparent and reproducible randomization")
+                                 ),
+                                 p(strong("Algorithm:"), "For N available participants, the function randomly selects one unit with probability 1/N, ensuring true random selection.")
+                             ),
+                             
+                             div(class = "result-box",
+                                 h4("Quality Control Measures"),
+                                 p("To ensure sampling validity:"),
+                                 tags$ul(
+                                   tags$li("Verify population list completeness"),
+                                   tags$li("Check for cyclical patterns in the population order"),
+                                   tags$li("Document all sampling decisions"),
+                                   tags$li("Calculate and report sampling error"),
+                                   tags$li("Maintain sampling protocol consistency")
+                                 )
+                             ),
+                             
+                             div(class = "info-box",
+                                 h4("Supported File Formats"),
+                                 p("This application supports the following file formats for population lists:"),
+                                 tags$ul(
+                                   tags$li(strong("Excel:"), " .xlsx, .xls"),
+                                   tags$li(strong("CSV:"), " .csv"),
+                                   tags$li(strong("Stata:"), " .dta"),
+                                   tags$li(strong("SAS:"), " .sas7bdat"),
+                                   tags$li(strong("SPSS:"), " .sav, .zsav"),
+                                   tags$li(strong("R Data:"), " .rda, .rdata")
+                                 ),
+                                 p("The application automatically detects the file format and reads the data accordingly.")
+                             )
+                    ),
+                    
+                    tabPanel("About",
+                             div(class = "info-box",
+                                 h3("About This Tool"),
+                                 p("SysSampler was developed to assist researchers, students, and professionals in selecting representative samples from populations using the systematic sampling method."),
+                                 
+                                 h4("Key Features:"),
+                                 tags$ul(
+                                   tags$li("Calculate sampling interval (k) with step-by-step workings"),
+                                   tags$li("Generate systematic samples with custom random start"),
+                                   tags$li("Scientific procedures for non-response handling"),
+                                   tags$li("Upload and use your own population lists (multiple formats supported)"),
+                                   tags$li("True random start selection using randomizr package"),
+                                   tags$li("Visualize the sampling process"),
+                                   tags$li("Export results to Word documents and CSV files")
+                                 )
+                             ),
+                             
+                             div(class = "developer-info",
+                                 h4("Developer Information:"),
+                                 p("Mudasir Mohammed Ibrahim"),
+                                 p("Email: mudassiribrahim30@gmail.com"),
+                                 p("Version: 1.0 (Enhanced Edition with Multiple File Support)")
+                             )
+                    )
+                  )
+                )
+              )
+          ),
+          
+          # Footer - now at the bottom and visible across all tabs
+          div(class = "footer",
+              p("SysSampler | Developed by Mudasir Mohammed Ibrahim"),
+              p("© 2024 All Rights Reserved")
+          )
+      )
+  )
+)
+
+# Define server logic
+server <- function(input, output, session) {
+  
+  # Reactive values to store calculations
+  values <- reactiveValues(
+    sampling_interval = NULL,
+    sample_units = NULL,
+    population_data = NULL,
+    calculation_steps = NULL,
+    nonresponse_adjustments = NULL,
+    plot_data = NULL,
+    uploaded_file_info = NULL,
+    random_start_result = NULL
+  )
+  
+  # Function to read uploaded file based on extension
+  read_uploaded_file <- function(file_path, file_ext) {
+    tryCatch({
+      switch(file_ext,
+             "csv" = read.csv(file_path),
+             "xlsx" = read.xlsx(file_path),
+             "xls" = read.xlsx(file_path),
+             "dta" = read_dta(file_path),
+             "sas7bdat" = read_sas(file_path),
+             "sav" = read_sav(file_path),
+             "zsav" = read_sav(file_path),
+             "rda" = {
+               env <- new.env()
+               load(file_path, envir = env)
+               if(length(ls(env)) > 0) {
+                 get(ls(env)[1], envir = env)
+               } else {
+                 stop("No data found in RData file")
+               }
+             },
+             "rdata" = {
+               env <- new.env()
+               load(file_path, envir = env)
+               if(length(ls(env)) > 0) {
+                 get(ls(env)[1], envir = env)
+               } else {
+                 stop("No data found in RData file")
+               }
+             },
+             stop("Unsupported file format")
+      )
+    }, error = function(e) {
+      stop(paste("Error reading file:", e$message))
+    })
+  }
+  
+  # Display file information after upload
+  output$file_info <- renderUI({
+    if (!is.null(input$population_file)) {
+      file <- input$population_file
+      values$uploaded_file_info <- list(
+        name = file$name,
+        size = file$size,
+        type = file$type
+      )
+      
+      div(class = "file-upload-info",
+          p(strong("File uploaded:"), file$name),
+          p(strong("Size:"), round(file$size/1024, 2), "KB"),
+          p(strong("Type:"), file$type)
+      )
+    }
+  })
+  
+  # Calculate sampling interval and sample when button is clicked
+  observeEvent(input$calculate, {
+    # Validate inputs
+    req(input$population, input$sample_size, input$random_start)
+    
+    if (input$population <= 0) {
+      showNotification("Population size must be greater than 0.", type = "error")
+      return()
+    }
+    
+    if (input$sample_size <= 0) {
+      showNotification("Sample size must be greater than 0.", type = "error")
+      return()
+    }
+    
+    if (input$sample_size > input$population) {
+      showNotification("Sample size cannot be larger than population size.", type = "error")
+      return()
+    }
+    
+    if (input$random_start <= 0 || input$random_start > input$population) {
+      showNotification("Random start must be between 1 and population size.", type = "error")
+      return()
+    }
+    
+    # Show loading notification
+    showNotification("Calculating sample...", type = "message", duration = 2)
+    
+    # Store calculation steps
+    steps <- list()
+    steps[[1]] <- paste("Step 1: Identify population size N =", input$population)
+    steps[[2]] <- paste("Step 2: Determine sample size n =", input$sample_size)
+    
+    # Calculate sampling interval
+    k <- input$population / input$sample_size
+    steps[[3]] <- paste("Step 3: Calculate sampling interval k = N / n =", 
+                        input$population, "/", input$sample_size, "=", round(k, 2))
+    
+    k_rounded <- round(k)
+    steps[[4]] <- paste("Step 4: Round k to nearest integer =", k_rounded)
+    
+    values$sampling_interval <- k_rounded
+    values$calculation_steps <- steps
+    
+    # Generate sample units
+    start <- input$random_start
+    sample_units <- seq(from = start, 
+                        by = k_rounded, 
+                        length.out = input$sample_size)
+    
+    # Ensure sample units don't exceed population size
+    sample_units <- sample_units[sample_units <= input$population]
+    
+    # Handle non-response if enabled
+    if (input$enable_nonresponse && input$nonresponse_unit %in% sample_units) {
+      nonresponse_index <- which(sample_units == input$nonresponse_unit)
+      
+      replacement <- NULL
+      if (input$replacement_method == "next") {
+        replacement <- input$nonresponse_unit + 1
+        while (replacement %in% sample_units || replacement > input$population) {
+          replacement <- replacement + 1
+          if (replacement > input$population) {
+            replacement <- 1  # Wrap around to beginning
+          }
+          # Safety check to prevent infinite loop
+          if (replacement == input$nonresponse_unit) {
+            showNotification("No available replacement found using next method.", type = "warning")
+            replacement <- input$nonresponse_unit
+            break
+          }
+        }
+      } else if (input$replacement_method == "previous") {
+        replacement <- input$nonresponse_unit - 1
+        while (replacement %in% sample_units || replacement < 1) {
+          replacement <- replacement - 1
+          if (replacement < 1) {
+            replacement <- input$population  # Wrap around to end
+          }
+          # Safety check to prevent infinite loop
+          if (replacement == input$nonresponse_unit) {
+            showNotification("No available replacement found using previous method.", type = "warning")
+            replacement <- input$nonresponse_unit
+            break
+          }
+        }
+      } else { # random
+        available_units <- setdiff(1:input$population, sample_units)
+        if (length(available_units) > 0) {
+          replacement <- sample(available_units, 1)
+        } else {
+          showNotification("No available units for random replacement.", type = "warning")
+          replacement <- input$nonresponse_unit # No replacement available
+        }
+      }
+      
+      if (!is.null(replacement)) {
+        sample_units[nonresponse_index] <- replacement
+        values$nonresponse_adjustments <- list(
+          original_unit = input$nonresponse_unit,
+          replacement_unit = replacement,
+          method = input$replacement_method
+        )
+      }
+    }
+    
+    # If we have uploaded population data, use it
+    if (input$has_list && !is.null(input$population_file)) {
+      req(input$population_file)
+      tryCatch({
+        file_ext <- tools::file_ext(input$population_file$name)
+        pop_data <- read_uploaded_file(input$population_file$datapath, file_ext)
+        
+        if (nrow(pop_data) < input$population) {
+          showNotification("Uploaded population list has fewer rows than specified population size. Using indices instead.", type = "warning")
+          # Fall back to index-based sampling
+          sample_status <- rep("Original", length(sample_units))
+          if (!is.null(values$nonresponse_adjustments)) {
+            sample_status[sample_units == values$nonresponse_adjustments$replacement_unit] <- "Replacement"
+          }
+          
+          values$sample_units <- data.frame(
+            ID = sample_units,
+            Selected_Unit = paste("Unit", sample_units),
+            Status = sample_status
+          )
+        } else {
+          # Select rows based on sample units
+          if (all(sample_units <= nrow(pop_data))) {
+            values$sample_units <- pop_data[sample_units, , drop = FALSE]
+            values$population_data <- pop_data
+            
+            # Add status column for non-response tracking
+            if (!is.null(values$nonresponse_adjustments)) {
+              values$sample_units$Status <- "Original"
+              replacement_row <- which(sample_units == values$nonresponse_adjustments$replacement_unit)
+              if (length(replacement_row) > 0) {
+                values$sample_units$Status[replacement_row] <- "Replacement"
+              }
+            }
+          } else {
+            showNotification("Sample units exceed uploaded population list size. Using indices instead.", type = "warning")
+            # Fall back to index-based sampling
+            sample_status <- rep("Original", length(sample_units))
+            if (!is.null(values$nonresponse_adjustments)) {
+              sample_status[sample_units == values$nonresponse_adjustments$replacement_unit] <- "Replacement"
+            }
+            
+            values$sample_units <- data.frame(
+              ID = sample_units,
+              Selected_Unit = paste("Unit", sample_units),
+              Status = sample_status
+            )
+          }
+        }
+      }, error = function(e) {
+        showNotification(paste("Error reading file:", e$message), type = "error")
+        # Fall back to index-based sampling
+        sample_status <- rep("Original", length(sample_units))
+        if (!is.null(values$nonresponse_adjustments)) {
+          sample_status[sample_units == values$nonresponse_adjustments$replacement_unit] <- "Replacement"
+        }
+        
+        values$sample_units <- data.frame(
+          ID = sample_units,
+          Selected_Unit = paste("Unit", sample_units),
+          Status = sample_status
+        )
+      })
+    } else {
+      # Otherwise, just use the indices
+      sample_status <- rep("Original", length(sample_units))
+      if (!is.null(values$nonresponse_adjustments)) {
+        sample_status[sample_units == values$nonresponse_adjustments$replacement_unit] <- "Replacement"
+      }
+      
+      values$sample_units <- data.frame(
+        ID = sample_units,
+        Selected_Unit = paste("Unit", sample_units),
+        Status = sample_status
+      )
+    }
+    
+    # Store plot data for consistent downloading
+    values$plot_data <- list(
+      sampling_interval = k_rounded,
+      sample_units = sample_units,
+      population = input$population,
+      nonresponse_adjustments = values$nonresponse_adjustments
+    )
+    
+    showNotification("Sample calculation completed!", type = "message", duration = 3)
+  })
+  
+  # Generate random start number
+  observeEvent(input$generate_random_start, {
+    req(input$available_participants)
+    
+    if (input$available_participants <= 0) {
+      showNotification("Number of available participants must be greater than 0.", type = "error")
+      return()
+    }
+    
+    # Use randomizr package to generate true random start
+    tryCatch({
+      # Generate a simple random assignment with 1 treated unit
+      random_assignment <- simple_ra(N = input$available_participants, num_arms = 1)
+      
+      # Find which unit was selected (TRUE indicates selected unit)
+      random_start_number <- which(random_assignment)[1]
+      
+      values$random_start_result <- list(
+        available_participants = input$available_participants,
+        random_start = random_start_number,
+        method = "simple_ra from randomizr package",
+        timestamp = Sys.time()
+      )
+      
+      showNotification(paste("Random start number generated:", random_start_number), 
+                       type = "message")
+      
+    }, error = function(e) {
+      # Fallback to base R if randomizr fails
+      random_start_number <- sample(1:input$available_participants, 1)
+      
+      values$random_start_result <- list(
+        available_participants = input$available_participants,
+        random_start = random_start_number,
+        method = "sample from base R (fallback)",
+        timestamp = Sys.time()
+      )
+      
+      showNotification(paste("Random start number generated (using fallback):", random_start_number), 
+                       type = "message")
+    })
+  })
+  
+  # Display random start result
+  output$random_start_result <- renderUI({
+    if (!is.null(values$random_start_result)) {
+      div(class = "result-box",
+          h4("Random Start Selection Result"),
+          p(strong("Available Participants:"), values$random_start_result$available_participants),
+          p(strong("Random Start Number (r):"), values$random_start_result$random_start),
+          p(strong("Method Used:"), values$random_start_result$method),
+          p(strong("Generated at:"), format(values$random_start_result$timestamp, "%Y-%m-%d %H:%M:%S")),
+          p(em("Note: This random start was generated using true random assignment. You can use this number as your starting point for systematic sampling."))
+      )
+    }
+  })
+  
+  # Reset inputs
+  observeEvent(input$reset, {
+    updateNumericInput(session, "population", value = 1000)
+    updateNumericInput(session, "sample_size", value = 100)
+    updateNumericInput(session, "random_start", value = 1)
+    updateCheckboxInput(session, "has_list", value = FALSE)
+    updateCheckboxInput(session, "enable_nonresponse", value = FALSE)
+    updateCheckboxInput(session, "want_random_start", value = FALSE)
+    values$sampling_interval <- NULL
+    values$sample_units <- NULL
+    values$population_data <- NULL
+    values$calculation_steps <- NULL
+    values$nonresponse_adjustments <- NULL
+    values$plot_data <- NULL
+    values$uploaded_file_info <- NULL
+    values$random_start_result <- NULL
+    showNotification("All inputs have been reset.", type = "message")
+  })
+  
+  # Display calculation steps
+  output$calculation_steps <- renderUI({
+    if (!is.null(values$calculation_steps)) {
+      div(class = "calculation-box",
+          h4("Calculation Steps"),
+          lapply(values$calculation_steps, function(step) {
+            p(step)
+          })
+      )
+    }
+  })
+  
+  # Display sampling interval
+  output$interval_result <- renderUI({
+    if (!is.null(values$sampling_interval)) {
+      div(class = "result-box",
+          h4("Sampling Parameters"),
+          p("Population Size (N): ", strong(input$population)),
+          p("Sample Size (n): ", strong(input$sample_size)),
+          p("Sampling Interval (k): ", strong(values$sampling_interval)),
+          p("Random Start (r): ", strong(input$random_start)),
+          p("Total Sample Units Selected: ", strong(nrow(values$sample_units)))
+      )
+    }
+  })
+  
+  # Display non-response handling results
+  output$nonresponse_result <- renderUI({
+    if (!is.null(values$nonresponse_adjustments)) {
+      div(class = "info-box",
+          h4("Non-Response Adjustment"),
+          p("Original unit ", strong(values$nonresponse_adjustments$original_unit), 
+            " was replaced with unit ", strong(values$nonresponse_adjustments$replacement_unit)),
+          p("Replacement method: ", strong(tools::toTitleCase(values$nonresponse_adjustments$method)))
+      )
+    }
+  })
+  
+  # Display sample table
+  output$sample_table <- renderDataTable({
+    if (!is.null(values$sample_units)) {
+      datatable(
+        values$sample_units,
+        options = list(
+          pageLength = 10,
+          lengthMenu = c(5, 10, 15, 20),
+          searching = FALSE,
+          dom = 'Blfrtip',
+          scrollX = TRUE
+        ),
+        rownames = FALSE
+      )
+    }
+  })
+  
+  # Generate interpretation
+  output$interpretation <- renderText({
+    if (!is.null(values$sampling_interval)) {
+      interpretation <- paste(
+        "For a population of", input$population, "units, a systematic random sample of", 
+        nrow(values$sample_units), "units was selected using a sampling interval of", 
+        values$sampling_interval, "and a random start of", input$random_start, ".",
+        "This means every", values$sampling_interval, "th unit was selected from the population,",
+        "starting from unit", input$random_start, "."
+      )
+      
+      if (!is.null(values$nonresponse_adjustments)) {
+        interpretation <- paste(
+          interpretation,
+          "Non-response was handled by replacing unit", values$nonresponse_adjustments$original_unit,
+          "with unit", values$nonresponse_adjustments$replacement_unit, "using the",
+          values$nonresponse_adjustments$method, "method."
+        )
+      }
+      
+      interpretation <- paste(
+        interpretation,
+        "Systematic sampling provides a practical and efficient method for selecting",
+        "a representative sample when the population list is in random or random-like order.",
+        "Ensure that your population does not have a cyclical pattern that aligns with",
+        "the sampling interval to avoid biased results."
+      )
+      
+      return(interpretation)
+    } else {
+      "Please calculate the sample to see the interpretation."
+    }
+  })
+  
+  # Create sampling visualization function (used for both display and download)
+  create_sampling_plot <- function() {
+    if (!is.null(values$plot_data)) {
+      k <- values$plot_data$sampling_interval
+      n_units <- min(100, values$plot_data$population)  # Limit for visualization
+      
+      # Create data for plotting
+      units <- 1:n_units
+      selected <- values$plot_data$sample_units[values$plot_data$sample_units <= n_units]
+      
+      # Identify non-response units
+      nonresponse_units <- NULL
+      replacement_units <- NULL
+      if (!is.null(values$plot_data$nonresponse_adjustments)) {
+        nonresponse_units <- values$plot_data$nonresponse_adjustments$original_unit
+        replacement_units <- values$plot_data$nonresponse_adjustments$replacement_unit
+      }
+      
+      # Create the plot with consistent parameters
+      par(mar = c(5, 4, 4, 8), xpd = TRUE)
+      plot(units, rep(1, length(units)), 
+           type = "h", lwd = 3, col = "lightgray",
+           xlab = "Population Units", ylab = "",
+           yaxt = "n", main = "Systematic Sampling Visualization",
+           ylim = c(0.5, 1.5), cex.main = 1.2, font.main = 2,
+           cex.lab = 1.1, cex.axis = 1.0)
+      
+      # Highlight selected units
+      points(selected, rep(1, length(selected)), 
+             pch = 19, col = "green3", cex = 1.5)
+      
+      # Highlight non-response and replacement units
+      if (!is.null(nonresponse_units) && nonresponse_units <= n_units) {
+        points(nonresponse_units, 1, 
+               pch = 4, col = "red", cex = 2.0, lwd = 2)
+      }
+      
+      if (!is.null(replacement_units) && replacement_units <= n_units) {
+        points(replacement_units, 1, 
+               pch = 17, col = "blue", cex = 1.8)
+      }
+      
+      # Add sampling interval indicator
+      if (length(selected) > 1) {
+        arrows(selected[1], 1.2, selected[2], 1.2, 
+               length = 0.1, code = 3, col = "blue", lwd = 2)
+        text(mean(c(selected[1], selected[2])), 1.3, 
+             paste("k =", k), col = "blue", font = 2, cex = 1.1)
+      }
+      
+      # Add enhanced legend
+      legend_colors <- c("green3", "red", "blue", "lightgray")
+      legend_symbols <- c(19, 4, 17, 15)
+      legend_labels <- c("Selected Units", "Non-Response", "Replacement", "Population")
+      
+      if (is.null(nonresponse_units)) {
+        legend_colors <- legend_colors[c(1,4)]
+        legend_symbols <- legend_symbols[c(1,4)]
+        legend_labels <- legend_labels[c(1,4)]
+      }
+      
+      legend("topright", 
+             legend = legend_labels, 
+             pch = legend_symbols,
+             col = legend_colors,
+             pt.cex = 1.3,
+             pt.lwd = 2,
+             inset = c(-0.25, 0),
+             bty = "n",
+             cex = 0.9)
+    } else {
+      # Show placeholder when no calculation has been done
+      plot(1, 1, type = "n", xlab = "", ylab = "", xaxt = "n", yaxt = "n",
+           main = "Sampling Visualization\n(Calculate sample to see visualization)",
+           cex.main = 1.2)
+      text(1, 1, "Please calculate the sample to see the visualization", cex = 1.1)
+    }
+  }
+  
+  # Create sampling visualization for display
+  output$sampling_plot <- renderPlot({
+    create_sampling_plot()
+  }, height = 500)
+  
+  # Download PNG plot
+  output$download_plot_png <- downloadHandler(
+    filename = function() {
+      paste("sampling_visualization_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      if (!is.null(values$plot_data)) {
+        # Use the same dimensions as the display
+        png(file, width = 8, height = 6, units = "in", res = 300)
+        create_sampling_plot()
+        dev.off()
+        showNotification("PNG plot downloaded successfully!", type = "message")
+      } else {
+        showNotification("No plot available to download. Please calculate a sample first.", type = "error")
+      }
+    }
+  )
+  
+  # Download JPEG plot
+  output$download_plot_jpeg <- downloadHandler(
+    filename = function() {
+      paste("sampling_visualization_", Sys.Date(), ".jpeg", sep = "")
+    },
+    content = function(file) {
+      if (!is.null(values$plot_data)) {
+        # Use the same dimensions as the display
+        jpeg(file, width = 8, height = 6, units = "in", quality = 100, res = 300)
+        create_sampling_plot()
+        dev.off()
+        showNotification("JPEG plot downloaded successfully!", type = "message")
+      } else {
+        showNotification("No plot available to download. Please calculate a sample first.", type = "error")
+      }
+    }
+  )
+  
+  # Download Word report with flextable
+  output$download_word <- downloadHandler(
+    filename = function() {
+      paste("systematic_sampling_report_", Sys.Date(), ".docx", sep = "")
+    },
+    content = function(file) {
+      # Validate that we have data to export
+      if (is.null(values$sample_units)) {
+        showNotification("No sample data to export. Please calculate a sample first.", type = "error")
+        return()
+      }
+      
+      tryCatch({
+        # Create a new Word document
+        doc <- read_docx()
+        
+        # Add title
+        doc <- doc %>% 
+          body_add_par("Systematic Random Sampling Report", style = "heading 1") %>%
+          body_add_par(paste("Generated on:", Sys.Date()), style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Add sampling parameters
+        doc <- doc %>% 
+          body_add_par("Sampling Parameters", style = "heading 2") %>%
+          body_add_par(paste("Population Size (N):", input$population), style = "Normal") %>%
+          body_add_par(paste("Sample Size (n):", input$sample_size), style = "Normal") %>%
+          body_add_par(paste("Random Start (r):", input$random_start), style = "Normal")
+        
+        if (!is.null(values$sampling_interval)) {
+          doc <- doc %>% 
+            body_add_par(paste("Sampling Interval (k):", values$sampling_interval), style = "Normal") %>%
+            body_add_par("", style = "Normal")
+        }
+        
+        # Add random start information if generated
+        if (!is.null(values$random_start_result)) {
+          doc <- doc %>% 
+            body_add_par("Random Start Selection", style = "heading 2") %>%
+            body_add_par(paste("Available Participants:", values$random_start_result$available_participants), style = "Normal") %>%
+            body_add_par(paste("Generated Random Start:", values$random_start_result$random_start), style = "Normal") %>%
+            body_add_par(paste("Method Used:", values$random_start_result$method), style = "Normal") %>%
+            body_add_par(paste("Generated at:", format(values$random_start_result$timestamp, "%Y-%m-%d %H:%M:%S")), style = "Normal") %>%
+            body_add_par("", style = "Normal")
+        }
+        
+        # Add calculation steps
+        if (!is.null(values$calculation_steps)) {
+          doc <- doc %>% 
+            body_add_par("Calculation Steps", style = "heading 2")
+          
+          for (step in values$calculation_steps) {
+            doc <- doc %>% body_add_par(step, style = "Normal")
+          }
+          doc <- doc %>% body_add_par("", style = "Normal")
+        }
+        
+        # Add non-response handling if applicable
+        if (!is.null(values$nonresponse_adjustments)) {
+          doc <- doc %>% 
+            body_add_par("Non-Response Handling", style = "heading 2") %>%
+            body_add_par(paste("Original unit", values$nonresponse_adjustments$original_unit, 
+                               "was replaced with unit", values$nonresponse_adjustments$replacement_unit), 
+                         style = "Normal") %>%
+            body_add_par(paste("Replacement method:", tools::toTitleCase(values$nonresponse_adjustments$method)), 
+                         style = "Normal") %>%
+            body_add_par("", style = "Normal")
+        }
+        
+        # Add sample data using flextable
+        if (!is.null(values$sample_units)) {
+          doc <- doc %>% 
+            body_add_par("Selected Sample", style = "heading 2")
+          
+          # Create a flextable
+          sample_ft <- flextable(values$sample_units)
+          
+          # Style the table
+          sample_ft <- sample_ft %>%
+            theme_booktabs() %>%
+            fontsize(size = 10, part = "all") %>%
+            font(fontname = "Arial", part = "all") %>%
+            align(align = "center", part = "header") %>%
+            align(align = "center", part = "body") %>%
+            bold(part = "header") %>%
+            bg(bg = "#f2f2f2", part = "header") %>%
+            autofit()
+          
+          # Add the flextable to the document
+          doc <- body_add_flextable(doc, sample_ft)
+          doc <- body_add_par(doc, "")
+        }
+        
+        # Add interpretation - FIXED SECTION
+        doc <- doc %>% 
+          body_add_par("Interpretation", style = "heading 2")
+        
+        # Generate interpretation directly instead of relying on output$interpretation
+        interpretation_text <- if (!is.null(values$sampling_interval)) {
+          interpretation <- paste(
+            "For a population of", input$population, "units, a systematic random sample of", 
+            nrow(values$sample_units), "units was selected using a sampling interval of", 
+            values$sampling_interval, "and a random start of", input$random_start, ".",
+            "This means every", values$sampling_interval, "th unit was selected from the population,",
+            "starting from unit", input$random_start, "."
+          )
+          
+          if (!is.null(values$nonresponse_adjustments)) {
+            interpretation <- paste(
+              interpretation,
+              "Non-response was handled by replacing unit", values$nonresponse_adjustments$original_unit,
+              "with unit", values$nonresponse_adjustments$replacement_unit, "using the",
+              values$nonresponse_adjustments$method, "method."
+            )
+          }
+          
+          paste(
+            interpretation,
+            "Systematic sampling provides a practical and efficient method for selecting",
+            "a representative sample when the population list is in random or random-like order.",
+            "Ensure that your population does not have a cyclical pattern that aligns with",
+            "the sampling interval to avoid biased results."
+          )
+        } else {
+          "Please calculate the sample to see the interpretation."
+        }
+        
+        doc <- doc %>% 
+          body_add_par(interpretation_text, style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Add methodology section
+        doc <- doc %>% 
+          body_add_par("Methodology", style = "heading 2") %>%
+          body_add_par("Systematic sampling is a probability sampling method where researchers select members of the population at a regular interval (k) determined in advance.", style = "Normal") %>%
+          body_add_par("The sampling interval k is calculated as: k = N / n", style = "Normal") %>%
+          body_add_par("Where N is the population size and n is the sample size.", style = "Normal") %>%
+          body_add_par("Sample units are selected starting from a random point r (where 1 ≤ r ≤ k) and then every k-th unit thereafter.", style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Add file information if uploaded
+        if (!is.null(values$uploaded_file_info)) {
+          doc <- doc %>% 
+            body_add_par("Data Source", style = "heading 2") %>%
+            body_add_par(paste("File Name:", values$uploaded_file_info$name), style = "Normal") %>%
+            body_add_par(paste("File Size:", round(values$uploaded_file_info$size/1024, 2), "KB"), style = "Normal") %>%
+            body_add_par(paste("File Type:", values$uploaded_file_info$type), style = "Normal") %>%
+            body_add_par("", style = "Normal")
+        }
+        
+        # Add developer info
+        doc <- doc %>% 
+          body_add_par("", style = "Normal") %>%
+          body_add_par("Generated by SysSampler - Systematic Random Sampling Calculator", style = "Normal") %>%
+          body_add_par("Developer: Mudasir Mohammed Ibrahim", style = "Normal") %>%
+          body_add_par("Email: mudassiribrahim30@gmail.com", style = "Normal")
+        
+        # Save the document
+        print(doc, target = file)
+        showNotification("Word report downloaded successfully!", type = "message")
+      }, error = function(e) {
+        showNotification(paste("Error generating Word report:", e$message), type = "error")
+      })
+    }
+  )
+  # Download CSV sample data
+  output$download_csv <- downloadHandler(
+    filename = function() {
+      paste("systematic_sample_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      if (!is.null(values$sample_units)) {
+        write.csv(values$sample_units, file, row.names = FALSE)
+        showNotification("CSV data downloaded successfully!", type = "message")
+      } else {
+        showNotification("No sample data to export. Please calculate a sample first.", type = "error")
+      }
+    }
+  )
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
