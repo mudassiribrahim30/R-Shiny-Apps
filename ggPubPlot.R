@@ -23,30 +23,292 @@ library(ggsci)
 library(colourpicker)
 library(nortest) # For Anderson-Darling test
 
+# Custom CSS for professional styling and animations
+custom_css <- "
+/* Professional styling */
+.professional-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.professional-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+}
+
+.sidebar-panel {
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  padding: 20px;
+  height: 90vh;
+  overflow-y: auto;
+  box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+  border-right: 1px solid #dee2e6;
+}
+
+.main-panel {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.section-header {
+  color: #495057;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Button animations */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+/* Card animations */
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 15px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.feature-card:hover::before {
+  left: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.feature-icon {
+  font-size: 2.5em;
+  color: #667eea;
+  margin-bottom: 15px;
+}
+
+/* Tab styling */
+.nav-tabs {
+  border-bottom: 2px solid #e9ecef;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 12px 25px;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 -2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+/* Input styling */
+.form-control, .selectize-input {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .selectize-input.focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Animation for plot loading */
+.plot-container {
+  position: relative;
+}
+
+.plot-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+/* Home page specific styles */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 60px 40px;
+  border-radius: 15px;
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\"><polygon fill=\"rgba(255,255,255,0.05)\" points=\"0,1000 1000,0 1000,1000\"/></svg>');
+}
+
+.hero-title {
+  font-size: 3em;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero-subtitle {
+  font-size: 1.3em;
+  opacity: 0.9;
+  margin-bottom: 30px;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  margin: 40px 0;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-number {
+  font-size: 2.5em;
+  font-weight: 700;
+  color: #667eea;
+  display: block;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Fade-in animation */
+.fade-in {
+  animation: fadeIn 0.8s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse animation for important elements */
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+"
+
 # Define UI
 ui <- fluidPage(
   theme = bslib::bs_theme(
+    version = 5,
     bootswatch = "flatly",
-    primary = "#3498db",
-    secondary = "#2ecc71",
-    success = "#2ecc71",
-    info = "#3498db",
-    warning = "#f39c12",
+    primary = "#667eea",
+    secondary = "#764ba2",
+    success = "#4CAF50",
+    info = "#17a2b8",
+    warning = "#ffc107",
     danger = "#e74c3c",
-    bg = "#f8f9fa",
+    bg = "#ffffff",
     fg = "#212529",
-    base_font = font_google("Open Sans")
+    base_font = font_google("Inter"),
+    heading_font = font_google("Inter")
   ),
+  tags$head(
+    tags$style(HTML(custom_css)),
+    tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")
+  ),
+  
   div(
-    style = "background-color: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; border-radius: 5px;",
-    h2("ggPubPlot", style = "margin: 0; font-weight: bold;"),
-    p("", style = "margin: 0; font-size: 16px; opacity: 0.9;")
+    class = "professional-header fade-in",
+    h1("ggPubPlot", class = "pulse", style = "margin: 0; font-weight: 800; font-size: 2.5em;"),
+    p("Professional Data Visualization Platform", style = "margin: 0; font-size: 1.2em; opacity: 0.95; margin-top: 10px;")
   ),
+  
   sidebarLayout(
     sidebarPanel(
       width = 3,
-      style = "background-color: #f8f9fa; border-radius: 5px; padding: 15px; height: 90vh; overflow-y: auto;",
-      h4("Data Input", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      class = "sidebar-panel",
+      h4("Data Input", class = "section-header"),
       radioButtons(
         "data_source",
         "Data Source:",
@@ -124,7 +386,7 @@ ui <- fluidPage(
         )
       ),
       hr(),
-      h4("Plot Configuration", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Plot Configuration", class = "section-header"),
       selectInput(
         "plot_type",
         "Plot Type:",
@@ -164,7 +426,7 @@ ui <- fluidPage(
           "Ridgeline Plot" = "ridgeline",
           "Parallel Coordinates" = "parcoord",
           "Word Cloud" = "wordcloud",
-          "Clustered Bar Chart" = "clustered_bar"  # Added clustered bar chart option
+          "Clustered Bar Chart" = "clustered_bar"
         ),
         selected = "scatter"
       ),
@@ -211,38 +473,35 @@ ui <- fluidPage(
         checkboxInput("show_outliers", "Identify Outliers", FALSE)
       ),
       
-      # Plot dimensions section
       hr(),
-      h4("Plot Dimensions", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Plot Dimensions", class = "section-header"),
       sliderInput("plot_width", "Plot Width (inches):", min = 4, max = 20, value = 10, step = 0.5),
       sliderInput("plot_height", "Plot Height (inches):", min = 4, max = 20, value = 6, step = 0.5),
       sliderInput("plot_dpi", "Resolution (DPI):", min = 72, max = 600, value = 300, step = 10),
       
-      # Color customization section
       hr(),
-      h4("Color Customization", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Color Customization", class = "section-header"),
       radioButtons("color_choice", "Color Options:",
                    choices = c("Single Color" = "single", "Custom by Category" = "category"),
                    selected = "single",
                    inline = TRUE),
       conditionalPanel(
         condition = "input.color_choice == 'single'",
-        colourpicker::colourInput("single_color", "Select Color:", value = "#3498db", showColour = "both")
+        colourpicker::colourInput("single_color", "Select Color:", value = "#667eea", showColour = "both")
       ),
       conditionalPanel(
         condition = "input.color_choice == 'category' && (input.color_var != 'none' || input.plot_type == 'pie' || input.plot_type == 'donut' || input.plot_type == 'bar' || input.plot_type == 'clustered_bar')",
         div(
-          style = "border: 1px solid #ddd; border-radius: 5px; padding: 10px; margin-bottom: 15px;",
-          h5("Category Colors", style = "margin-top: 0;"),
+          style = "border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: white;",
+          h5("Category Colors", style = "margin-top: 0; color: #495057;"),
           div(
-            style = "resize: both; overflow: auto; max-height: 400px; min-height: 100px; border: 1px solid #eee; padding: 10px;",
+            style = "resize: both; overflow: auto; max-height: 400px; min-height: 100px; border: 1px solid #eee; padding: 10px; border-radius: 6px;",
             uiOutput("category_colors_ui")
           ),
-          helpText("Tip: Click the color box, then use arrow keys to browse and select a color", style = "font-size: 12px; color: #666;")
+          helpText("Tip: Click the color box, then use arrow keys to browse and select a color", style = "font-size: 12px; color: #6c757d;")
         )
       ),
       
-      # Bar chart specific options
       conditionalPanel(
         condition = "input.plot_type == 'bar' || input.plot_type == 'clustered_bar'",
         checkboxInput("show_values", "Show Values on Bars", TRUE),
@@ -258,7 +517,6 @@ ui <- fluidPage(
         )
       ),
       
-      # Pie chart specific options
       conditionalPanel(
         condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
         checkboxInput("pie_labels", "Show Labels", TRUE),
@@ -270,7 +528,7 @@ ui <- fluidPage(
       ),
       
       hr(),
-      h4("Aesthetics & Options", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Aesthetics & Options", class = "section-header"),
       conditionalPanel(
         condition = "input.plot_type == 'scatter' || input.plot_type == 'line' || input.plot_type == 'pointrange' || input.plot_type == 'jitter'",
         sliderInput("point_size", "Point Size:", min = 0.1, max = 10, value = 2, step = 0.1),
@@ -365,16 +623,14 @@ ui <- fluidPage(
         numericInput("waffle_cols", "Number of Columns:", value = 10, min = 1)
       ),
       
-      # Statistical tests section - Updated with action button
       hr(),
-      h4("Statistical Tests", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Statistical Tests", class = "section-header"),
       p("Click the button below to run statistical tests and see the results.", 
-        style = "font-size: 12px; color: #666; margin-bottom: 10px;"),
+        style = "font-size: 12px; color: #6c757d; margin-bottom: 10px;"),
       
-      # Action button to run statistical tests
       actionButton("run_tests", "Run Statistical Tests", 
                    class = "btn-primary",
-                   style = "background-color: #3498db; border-color: #2980b9; margin-bottom: 15px;"),
+                   style = "margin-bottom: 15px; width: 100%;"),
       
       conditionalPanel(
         condition = "input.plot_type == 'scatter'",
@@ -407,14 +663,14 @@ ui <- fluidPage(
       ),
       
       hr(),
-      h4("Labels & Titles", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Labels & Titles", class = "section-header"),
       textInput("title", "Plot Title:", value = ""),
       textInput("x_lab", "X Axis Label:", value = ""),
       textInput("y_lab", "Y Axis Label:", value = ""),
       textInput("caption", "Caption:", value = ""),
       textInput("tag", "Tag:", value = ""),
       hr(),
-      h4("Theme & Appearance", style = "color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 5px;"),
+      h4("Theme & Appearance", class = "section-header"),
       selectInput(
         "theme",
         "Theme:",
@@ -438,46 +694,130 @@ ui <- fluidPage(
       checkboxInput("interactive", "Interactive Plot", FALSE),
       hr(),
       div(
-        style = "display: flex; justify-content: space-between;",
+        style = "display: flex; flex-direction: column; gap: 10px;",
         actionButton("run_analysis", "Generate Plot", 
                      class = "btn-primary",
-                     style = "background-color: #2ecc71; border-color: #27ae60;"),
+                     style = "width: 100%;"),
         downloadButton("download_plot", "Download Plot", 
                        class = "btn-success",
-                       style = "background-color: #3498db; border-color: #2980b9;"),
+                       style = "width: 100%;"),
         downloadButton("download_data", "Download Data", 
                        class = "btn-info",
-                       style = "background-color: #9b59b6; border-color: #8e44ad;")
+                       style = "width: 100%; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); border: none;")
       ),
       hr(),
       div(
-        style = "background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 20px;",
-        p(strong("Developer Info")),
-        p("Name: Mudasir Mohammed Ibrahim"),
-        p("For suggestions or problems, contact:"),
-        p(HTML("<a href='mailto:mudassiribrahim30@gmail.com'>mudassiribrahim30@gmail.com</a>"))
+        style = "background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-top: 20px;",
+        p(strong("Developer Info"), style = "color: #495057; margin-bottom: 10px;"),
+        p("Name: Mudasir Mohammed Ibrahim", style = "margin: 5px 0; color: #6c757d;"),
+        p("For suggestions or problems, contact:", style = "margin: 5px 0; color: #6c757d;"),
+        p(HTML("<a href='mailto:mudassiribrahim30@gmail.com' style='color: #667eea;'>mudassiribrahim30@gmail.com</a>"))
       )
     ),
     mainPanel(
       width = 9,
-      style = "background-color: white; border-radius: 5px; padding: 15px; height: 90vh; overflow-y: auto;",
+      class = "main-panel",
       tabsetPanel(
         type = "tabs",
+        id = "main_tabs",
+        tabPanel(
+          "Home",
+          value = "home",
+          div(
+            class = "hero-section fade-in",
+            h1(class = "hero-title", "Welcome to ggPubPlot"),
+            p(class = "hero-subtitle", "Create publication-quality visualizations with ease"),
+            actionButton("get_started", "Get Started", 
+                         class = "btn-primary pulse",
+                         style = "font-size: 1.2em; padding: 15px 30px;")
+          ),
+          
+          div(
+            class = "stats-container fade-in",
+            div(class = "stat-item",
+                span(class = "stat-number", "35+"),
+                span(class = "stat-label", "Plot Types")
+            ),
+            div(class = "stat-item",
+                span(class = "stat-number", "10+"),
+                span(class = "stat-label", "Themes")
+            ),
+            div(class = "stat-item",
+                span(class = "stat-number", "∞"),
+                span(class = "stat-label", "Customizations")
+            )
+          ),
+          
+          h2("Key Features", style = "text-align: center; margin: 40px 0 30px 0; color: #495057;"),
+          
+          fluidRow(
+            column(6,
+                   div(class = "feature-card fade-in",
+                       div(class = "feature-icon", HTML("<i class='fas fa-chart-line'></i>")),
+                       h4("Advanced Visualization"),
+                       p("Create sophisticated plots with extensive customization options for professional publications.")
+                   )
+            ),
+            column(6,
+                   div(class = "feature-card fade-in",
+                       div(class = "feature-icon", HTML("<i class='fas fa-palette'></i>")),
+                       h4("Beautiful Themes"),
+                       p("Choose from multiple professional themes and color palettes to match your publication style.")
+                   )
+            )
+          ),
+          
+          fluidRow(
+            column(6,
+                   div(class = "feature-card fade-in",
+                       div(class = "feature-icon", HTML("<i class='fas fa-cogs'></i>")),
+                       h4("Statistical Analysis"),
+                       p("Built-in statistical tests and annotations to enhance your data storytelling.")
+                   )
+            ),
+            column(6,
+                   div(class = "feature-card fade-in",
+                       div(class = "feature-icon", HTML("<i class='fas fa-download'></i>")),
+                       h4("Export Ready"),
+                       p("High-resolution exports with customizable dimensions for journals and presentations.")
+                   )
+            )
+          ),
+          
+          fluidRow(
+            column(12,
+                   div(class = "feature-card fade-in",
+                       style = "text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;",
+                       h3("Ready to Create Amazing Visualizations?"),
+                       p("Start by uploading your data or exploring with sample datasets."),
+                       actionButton("explore_features", "Explore Features", 
+                                    class = "btn-primary",
+                                    style = "background: white; color: #667eea; border: none; margin-top: 15px;")
+                   )
+            )
+          )
+        ),
         tabPanel(
           "Plot",
+          value = "plot",
           conditionalPanel(
             condition = "input.interactive == false",
-            plotOutput("static_plot", height = "600px")
+            div(class = "plot-container",
+                plotOutput("static_plot", height = "600px")
+            )
           ),
           conditionalPanel(
             condition = "input.interactive == true",
-            girafeOutput("interactive_plot", height = "600px")
+            div(class = "plot-container",
+                girafeOutput("interactive_plot", height = "600px")
+            )
           ),
-          # Statistical test results section
           conditionalPanel(
             condition = "input.run_tests > 0",
-            h4("Statistical Test Results"),
-            verbatimTextOutput("statistical_results")
+            div(class = "fade-in",
+                h4("Statistical Test Results"),
+                verbatimTextOutput("statistical_results")
+            )
           )
         ),
         tabPanel(
@@ -489,7 +829,7 @@ ui <- fluidPage(
           verbatimTextOutput("plot_code"),
           actionButton("copy_code", "Thank You for Using the App", 
                        class = "btn-primary",
-                       style = "background-color: #3498db; border-color: #2980b9; margin-top: 10px;")
+                       style = "margin-top: 10px; width: 100%;")
         )
       )
     )
@@ -498,6 +838,17 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
+  
+  # Observe get started button to switch to plot tab
+  observeEvent(input$get_started, {
+    updateTabsetPanel(session, "main_tabs", selected = "plot")
+  })
+  
+  # Observe explore features button to switch to plot tab
+  observeEvent(input$explore_features, {
+    updateTabsetPanel(session, "main_tabs", selected = "plot")
+  })
+  
   # Reactive data
   data <- reactive({
     if (input$data_source == "sample") {
@@ -580,15 +931,15 @@ server <- function(input, output, session) {
           
           # Create a scrollable container for the color pickers
           div(
-            style = "max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;",
-            h5(paste("Custom Colors for", var_to_use, "Categories:"), style = "margin-top: 0;"),
+            style = "max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 6px; background: white;",
+            h5(paste("Custom Colors for", var_to_use, "Categories:"), style = "margin-top: 0; color: #495057;"),
             lapply(1:length(categories), function(i) {
               fluidRow(
                 column(
                   6,
                   style = "display: flex; align-items: center;",
                   div(
-                    style = "margin-right: 10px; min-width: 100px;",
+                    style = "margin-right: 10px; min-width: 100px; font-weight: 500; color: #495057;",
                     tags$span(categories[i])
                   )
                 ),
@@ -687,6 +1038,9 @@ server <- function(input, output, session) {
     req(data())
     df <- data()
     if (is.null(df)) return(NULL)
+    
+    # Show loading notification
+    showNotification("Generating plot...", type = "message", duration = 2)
     
     # Base plot
     p <- ggplot(data = df)
@@ -1351,8 +1705,8 @@ server <- function(input, output, session) {
       width_svg = input$plot_width,
       height_svg = input$plot_height,
       options = list(
-        opts_tooltip(css = "background-color:white;color:black;padding:5px;border-radius:5px;"),
-        opts_hover(css = "stroke-width:2px;"),
+        opts_tooltip(css = "background-color:white;color:black;padding:10px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.1);"),
+        opts_hover(css = "stroke-width:3px;fill-opacity:0.8;"),
         opts_selection(type = "none")
       )
     )
@@ -1390,7 +1744,7 @@ server <- function(input, output, session) {
   # Download plot
   output$download_plot <- downloadHandler(
     filename = function() {
-      paste("plot-", Sys.Date(), ".png", sep = "")
+      paste("ggPubPlot-", Sys.Date(), ".png", sep = "")
     },
     content = function(file) {
       p <- plot_obj()
@@ -1410,7 +1764,7 @@ server <- function(input, output, session) {
   # Download data
   output$download_data <- downloadHandler(
     filename = function() {
-      paste("data-", Sys.Date(), ".csv", sep = "")
+      paste("ggPubPlot-data-", Sys.Date(), ".csv", sep = "")
     },
     content = function(file) {
       df <- data()
