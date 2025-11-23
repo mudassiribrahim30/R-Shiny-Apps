@@ -15,708 +15,1073 @@ library(tidyr)
 library(purrr)
 
 ui <- fluidPage(
-  theme = shinytheme("flatly"),
   useShinyjs(),
   tags$head(
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"),
+    tags$script(HTML("
+      // Function to toggle theme
+      function toggleTheme() {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', newTheme);
+        
+        // Store theme preference in localStorage
+        localStorage.setItem('appTheme', newTheme);
+        
+        // Update button icon
+        const themeIcon = document.getElementById('theme-icon');
+        if (newTheme === 'dark') {
+          themeIcon.className = 'fas fa-sun';
+          themeIcon.style.color = '#ffd43b';
+        } else {
+          themeIcon.className = 'fas fa-moon';
+          themeIcon.style.color = '#f8f9fa';
+        }
+      }
+      
+      // Apply saved theme on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('appTheme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // Update button icon based on saved theme
+        const themeIcon = document.getElementById('theme-icon');
+        if (savedTheme === 'dark') {
+          themeIcon.className = 'fas fa-sun';
+          themeIcon.style.color = '#ffd43b';
+        } else {
+          themeIcon.className = 'fas fa-moon';
+          themeIcon.style.color = '#f8f9fa';
+        }
+      });
+    ")),
     tags$style(HTML("
-  :root {
-    --primary: #2A9D8F;      /* Sophisticated teal */
-    --primary-dark: #1D7874; /* Darker teal */
-    --primary-light: #E8F4F2; /* Light teal */
-    --secondary: #E76F51;    /* Coral accent */
-    --secondary-dark: #D45B3E; /* Darker coral */
-    --accent: #F4A261;       /* Warm gold */
-    --accent-dark: #E58C45;  /* Darker gold */
-    --neutral-light: #F8F9FA; /* Light background */
-    --neutral-medium: #E9ECEF; /* Medium background */
-    --neutral-dark: #495057;  /* Dark text */
-    --success: #2A9D8F;      /* Success in teal */
-    --warning: #F4A261;      /* Warning in gold */
-    --alert: #E76F51;        /* Alert in coral */
-    --info: #84A9C0;         /* Soft blue for info */
-  }
-  
-  body {
-    font-family: 'Segoe UI', 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--neutral-light);
-    color: var(--neutral-dark);
-    line-height: 1.6;
-  }
-  
-  .navbar {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-    border-bottom: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  
-  .navbar-brand {
-    font-weight: 700;
-    color: white !important;
-    font-size: 1.4rem;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-  
-  .navbar-nav > li > a {
-    color: rgba(255,255,255,0.9) !important;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  
-  .navbar-nav > li > a:hover {
-    color: white !important;
-    transform: translateY(-1px);
-  }
-  
-  .navbar-default .navbar-nav > .active > a, 
-  .navbar-default .navbar-nav > .active > a:focus, 
-  .navbar-default .navbar-nav > .active > a:hover {
-    background-color: rgba(255,255,255,0.15) !important;
-    color: white !important;
-    border-radius: 4px;
-  }
-  
-  .sidebar-panel {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    border-top: 3px solid var(--primary);
-  }
-  
-  .main-panel {
-    background-color: white;
-    border-radius: 8px;
-    padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-  
-  .btn-primary {
-    background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
-    border: none;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 6px;
-    color: white;
-    box-shadow: 0 2px 4px rgba(42,157,143,0.3);
-    transition: all 0.2s ease;
-  }
-  
-  .btn-primary:hover, .btn-primary:focus {
-    background: linear-gradient(to bottom, var(--primary-dark), var(--primary));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(42,157,143,0.4);
-    color: white;
-  }
-  
-  .btn-success {
-    background: linear-gradient(to bottom, var(--success), var(--primary-dark));
-    border: none;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 6px;
-    color: white;
-    box-shadow: 0 2px 4px rgba(42,157,143,0.3);
-  }
-  
-  .btn-info {
-    background: linear-gradient(to bottom, var(--info), #6A8FA5);
-    border: none;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 6px;
-    color: white;
-    box-shadow: 0 2px 4px rgba(132,169,192,0.3);
-  }
-  
-  .btn-warning {
-    background: linear-gradient(to bottom, var(--warning), var(--accent-dark));
-    border: none;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: 6px;
-    color: white;
-    box-shadow: 0 2px 4px rgba(244,162,97,0.3);
-  }
-  
-  .footer {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 25px;
-    font-size: 14px;
-    color: var(--neutral-dark);
-    box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
-    border-top: 1px solid var(--neutral-medium);
-  }
-  
-  .info-box {
-    background-color: var(--primary-light);
-    border-left: 4px solid var(--primary);
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 0 6px 6px 0;
-  }
-  
-  .alert-box {
-    background-color: #FEF2F2;
-    border-left: 4px solid var(--alert);
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 0 6px 6px 0;
-  }
-  
-  .app-title {
-    color: var(--primary-dark);
-    margin-bottom: 5px;
-    font-weight: 700;
-    font-size: 1.8rem;
-  }
-  
-  .app-subtitle {
-    color: var(--neutral-dark);
-    font-size: 1.1rem;
-    margin-bottom: 20px;
-    opacity: 0.8;
-  }
-  
-  .progress-bar {
-    height: 8px;
-    margin-top: 5px;
-    border-radius: 4px;
-    background: linear-gradient(to right, var(--primary), var(--accent));
-  }
-  
-  .large-file-warning {
-    color: var(--alert);
-    font-weight: bold;
-  }
-  
-  .file-input-label {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--primary-dark);
-  }
-  
-  .numeric-input-label {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--primary-dark);
-  }
-  
-  .section-title {
-    color: var(--primary-dark);
-    border-bottom: 2px solid var(--neutral-medium);
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-    font-weight: 600;
-    font-size: 1.3rem;
-  }
-  
-  .status-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border-left: 4px solid var(--primary);
-    transition: transform 0.2s ease;
-  }
-  
-  .status-card:hover {
-    transform: translateY(-3px);
-  }
-  
-  .status-title {
-    font-size: 14px;
-    color: var(--neutral-dark);
-    margin-bottom: 5px;
-    opacity: 0.8;
-  }
-  
-  .status-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--primary-dark);
-  }
-  
-  .download-section {
-    background-color: var(--neutral-light);
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 20px;
-    border: 1px dashed var(--neutral-medium);
-  }
-  
-  .download-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary-dark);
-    margin-bottom: 15px;
-  }
-  
-  .action-btn {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  
-  .data-table {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--neutral-medium);
-  }
-  
-  .selected-row {
-    background-color: rgba(42,157,143,0.1) !important;
-  }
-  
-  .randomization-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border-left: 4px solid var(--accent);
-  }
-  
-  .randomization-header {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--accent-dark);
-    margin-bottom: 15px;
-  }
-  
-  .randomization-description {
-    font-size: 14px;
-    color: var(--neutral-dark);
-    margin-bottom: 15px;
-    opacity: 0.8;
-  }
-  
-  .group-allocation-box {
-    background-color: var(--neutral-light);
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
-    border: 1px solid var(--neutral-medium);
-  }
-  
-  .group-allocation-row {
-    margin-bottom: 10px;
-  }
-  
-  .logo-container {
-    text-align: center;
-    margin-bottom: 20px;
-    padding: 20px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-    border-radius: 8px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  
-  .tagline {
-    font-style: italic;
-    font-weight: 500;
-    margin-top: 5px;
-    font-size: 1.1rem;
-    opacity: 0.9;
-  }
-  
-  input[type='number'], select, .form-control {
-    border-radius: 6px;
-    border: 1px solid var(--neutral-medium);
-    padding: 8px 12px;
-    transition: all 0.2s ease;
-  }
-  
-  input[type='number']:focus, select:focus, .form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 0.2rem rgba(42,157,143,0.25);
-  }
-  
-  .well {
-    background-color: var(--neutral-light);
-    border: 1px solid var(--neutral-medium);
-    border-radius: 8px;
-    box-shadow: none;
-  }
-  
-  .nav-tabs > li > a {
-    color: var(--neutral-dark);
-    font-weight: 600;
-    border-radius: 6px 6px 0 0;
-  }
-  
-  .nav-tabs > li.active > a,
-  .nav-tabs > li.active > a:focus,
-  .nav-tabs > li.active > a:hover {
-    color: var(--primary);
-    border-bottom: 3px solid var(--primary);
-    background-color: transparent;
-  }
-  
-  .dropdown-menu {
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border: 1px solid var(--neutral-medium);
-  }
-  
-  .dropdown-menu > li > a {
-    padding: 8px 16px;
-    transition: all 0.2s ease;
-  }
-  
-  .dropdown-menu > li > a:hover {
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
-  }
-"))
+      /* Light theme (default) */
+      :root {
+        --bg-primary: white;
+        --bg-secondary: #f8f9fa;
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-primary: #2c3e50;
+        --text-secondary: #7f8c8d;
+        --text-muted: #6c757d;
+        --text-heading: #2c3e50;
+        --text-body: #495057;
+        --card-bg: white;
+        --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        --border-color: #e9ecef;
+        --success-color: #27ae60;
+        --info-color: #17a2b8;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --primary-gradient: linear-gradient(135deg, #667eea, #764ba2);
+      }
+      
+      /* Dark theme */
+      [data-theme='dark'] {
+        --bg-primary: #0f1419;
+        --bg-secondary: #1e252b;
+        --bg-gradient: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+        --text-primary: #e2e8f0;
+        --text-secondary: #cbd5e0;
+        --text-muted: #a0aec0;
+        --text-heading: #f7fafc;
+        --text-body: #e2e8f0;
+        --card-bg: #1e252b;
+        --card-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        --border-color: #2d3748;
+        --success-color: #48bb78;
+        --info-color: #4299e1;
+        --warning-color: #ed8936;
+        --danger-color: #f56565;
+        --primary-gradient: linear-gradient(135deg, #4a5568, #2d3748);
+      }
+      
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+      
+      * {
+        font-family: 'Roboto', sans-serif;
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      }
+      
+      body {
+        background: var(--bg-gradient);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        color: var(--text-body);
+      }
+      
+      .main-container {
+        background: var(--bg-primary);
+        border-radius: 0px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin: 0;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slideIn {
+        from { transform: translateY(-30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      .title-animation {
+        animation: slideIn 1s ease-out;
+        text-align: center;
+        color: var(--text-heading);
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2.5em;
+      }
+      
+      .subtitle-animation {
+        animation: fadeIn 1.5s ease-out;
+        text-align: center;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        font-weight: 400;
+        font-size: 1.2em;
+      }
+      
+      .developer-info {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        text-align: center;
+        animation: fadeIn 2s ease-out;
+      }
+      
+      .formula-box {
+        background: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid var(--info-color);
+        box-shadow: var(--card-shadow);
+        color: var(--text-body);
+      }
+      
+      .result-box {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid var(--success-color);
+        box-shadow: var(--card-shadow);
+        color: var(--text-body);
+      }
+      
+      .info-box {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid var(--warning-color);
+        box-shadow: var(--card-shadow);
+        color: var(--text-body);
+      }
+      
+      .info-box h4, .formula-box h4, .result-box h4, .calculation-box h4 {
+        color: var(--text-heading) !important;
+        font-weight: 600;
+      }
+      
+      .calculation-box {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid var(--info-color);
+        box-shadow: var(--card-shadow);
+        color: var(--text-body);
+      }
+      
+      .random-start-box {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #9b59b6;
+        box-shadow: var(--card-shadow);
+        animation: fadeIn 0.5s ease-out;
+        color: var(--text-body);
+      }
+      
+      .navbar-default .navbar-brand {
+        color: white !important;
+        font-weight: 700;
+        font-size: 24px;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding: 15px;
+        margin-left: 10px;
+      }
+      
+      .nav-tabs > li > a {
+        color: var(--text-primary);
+        font-weight: 500;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+        padding: 12px 20px;
+        background: var(--bg-secondary);
+      }
+      
+      .nav-tabs > li.active > a {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+        border: none;
+      }
+      
+      .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+      }
+      
+      .btn-warning {
+        background: linear-gradient(135deg, var(--warning-color), var(--danger-color));
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .btn-success {
+        background: linear-gradient(135deg, var(--success-color), #2ecc71);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        color: white;
+      }
+      
+      .sidebar-panel {
+        background: var(--bg-secondary);
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: var(--card-shadow);
+        height: fit-content;
+        color: var(--text-body);
+      }
+      
+      .main-panel {
+        padding: 0 25px;
+        width: 100%;
+        background: var(--bg-primary);
+        color: var(--text-body);
+      }
+      
+      .download-btn {
+        width: 100%; 
+        margin-bottom: 10px; 
+        background: var(--primary-gradient); 
+        color: white; 
+        border: none; 
+        border-radius: 8px; 
+        padding: 10px;
+      }
+      
+      .footer {
+        background: var(--primary-gradient);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        border-radius: 0px;
+        margin-top: auto;
+        font-size: 0.9em;
+        width: 100%;
+      }
+      
+      .content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 20px;
+        background: var(--bg-primary);
+        color: var(--text-body);
+      }
+      
+      .main-content-area {
+        flex: 1;
+        margin-bottom: 20px;
+        width: 100%;
+        background: var(--bg-primary);
+        color: var(--text-body);
+      }
+      
+      .plot-download-btn {
+        background: linear-gradient(135deg, var(--success-color), #2ecc71);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        margin: 10px 5px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      
+      .plot-download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        color: white;
+      }
+      
+      .sidebar-panel {
+        position: relative;
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+      }
+      
+      .main-panel {
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+      }
+      
+      .file-upload-info {
+        background: var(--bg-secondary);
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-size: 0.9em;
+        border-left: 3px solid var(--info-color);
+        color: var(--text-body);
+      }
+      
+      .status-card {
+        background: var(--card-bg);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--info-color);
+        color: var(--text-body);
+      }
+      
+      .status-title {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      
+      .status-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      
+      .section-title {
+        color: var(--text-heading);
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+        font-weight: 600;
+        font-size: 1.3em;
+      }
+      
+      .download-section {
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px dashed var(--border-color);
+        color: var(--text-body);
+      }
+      
+      .download-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-heading);
+        margin-bottom: 15px;
+      }
+      
+      .action-btn {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      
+      .data-table {
+        border-radius: 8px;
+        overflow: hidden;
+        width: 100% !important;
+        background: var(--card-bg);
+        color: var(--text-body);
+      }
+      
+      .selected-row {
+        background-color: rgba(39, 174, 96, 0.2) !important;
+      }
+      
+      .randomization-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--info-color);
+        color: var(--text-body);
+      }
+      
+      .randomization-header {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-heading);
+        margin-bottom: 15px;
+      }
+      
+      .randomization-description {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 15px;
+      }
+      
+      .group-allocation-box {
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        border: 1px solid var(--border-color);
+        color: var(--text-body);
+      }
+      
+      .group-allocation-row {
+        margin-bottom: 10px;
+      }
+      
+      .file-input-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+      }
+      
+      .numeric-input-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+      }
+      
+      .large-file-warning {
+        color: var(--danger-color);
+        font-weight: bold;
+      }
+      
+      .progress-bar {
+        height: 10px;
+        margin-top: 5px;
+        border-radius: 4px;
+      }
+      
+      /* Theme toggle button - FIXED POSITION */
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        z-index: 9999;
+        border: 2px solid rgba(255,255,255,0.2);
+      }
+      
+      .theme-toggle:hover {
+        transform: scale(1.15) rotate(15deg);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      }
+      
+      /* Fix for navbar brand */
+      .navbar-brand {
+        padding: 15px 15px !important;
+        height: auto !important;
+        font-size: 24px !important;
+        line-height: 1.5 !important;
+      }
+      
+      /* Ensure full width layout */
+      .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+        width: 100%;
+        margin: 0;
+      }
+      
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+      }
+      
+      .col-sm-4, .col-sm-8, .col-lg-4, .col-lg-8, .col-md-4, .col-md-8 {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      
+      /* Fix tab content width */
+      .tab-content {
+        width: 100%;
+        background: var(--bg-primary);
+        color: var(--text-body);
+      }
+      
+      /* Ensure proper spacing in main containers */
+      .main-content-area .container-fluid {
+        padding: 20px;
+        background: var(--bg-primary);
+        color: var(--text-body);
+      }
+      
+      /* Text styling improvements for dark theme */
+      [data-theme='dark'] {
+        color: var(--text-body);
+      }
+      
+      [data-theme='dark'] h1, 
+      [data-theme='dark'] h2, 
+      [data-theme='dark'] h3, 
+      [data-theme='dark'] h4, 
+      [data-theme='dark'] h5, 
+      [data-theme='dark'] h6 {
+        color: var(--text-heading) !important;
+        font-weight: 600;
+      }
+      
+      [data-theme='dark'] p {
+        color: var(--text-body) !important;
+        font-weight: 400;
+        line-height: 1.6;
+      }
+      
+      [data-theme='dark'] li {
+        color: var(--text-body) !important;
+        font-weight: 400;
+      }
+      
+      [data-theme='dark'] strong {
+        color: var(--text-heading) !important;
+        font-weight: 600;
+      }
+      
+      [data-theme='dark'] .formula-box p,
+      [data-theme='dark'] .info-box p,
+      [data-theme='dark'] .result-box p,
+      [data-theme='dark'] .calculation-box p {
+        color: var(--text-body) !important;
+      }
+      
+      /* Dark theme specific adjustments for data tables */
+      [data-theme='dark'] .dataTables_wrapper .dataTables_length,
+      [data-theme='dark'] .dataTables_wrapper .dataTables_filter,
+      [data-theme='dark'] .dataTables_wrapper .dataTables_info,
+      [data-theme='dark'] .dataTables_wrapper .dataTables_processing,
+      [data-theme='dark'] .dataTables_wrapper .dataTables_paginate {
+        color: var(--text-primary) !important;
+      }
+      
+      [data-theme='dark'] table.dataTable thead th,
+      [data-theme='dark'] table.dataTable thead td {
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-heading);
+        background: var(--bg-secondary);
+        font-weight: 600;
+      }
+      
+      [data-theme='dark'] table.dataTable tbody th,
+      [data-theme='dark'] table.dataTable tbody td {
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-body);
+        background: var(--card-bg);
+      }
+      
+      [data-theme='dark'] .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: var(--text-primary) !important;
+      }
+      
+      /* Form controls in dark theme */
+      [data-theme='dark'] .form-control {
+        background-color: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-body);
+      }
+      
+      [data-theme='dark'] .form-control:focus {
+        background-color: var(--bg-secondary);
+        border-color: var(--info-color);
+        color: var(--text-body);
+        box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+      }
+      
+      [data-theme='dark'] .form-control::placeholder {
+        color: var(--text-muted);
+      }
+      
+      /* Dropdowns in dark theme */
+      [data-theme='dark'] .dropdown-menu {
+        background-color: var(--card-bg);
+        border-color: var(--border-color);
+      }
+      
+      [data-theme='dark'] .dropdown-menu > li > a {
+        color: var(--text-body);
+      }
+      
+      [data-theme='dark'] .dropdown-menu > li > a:hover {
+        background-color: var(--bg-secondary);
+        color: var(--text-heading);
+      }
+      
+      /* Radio buttons and checkboxes in dark theme */
+      [data-theme='dark'] .radio label,
+      [data-theme='dark'] .checkbox label {
+        color: var(--text-body);
+      }
+      
+      /* Well panels in dark theme */
+      [data-theme='dark'] .well {
+        background-color: var(--bg-secondary);
+        border-color: var(--border-color);
+        color: var(--text-body);
+      }
+      
+      /* HR styling in dark theme */
+      [data-theme='dark'] hr {
+        border-color: var(--border-color);
+      }
+      
+      /* Improved contrast for better readability */
+      [data-theme='dark'] {
+        --text-heading: #f7fafc;
+        --text-body: #e2e8f0;
+        --text-secondary: #cbd5e0;
+        --text-muted: #a0aec0;
+      }
+      
+      /* Additional text contrast improvements */
+      [data-theme='dark'] .sidebar-panel,
+      [data-theme='dark'] .main-panel,
+      [data-theme='dark'] .tab-content {
+        color: var(--text-body);
+      }
+      
+      [data-theme='dark'] .section-title {
+        color: var(--text-heading);
+        font-weight: 600;
+      }
+      
+      [data-theme='dark'] .file-input-label,
+      [data-theme='dark'] .numeric-input-label {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+    "))
   ),
   
-  navbarPage(
-    title = div(
-      style = "display: flex; align-items: center;",
-      img(src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTkgMmg2TTkgNmg2TTQgMTBoMTZNNCAxNGgxNk00IDE4aDE2Ij48L3BhdGg+PC9zdmc+",
-          style = "height: 30px; margin-right: 10px; filter: brightness(0) invert(1);"),
-      "TagSelect"
-    ),
-    windowTitle = "TagSelect: Research Participant Selection Tool",
-    collapsible = TRUE,
-    inverse = TRUE,
-    fluid = TRUE,
-    header = div(
-      class = "logo-container",
-      h2("TagSelect: Research Participant Selection Tool", style = "margin: 0; font-weight: 700;"),
-      p("A tool for participant selection in research studies", class = "tagline")
-    ),
-    
-    tabPanel(
-      "Simple Randomization",
-      div(
-        class = "container-fluid",
-        style = "padding-top:20px;",
-        
-        fluidRow(
-          column(
-            4,
-            div(
-              class = "sidebar-panel",
-              
-              h4(class = "section-title", icon("upload", class = "fa-fw"), "Data Upload"),
-              
-              div(class = "file-input-label", "Upload Participant List"),
-              fileInput("file", NULL,
-                        accept = c(".csv", ".xlsx", ".xls", ".sav", ".dta", ".docx"),
-                        buttonLabel = "Browse...",
-                        placeholder = "No file selected",
-                        width = "100%"),
-              
-              div(id = "file_stats",
-                  uiOutput("file_info_box")
-              ),
-              
-              br(),
-              
-              div(class = "numeric-input-label", "Number of Participants to Sample"),
-              numericInput("sample_size", NULL,
-                           value = 5, min = 1, max = 10000, step = 1,
-                           width = "100%"),
-              
-              actionButton("sample_btn", "Select Random Sample", 
-                           class = "btn-primary action-btn", 
-                           icon = icon("random")),
-              
-              br(), br(),
-              
+  # Theme toggle button - FIXED POSITION (now in front of everything)
+  div(class = "theme-toggle", 
+      onclick = "toggleTheme()",
+      title = "Toggle Dark/Light Mode",
+      icon("moon", id = "theme-icon")
+  ),
+  
+  div(class = "main-container",
+      div(class = "content-wrapper",
+          navbarPage(
+            title = div(
+              style = "color: white; font-weight: 700; font-size: 24px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding: 5px 0;",
+              "TagSelect"
+            ),
+            windowTitle = "TagSelect: High-Capacity Random Sampler",
+            collapsible = TRUE,
+            inverse = FALSE,
+            fluid = TRUE,
+            header = tags$head(
+              tags$style(HTML("
+                .navbar {
+                  border-radius: 0;
+                  margin-bottom: 0;
+                  background-color: var(--bg-primary);
+                  border: none;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                  position: relative;
+                  z-index: 1000;
+                }
+                .navbar-default .navbar-nav > li > a {
+                  color: var(--text-primary);
+                  font-weight: 500;
+                }
+                .navbar-default .navbar-nav > .active > a {
+                  background-color: transparent !important;
+                  color: #667eea !important;
+                }
+              "))
+            ),
+            
+            tabPanel(
+              "Simple Randomization",
               div(
-                class = "download-section",
-                h4(class = "download-title", icon("download", class = "fa-fw"), "Download Options"),
+                class = "container-fluid",
+                style = "padding: 20px; width: 100%;",
                 
-                div(
-                  style = "margin-bottom:15px;",
-                  dropdownButton(
-                    label = "Download Full List",
-                    status = "success",
-                    icon = icon("file-export"),
-                    circle = FALSE,
-                    size = "sm",
-                    downloadButton("download_all_excel", "Excel", class = "btn-success"),
-                    downloadButton("download_all_word", "Word", class = "btn-info"),
-                    downloadButton("download_all_csv", "CSV", class = "btn-secondary")
+                fluidRow(
+                  column(
+                    12,
+                    h1(class = "title-animation", "Simple Randomization"),
+                    h4(class = "subtitle-animation", "Efficient participant selection for research studies of all sizes"),
+                    hr(style = "border-top:1px solid var(--border-color);")
                   )
                 ),
                 
-                div(
-                  dropdownButton(
-                    label = "Download Selected Only",
-                    status = "success",
-                    icon = icon("file-export"),
-                    circle = FALSE,
-                    size = "sm",
-                    downloadButton("download_selected_excel", "Excel", class = "btn-success"),
-                    downloadButton("download_selected_word", "Word", class = "btn-info"),
-                    downloadButton("download_selected_csv", "CSV", class = "btn-secondary")
-                  )
-                )
-              ),
-              
-              br(),
-              
-              div(
-                class = "info-box",
-                h4(icon("info-circle", class = "fa-fw"), "Instructions"),
-                tags$ol(
-                  tags$li("Upload your list of participants (Excel, CSV, SPSS, Stata, or Word)"),
-                  tags$li("Specify how many participants to randomly select"),
-                  tags$li("Click 'Select Random Sample' to tag participants"),
-                  tags$li("Selected participants will be marked in the table"),
-                  tags$li("Download either the full list or only selected participants")
-                )
-              )
-            )
-          ),
-          
-          column(
-            8,
-            div(
-              class = "main-panel",
-              
-              fluidRow(
-                column(
-                  6,
-                  div(
-                    class = "status-card",
-                    div(class = "status-title", "Total Participants"),
-                    div(class = "status-value", textOutput("total_count"))
-                  )
-                ),
-                column(
-                  6,
-                  div(
-                    class = "status-card",
-                    div(class = "status-title", "Selected Participants"),
-                    div(class = "status-value", textOutput("selected_count"))
-                  )
-                )
-              ),
-              
-              conditionalPanel(
-                condition = "input.file != null",
-                div(id = "progress_container",
-                    div(class = "progress",
-                        div(id = "progress_bar", 
-                            class = "progress-bar progress-bar-striped active",
-                            role = "progressbar",
-                            style = "width: 0%"))
-                )
-              ),
-              
-              br(),
-              
-              h4(class = "section-title", icon("table", class = "fa-fw"), "Participant List"),
-              
-              div(
-                class = "data-table",
-                DTOutput("table")
-              )
-            )
-          )
-        ),
-        
-        fluidRow(
-          column(
-            12,
-            div(
-              class = "footer",
-              fluidRow(
-                column(
-                  6,
-                  HTML("<strong>Developer:</strong> Mudasir Mohammed Ibrahim<br>
-                       <strong>Contact:</strong> <a href='mailto:mudassiribrahim30@gmail.com'>mudassiribrahim30@gmail.com</a>")
-                ),
-                column(
-                  6,
-                  style = "text-align:right;",
-                  HTML("<strong>Version:</strong> 2.3 | 
-                       <strong>Capacity:</strong> 10,000 participants × 1,000 variables<br>
-                       <a href='https://github.com/mudasir-ibrahim/TagSelect' target='_blank'> 
-                       <i class='fab fa-github'></i> View on GitHub</a>")
-                )
-              )
-            )
-          )
-        )
-      )
-    ),
-    
-    tabPanel(
-      "Experimental Randomization",
-      div(
-        class = "container-fluid",
-        style = "padding-top:20px;",
-        
-        fluidRow(
-          column(
-            12,
-            h1(class = "app-title", "Experimental Randomization"),
-            h4(class = "app-subtitle", "Advanced randomization methods for experimental designs"),
-            hr(style = "border-top:1px solid #eee;")
-          )
-        ),
-        
-        fluidRow(
-          column(
-            4,
-            div(
-              class = "sidebar-panel",
-              
-              h4(class = "section-title", icon("random", class = "fa-fw"), "Randomization Setup"),
-              
-              radioButtons("has_participant_list", "Do you have a list of participants?",
-                           choices = c("Yes" = "yes", "No" = "no"),
-                           selected = "no"),
-              
-              conditionalPanel(
-                condition = "input.has_participant_list == 'yes'",
-                div(
-                  class = "info-box",
-                  h4(icon("upload", class = "fa-fw"), "Upload Participant List"),
-                  fileInput("exp_file", NULL,
-                            accept = c(".csv", ".xlsx", ".xls", ".sav", ".dta", ".docx"),
-                            buttonLabel = "Browse...",
-                            placeholder = "No file selected",
-                            width = "100%"),
+                fluidRow(
+                  column(
+                    4,
+                    div(
+                      class = "sidebar-panel",
+                      
+                      h4(class = "section-title", icon("upload", class = "fa-fw"), "Data Upload"),
+                      
+                      div(class = "file-input-label", "Upload Participant List"),
+                      fileInput("file", NULL,
+                                accept = c(".csv", ".xlsx", ".xls", ".sav", ".dta", ".docx"),
+                                buttonLabel = "Browse...",
+                                placeholder = "No file selected",
+                                width = "100%"),
+                      
+                      div(id = "file_stats",
+                          uiOutput("file_info_box")
+                      ),
+                      
+                      br(),
+                      
+                      div(class = "numeric-input-label", "Number of Participants to Sample"),
+                      numericInput("sample_size", NULL,
+                                   value = 5, min = 1, max = 10000, step = 1,
+                                   width = "100%"),
+                      
+                      actionButton("sample_btn", "Select Random Sample", 
+                                   class = "btn-primary action-btn", 
+                                   icon = icon("random")),
+                      
+                      br(), br(),
+                      
+                      div(
+                        class = "download-section",
+                        h4(class = "download-title", icon("download", class = "fa-fw"), "Download Options"),
+                        
+                        div(
+                          style = "margin-bottom:15px;",
+                          dropdownButton(
+                            label = "Download Full List",
+                            status = "success",
+                            icon = icon("file-export"),
+                            circle = FALSE,
+                            size = "sm",
+                            downloadButton("download_all_excel", "Excel", class = "btn-success"),
+                            downloadButton("download_all_word", "Word", class = "btn-info"),
+                            downloadButton("download_all_csv", "CSV", class = "btn-secondary")
+                          )
+                        ),
+                        
+                        div(
+                          dropdownButton(
+                            label = "Download Selected Only",
+                            status = "success",
+                            icon = icon("file-export"),
+                            circle = FALSE,
+                            size = "sm",
+                            downloadButton("download_selected_excel", "Excel", class = "btn-success"),
+                            downloadButton("download_selected_word", "Word", class = "btn-info"),
+                            downloadButton("download_selected_csv", "CSV", class = "btn-secondary")
+                          )
+                        )
+                      ),
+                      
+                      br(),
+                      
+                      div(
+                        class = "info-box",
+                        h4(icon("info-circle", class = "fa-fw"), "Instructions"),
+                        tags$ol(
+                          tags$li("Upload your list of participants (Excel, CSV, SPSS, Stata, or Word)"),
+                          tags$li("Specify how many participants to randomly select"),
+                          tags$li("Click 'Select Random Sample' to tag participants"),
+                          tags$li("Selected participants will be marked in the table"),
+                          tags$li("Download either the full list or only selected participants")
+                        )
+                      )
+                    )
+                  ),
                   
-                  numericInput("total_participants", "Total Number of Participants:",
-                               value = NULL, min = 1, max = 10000, step = 1),
-                  
-                  selectInput("group_var", "Select Grouping Variable:", 
-                              choices = c("None" = "none"), selected = "none"),
-                  
-                  conditionalPanel(
-                    condition = "input.group_var != 'none'",
-                    checkboxInput("specify_group_n", "Specify sample size for each group?", FALSE),
-                    conditionalPanel(
-                      condition = "input.specify_group_n",
-                      uiOutput("group_allocation_ui")
+                  column(
+                    8,
+                    div(
+                      class = "main-panel",
+                      
+                      fluidRow(
+                        column(
+                          6,
+                          div(
+                            class = "status-card",
+                            div(class = "status-title", "Total Participants"),
+                            div(class = "status-value", textOutput("total_count"))
+                          )
+                        ),
+                        column(
+                          6,
+                          div(
+                            class = "status-card",
+                            div(class = "status-title", "Selected Participants"),
+                            div(class = "status-value", textOutput("selected_count"))
+                          )
+                        )
+                      ),
+                      
+                      conditionalPanel(
+                        condition = "input.file != null",
+                        div(id = "progress_container",
+                            div(class = "progress",
+                                div(id = "progress_bar", 
+                                    class = "progress-bar progress-bar-striped active",
+                                    role = "progressbar",
+                                    style = "width: 0%"))
+                        )
+                      ),
+                      
+                      br(),
+                      
+                      h4(class = "section-title", icon("table", class = "fa-fw"), "Participant List"),
+                      
+                      div(
+                        class = "data-table",
+                        DTOutput("table")
+                      )
                     )
                   )
                 )
-              ),
-              
-              conditionalPanel(
-                condition = "input.has_participant_list == 'no'",
-                div(
-                  class = "info-box",
-                  h4(icon("users", class = "fa-fw"), "Generate Participants"),
-                  numericInput("total_n", "Total Number of Participants:",
-                               value = 100, min = 1, max = 10000, step = 1),
+              )
+            ),
+            
+            tabPanel(
+              "Experimental Randomization",
+              div(
+                class = "container-fluid",
+                style = "padding: 20px; width: 100%;",
+                
+                fluidRow(
+                  column(
+                    12,
+                    h1(class = "title-animation", "Experimental Randomization"),
+                    h4(class = "subtitle-animation", "Advanced randomization methods for experimental designs"),
+                    hr(style = "border-top:1px solid var(--border-color);")
+                  )
+                ),
+                
+                fluidRow(
+                  column(
+                    4,
+                    div(
+                      class = "sidebar-panel",
+                      
+                      h4(class = "section-title", icon("random", class = "fa-fw"), "Randomization Setup"),
+                      
+                      radioButtons("has_participant_list", "Do you have a list of participants?",
+                                   choices = c("Yes" = "yes", "No" = "no"),
+                                   selected = "no"),
+                      
+                      conditionalPanel(
+                        condition = "input.has_participant_list == 'yes'",
+                        div(
+                          class = "info-box",
+                          h4(icon("upload", class = "fa-fw"), "Upload Participant List"),
+                          fileInput("exp_file", NULL,
+                                    accept = c(".csv", ".xlsx", ".xls", ".sav", ".dta", ".docx"),
+                                    buttonLabel = "Browse...",
+                                    placeholder = "No file selected",
+                                    width = "100%"),
+                          
+                          numericInput("total_participants", "Total Number of Participants:",
+                                       value = NULL, min = 1, max = 10000, step = 1),
+                          
+                          selectInput("group_var", "Select Grouping Variable:", 
+                                      choices = c("None" = "none"), selected = "none"),
+                          
+                          conditionalPanel(
+                            condition = "input.group_var != 'none'",
+                            checkboxInput("specify_group_n", "Specify sample size for each group?", FALSE),
+                            conditionalPanel(
+                              condition = "input.specify_group_n",
+                              uiOutput("group_allocation_ui")
+                            )
+                          )
+                        )
+                      ),
+                      
+                      conditionalPanel(
+                        condition = "input.has_participant_list == 'no'",
+                        div(
+                          class = "info-box",
+                          h4(icon("users", class = "fa-fw"), "Generate Participants"),
+                          numericInput("total_n", "Total Number of Participants:",
+                                       value = 100, min = 1, max = 10000, step = 1),
+                          
+                          checkboxInput("has_groups", "Include groups in your design?", FALSE),
+                          
+                          conditionalPanel(
+                            condition = "input.has_groups",
+                            textInput("group_names", "Group Names (comma separated):",
+                                      placeholder = "e.g., Male, Female"),
+                            uiOutput("group_size_ui")
+                          )
+                        )
+                      ),
+                      
+                      h4(class = "section-title", icon("cogs", class = "fa-fw"), "Randomization Settings"),
+                      
+                      selectInput("randomization_method", "Select Randomization Method:",
+                                  choices = c("Simple Randomization" = "simple",
+                                              "Complete Randomization" = "complete",
+                                              "Block Randomization" = "block",
+                                              "Cluster Randomization" = "cluster",
+                                              "Stratified Randomization" = "stratified")),
+                      
+                      conditionalPanel(
+                        condition = "input.randomization_method == 'block'",
+                        numericInput("block_size", "Block Size:", value = 4, min = 2, max = 20, step = 1)
+                      ),
+                      
+                      numericInput("num_treatments", "Number of Treatment Groups:", 
+                                   value = 2, min = 2, max = 500, step = 1),
+                      
+                      textInput("treatment_names", "Treatment Group Names (comma separated):",
+                                value = "Treatment, Control"),
+                      
+                      actionButton("randomize_btn", "Perform Randomization", 
+                                   class = "btn-primary action-btn", 
+                                   icon = icon("random")),
+                      
+                      br(), br(),
+                      
+                      div(
+                        class = "download-section",
+                        h4(class = "download-title", icon("download", class = "fa-fw"), "Download Results"),
+                        
+                        downloadButton("download_randomized", "Download Randomized Data", 
+                                       class = "btn-success action-btn")
+                      )
+                    )
+                  ),
                   
-                  checkboxInput("has_groups", "Include groups in your design?", FALSE),
-                  
-                  conditionalPanel(
-                    condition = "input.has_groups",
-                    textInput("group_names", "Group Names (comma separated):",
-                              placeholder = "e.g., Male, Female"),
-                    uiOutput("group_size_ui")
+                  column(
+                    8,
+                    div(
+                      class = "main-panel",
+                      
+                      fluidRow(
+                        column(
+                          12,
+                          div(
+                            class = "randomization-card",
+                            div(class = "randomization-header", "Randomization Summary"),
+                            verbatimTextOutput("randomization_summary")
+                          )
+                        )
+                      ),
+                      
+                      h4(class = "section-title", icon("table", class = "fa-fw"), "Randomized Data"),
+                      
+                      div(
+                        class = "data-table",
+                        DTOutput("randomized_table")
+                      )
+                    )
                   )
                 )
-              ),
-              
-              h4(class = "section-title", icon("cogs", class = "fa-fw"), "Randomization Settings"),
-              
-              selectInput("randomization_method", "Select Randomization Method:",
-                          choices = c("Simple Randomization" = "simple",
-                                      "Complete Randomization" = "complete",
-                                      "Block Randomization" = "block",
-                                      "Cluster Randomization" = "cluster",
-                                      "Stratified Randomization" = "stratified")),
-              
-              conditionalPanel(
-                condition = "input.randomization_method == 'block'",
-                numericInput("block_size", "Block Size:", value = 4, min = 2, max = 20, step = 1)
-              ),
-              
-              numericInput("num_treatments", "Number of Treatment Groups:", 
-                           value = 2, min = 2, max = 500, step = 1),
-              
-              textInput("treatment_names", "Treatment Group Names (comma separated):",
-                        value = "Treatment, Control"),
-              
-              actionButton("randomize_btn", "Perform Randomization", 
-                           class = "btn-primary action-btn", 
-                           icon = icon("random")),
-              
-              br(), br(),
-              
+              )
+            ),
+            
+            tabPanel(
+              "About",
               div(
-                class = "download-section",
-                h4(class = "download-title", icon("download", class = "fa-fw"), "Download Results"),
+                class = "main-panel",
+                style = "padding: 20px;",
+                h2("About TagSelect"),
+                p("TagSelect is a high-performance application designed to help researchers efficiently select random samples from participant lists and conduct experimental randomization."),
                 
-                downloadButton("download_randomized", "Download Randomized Data", 
-                               class = "btn-success action-btn")
+                h3("Features"),
+                tags$ul(
+                  tags$li("Supports multiple file formats (Excel, CSV, SPSS, Stata, Word)"),
+                  tags$li("Optimized for large datasets (up to 10,000 participants)"),
+                  tags$li("Simple random sampling and advanced experimental randomization"),
+                  tags$li("Multiple export options"),
+                  tags$li("User-friendly interface with dark/light theme support")
+                ),
+                
+                h3("Technical Details"),
+                p("The application uses R's sample.int() function with Fisher-Yates shuffling for simple randomization and the randomizr package for experimental designs."),
+                
+                h3("Citation"),
+                p("If you use TagSelect in your research, please consider citing it:"),
+                tags$blockquote(
+                  "Ibrahim, M. M. (2025). TagSelect: High-Capacity Random Sampler [Computer software]."
+                ),
+                
+                div(class = "developer-info",
+                    h4("Developer Information:"),
+                    p("Mudasir Mohammed Ibrahim"),
+                    p("Email: mudassiribrahim30@gmail.com"),
+                    p("Version: 2.3 | Capacity: 10,000 participants × 1,000 variables")
+                )
               )
             )
           ),
           
-          column(
-            8,
-            div(
-              class = "main-panel",
-              
-              fluidRow(
-                column(
-                  12,
-                  div(
-                    class = "randomization-card",
-                    div(class = "randomization-header", "Randomization Summary"),
-                    verbatimTextOutput("randomization_summary")
-                  )
-                )
-              ),
-              
-              h4(class = "section-title", icon("table", class = "fa-fw"), "Randomized Data"),
-              
-              div(
-                class = "data-table",
-                DTOutput("randomized_table")
-              )
-            )
+          div(class = "footer",
+              p("TagSelect | Developed by Mudasir Mohammed Ibrahim"),
+              p("© 2025 All Rights Reserved")
           )
-        )
       )
-    ),
-    
-    tabPanel(
-      "About",
-      div(
-        class = "main-panel",
-        h2("About TagSelect"),
-        p("TagSelect is a high-performance application designed to help researchers efficiently select random samples from participant lists and conduct experimental randomization."),
-        
-        h3("Features"),
-        tags$ul(
-          tags$li("Supports multiple file formats (Excel, CSV, SPSS, Stata, Word)"),
-          tags$li("Optimized for large datasets (up to 10,000 participants)"),
-          tags$li("Simple random sampling and advanced experimental randomization"),
-          tags$li("Multiple export options"),
-          tags$li("User-friendly interface")
-        ),
-        
-        h3("Technical Details"),
-        p("The application uses R's sample.int() function with Fisher-Yates shuffling for simple randomization and the randomizr package for experimental designs."),
-        
-        h3("Citation"),
-        p("If you use TagSelect in your research, please consider citing it:"),
-        tags$blockquote(
-          "Ibrahim, M. M. (2023). TagSelect: High-Capacity Random Sampler [Computer software]."
-        )
-      )
-    )
   )
 )
 
+# Server logic remains the same as before
 server <- function(input, output, session) {
   data <- reactiveVal(NULL)
   randomized_data <- reactiveVal(NULL)
@@ -1086,8 +1451,8 @@ server <- function(input, output, session) {
     
     if (size > 5e6) {  # 5MB
       size_text <- tagList(
-        span(size_text, style = "color:#e74c3c;"),
-        icon("exclamation-triangle", style = "color:#e74c3c;")
+        span(size_text, style = "color:var(--danger-color);"),
+        icon("exclamation-triangle", style = "color:var(--danger-color);")
       )
     }
     
