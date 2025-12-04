@@ -499,13 +499,37 @@ get_spss_metadata <- function(spss_data) {
   return(metadata)
 }
 
-# UI Definition with improved font sizes and colors
+# UI Definition with improved font sizes, theme toggle, and moving app name
 ui <- fluidPage(
   theme = shinytheme("flatly"),
   
-  # Viewport meta tag for proper scaling on laptop screens
+  # JavaScript for theme toggle
   tags$head(
     tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
+    tags$script(HTML("
+      $(document).ready(function() {
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('data2spss-theme');
+        if (savedTheme === 'dark') {
+          $('body').addClass('dark-theme');
+          $('#themeToggle i').removeClass('fa-moon').addClass('fa-sun');
+        }
+        
+        // Theme toggle functionality
+        $('#themeToggle').click(function() {
+          $('body').toggleClass('dark-theme');
+          
+          if ($('body').hasClass('dark-theme')) {
+            $('#themeToggle i').removeClass('fa-moon').addClass('fa-sun');
+            localStorage.setItem('data2spss-theme', 'dark');
+          } else {
+            $('#themeToggle i').removeClass('fa-sun').addClass('fa-moon');
+            localStorage.setItem('data2spss-theme', 'light');
+          }
+        });
+      });
+    ")),
+    
     tags$style(HTML("
       /* Johns Hopkins-inspired color scheme with improved contrast */
       :root {
@@ -521,6 +545,22 @@ ui <- fluidPage(
         --text-light: #777777;
       }
       
+      /* Dark theme variables */
+      body.dark-theme {
+        --hopkins-blue: #4A90E2;
+        --hopkins-dark-blue: #2C3E50;
+        --hopkins-light-blue: #1A2530;
+        --hopkins-gold: #CFB87C;
+        --hopkins-gray: #121212;
+        --hopkins-dark-gray: #E0E0E0;
+        --hopkins-accent: #68ACE5;
+        --text-primary: #E0E0E0;
+        --text-secondary: #B0B0B0;
+        --text-light: #888888;
+        background-color: var(--hopkins-gray) !important;
+        color: var(--text-primary) !important;
+      }
+      
       /* Improved font sizes and clarity */
       html, body {
         height: 100%;
@@ -528,9 +568,11 @@ ui <- fluidPage(
         padding: 0;
         overflow-x: hidden;
         font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-        font-size: 11.8px; /* Base font size increased */
+        font-size: 14px; /* Increased base font size */
         line-height: 1.6;
         color: var(--text-primary);
+        background-color: var(--hopkins-gray);
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
       
       .container-fluid {
@@ -538,23 +580,89 @@ ui <- fluidPage(
         padding-right: 0;
         max-width: 1400px;
         margin: 0 auto;
+        overflow-x: hidden;
       }
       
-      body {
-        background-color: var(--hopkins-gray);
-        min-height: 100vh;
+      /* Floating App Name Animation */
+      .floating-app-name {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1000;
+        font-size: 28px; /* Increased font size */
+        font-weight: 700;
+        color: var(--hopkins-blue);
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 8px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: floatAnimation 6s ease-in-out infinite;
+        text-decoration: none;
+        border: 2px solid var(--hopkins-gold);
+        transition: all 0.3s ease;
+      }
+      
+      .dark-theme .floating-app-name {
+        background-color: rgba(30, 30, 30, 0.9);
+        color: var(--hopkins-accent);
+      }
+      
+      .floating-app-name:hover {
+        animation: floatAnimation 3s ease-in-out infinite;
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      }
+      
+      @keyframes floatAnimation {
+        0%, 100% {
+          transform: translateY(0px) rotate(-1deg);
+        }
+        25% {
+          transform: translateY(-8px) rotate(1deg);
+        }
+        50% {
+          transform: translateY(0px) rotate(-1deg);
+        }
+        75% {
+          transform: translateY(-4px) rotate(1deg);
+        }
+      }
+      
+      /* Theme Toggle Button */
+      .theme-toggle-btn {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+        background-color: var(--hopkins-blue);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .theme-toggle-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
       }
       
       /* Blog-inspired header with improved typography */
       .blog-header {
         background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
         color: white;
-        padding: 3rem 0 2rem 0;
+        padding: 4rem 0 2.5rem 0;
         margin-bottom: 0;
         border-bottom: 4px solid var(--hopkins-gold);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
       }
       
       .blog-header-content {
@@ -565,7 +673,7 @@ ui <- fluidPage(
       }
       
       .app-title-main {
-        font-size: 3.5rem; /* Increased from 3.2rem */
+        font-size: 3.8rem; /* Increased from 3.5rem */
         font-weight: 700;
         margin: 0;
         letter-spacing: -0.5px;
@@ -575,7 +683,7 @@ ui <- fluidPage(
       }
       
       .app-subtitle-main {
-        font-size: 1.6rem; /* Increased from 1.4rem */
+        font-size: 1.8rem; /* Increased from 1.6rem */
         font-weight: 300;
         opacity: 0.95;
         margin: 0.5rem 0 0 0;
@@ -584,7 +692,7 @@ ui <- fluidPage(
       }
       
       .app-tagline {
-        font-size: 1.3rem; /* Increased from 1.1rem */
+        font-size: 1.4rem; /* Increased from 1.3rem */
         font-weight: 400;
         margin: 1rem 0 0 0;
         color: var(--hopkins-light-blue);
@@ -600,13 +708,22 @@ ui <- fluidPage(
         margin-bottom: 2rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         min-height: 60px;
+        transition: background-color 0.3s ease;
+      }
+      
+      .dark-theme .navbar {
+        background-color: var(--hopkins-light-blue) !important;
       }
       
       .navbar-brand {
         color: var(--hopkins-blue) !important;
         font-weight: 600;
-        font-size: 1.2rem; /* Increased */
+        font-size: 1.3rem; /* Increased */
         padding: 15px;
+      }
+      
+      .dark-theme .navbar-brand {
+        color: var(--hopkins-accent) !important;
       }
       
       .nav-tabs {
@@ -614,6 +731,12 @@ ui <- fluidPage(
         margin-bottom: 0;
         background: white;
         padding: 0 2rem;
+        transition: background-color 0.3s ease;
+      }
+      
+      .dark-theme .nav-tabs {
+        background: var(--hopkins-light-blue);
+        border-bottom-color: #444;
       }
       
       .nav-tabs > li > a {
@@ -623,8 +746,12 @@ ui <- fluidPage(
         margin-right: 1px;
         padding: 15px 25px;
         border: 1px solid transparent;
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.2rem; /* Increased */
         transition: all 0.3s ease;
+      }
+      
+      .dark-theme .nav-tabs > li > a {
+        color: var(--text-primary);
       }
       
       .nav-tabs > li.active > a {
@@ -634,7 +761,13 @@ ui <- fluidPage(
         border-bottom-color: transparent;
         font-weight: 600;
         border-top: 3px solid var(--hopkins-blue);
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+      }
+      
+      .dark-theme .nav-tabs > li.active > a {
+        background-color: var(--hopkins-light-blue) !important;
+        color: var(--hopkins-accent) !important;
+        border-color: #444;
       }
       
       .nav-tabs > li > a:hover {
@@ -643,52 +776,82 @@ ui <- fluidPage(
         color: var(--hopkins-dark-blue);
       }
       
+      .dark-theme .nav-tabs > li > a:hover {
+        background-color: #2C3E50;
+        color: white;
+      }
+      
       .main-content {
         max-width: 1200px;
         margin: 0 auto;
         padding: 0 2rem 2rem 2rem;
         width: 100%;
-        font-size: 1rem;
+        font-size: 1.1rem; /* Increased */
+        box-sizing: border-box;
       }
       
-      /* Improved card typography */
+      /* Improved card typography - FIXED OVERFLOW */
       .blog-card {
         background-color: white;
-        padding: 2.5rem;
+        padding: 1.8rem; /* Reduced to fit content better */
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         margin: 1.5rem 0;
         border-left: none;
         border-top: 1px solid #e9ecef;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
+      }
+      
+      .dark-theme .blog-card {
+        background-color: #1E1E1E;
+        border-color: #444;
       }
       
       .blog-card h2 {
-        font-size: 2.2rem; /* Increased */
+        font-size: 2rem; /* Slightly reduced */
         color: var(--hopkins-blue);
         margin-bottom: 1rem;
         font-weight: 600;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .blog-card h2 {
+        color: var(--hopkins-accent);
       }
       
       .blog-card h3 {
-        font-size: 1.8rem; /* Increased */
+        font-size: 1.6rem; /* Slightly reduced */
         color: var(--hopkins-dark-blue);
-        margin: 1.5rem 0 1rem 0;
+        margin: 1.2rem 0 0.8rem 0;
         font-weight: 600;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .blog-card h3 {
+        color: var(--text-primary);
       }
       
       .blog-card h4 {
-        font-size: 1.4rem; /* Increased */
+        font-size: 1.3rem; /* Slightly reduced */
         color: var(--hopkins-dark-gray);
-        margin: 1.2rem 0 0.8rem 0;
+        margin: 1rem 0 0.6rem 0;
         font-weight: 600;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .blog-card h4 {
+        color: var(--text-primary);
       }
       
       .blog-card p {
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Slightly reduced */
         color: var(--text-secondary);
-        line-height: 1.7;
-        margin-bottom: 1rem;
+        line-height: 1.6;
+        margin-bottom: 0.8rem;
+        word-wrap: break-word;
       }
       
       .blog-card:hover {
@@ -696,48 +859,78 @@ ui <- fluidPage(
         box-shadow: 0 6px 25px rgba(0,0,0,0.12);
       }
       
+      .dark-theme .blog-card:hover {
+        box-shadow: 0 6px 25px rgba(0,0,0,0.25);
+      }
+      
+      /* FIXED: Info box with better overflow handling */
       .info-box {
         background-color: white;
-        padding: 1.8rem; /* Increased */
+        padding: 1.5rem; /* Reduced */
         border-radius: 8px;
         border-left: 4px solid var(--hopkins-accent);
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .info-box {
+        background-color: #252525;
       }
       
       .info-box p {
         font-size: 1.1rem;
         color: var(--text-secondary);
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.6rem;
+        word-wrap: break-word;
       }
       
       .step-box {
         background-color: var(--hopkins-light-blue);
-        padding: 1.8rem; /* Increased */
+        padding: 1.5rem; /* Reduced */
         border-radius: 8px;
-        margin: 1rem 0;
+        margin: 0.8rem 0;
         border-left: 4px solid var(--hopkins-blue);
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      
+      .dark-theme .step-box {
+        background-color: #2A2A2A;
       }
       
       .step-box h4 {
-        font-size: 1.3rem;
+        font-size: 1.2rem; /* Reduced */
         color: var(--hopkins-blue);
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.6rem;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .step-box h4 {
+        color: var(--hopkins-accent);
       }
       
       .step-box ul {
         font-size: 1.1rem;
         color: var(--text-secondary);
+        padding-left: 1.2rem;
       }
       
       .step-box li {
-        margin-bottom: 0.5rem;
-        line-height: 1.6;
+        margin-bottom: 0.4rem;
+        line-height: 1.5;
+        word-wrap: break-word;
       }
       
-      /* Improved buttons with better text */
+      /* FIXED: Improved buttons with better text - NOW FIT PROPERLY */
       .btn-hopkins-primary {
         background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
         border: none;
@@ -745,9 +938,17 @@ ui <- fluidPage(
         font-weight: 600;
         border-radius: 6px;
         transition: all 0.3s ease;
-        padding: 14px 30px; /* Increased */
-        font-size: 1.1rem; /* Increased */
+        padding: 12px 20px; /* Reduced for better fit */
+        font-size: 1.1rem; /* Reduced */
         box-shadow: 0 2px 8px rgba(0,45,114,0.3);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        white-space: normal;
+        word-wrap: break-word;
+        text-align: center;
+        display: block;
+        margin: 10px 0;
       }
       
       .btn-hopkins-primary:hover {
@@ -763,10 +964,18 @@ ui <- fluidPage(
         color: white;
         border-radius: 6px;
         transition: all 0.3s ease;
-        padding: 14px 30px; /* Increased */
+        padding: 12px 20px; /* Reduced for better fit */
         font-weight: 600;
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
         box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        white-space: normal;
+        word-wrap: break-word;
+        text-align: center;
+        display: block;
+        margin: 10px 0;
       }
       
       .btn-hopkins-success:hover {
@@ -774,6 +983,18 @@ ui <- fluidPage(
         color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(40,167,69,0.4);
+      }
+      
+      /* Shiny download button styling */
+      .shiny-download-link {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 10px 0 !important;
+        display: block !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
       }
       
       .loading-spinner {
@@ -786,53 +1007,71 @@ ui <- fluidPage(
         margin: 20px auto;
       }
       
+      .dark-theme .loading-spinner {
+        border-color: #444;
+      }
+      
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
       
       .feature-icon {
-        font-size: 32px; /* Increased */
+        font-size: 30px; /* Reduced */
         color: var(--hopkins-blue);
-        margin-right: 12px;
+        margin-right: 10px;
       }
       
       .process-steps {
         counter-reset: step-counter;
-        margin: 2rem 0;
+        margin: 1.5rem 0;
       }
       
       .process-step {
         position: relative;
-        padding: 1.8rem 1.8rem 1.8rem 90px; /* Increased */
-        margin-bottom: 1.5rem;
+        padding: 1.5rem 1.5rem 1.5rem 80px; /* Reduced */
+        margin-bottom: 1.2rem;
         background: white;
         border-radius: 8px;
         border-left: 4px solid var(--hopkins-gold);
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      
+      .dark-theme .process-step {
+        background: #252525;
       }
       
       .process-step h4 {
-        font-size: 1.3rem; /* Increased */
+        font-size: 1.2rem; /* Reduced */
         color: var(--hopkins-blue);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .process-step h4 {
+        color: var(--hopkins-accent);
       }
       
       .process-step p {
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
         color: var(--text-secondary);
-        line-height: 1.6;
+        line-height: 1.5;
+        word-wrap: break-word;
       }
       
       .process-step:before {
         counter-increment: step-counter;
         content: counter(step-counter);
         position: absolute;
-        left: 1.8rem; /* Increased */
+        left: 1.5rem; /* Reduced */
         top: 50%;
         transform: translateY(-50%);
-        width: 55px; /* Increased */
-        height: 55px; /* Increased */
+        width: 50px; /* Reduced */
+        height: 50px; /* Reduced */
         background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
         color: white;
         border-radius: 50%;
@@ -840,44 +1079,49 @@ ui <- fluidPage(
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 22px; /* Increased */
+        font-size: 20px; /* Reduced */
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       }
       
       .developer-card {
         background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
         color: white;
-        padding: 3rem;
+        padding: 2.5rem; /* Reduced */
         border-radius: 12px;
         text-align: center;
-        margin: 2rem 0;
+        margin: 1.5rem 0;
         box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .developer-card h2 {
-        font-size: 2.2rem; /* Increased */
+        font-size: 2rem; /* Reduced */
         color: white;
         margin-bottom: 0.5rem;
+        word-wrap: break-word;
       }
       
       .developer-card h4 {
-        font-size: 1.4rem; /* Increased */
+        font-size: 1.3rem; /* Reduced */
         color: var(--hopkins-gold);
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
+        word-wrap: break-word;
       }
       
       .developer-card p {
-        font-size: 1.2rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
         color: rgba(255,255,255,0.9);
-        line-height: 1.6;
+        line-height: 1.5;
+        word-wrap: break-word;
       }
       
       .developer-avatar {
-        width: 140px;
-        height: 140px;
+        width: 140px; /* Reduced */
+        height: 140px; /* Reduced */
         border-radius: 50%;
         background-color: white;
-        margin: 0 auto 1.5rem;
+        margin: 0 auto 1.2rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -886,20 +1130,21 @@ ui <- fluidPage(
       }
       
       .contact-links {
-        margin-top: 2rem;
+        margin-top: 1.5rem;
       }
       
       .contact-link {
         display: inline-block;
         background-color: rgba(255,255,255,0.15);
         color: white;
-        padding: 14px 28px; /* Increased */
-        margin: 8px;
+        padding: 12px 24px; /* Reduced */
+        margin: 6px;
         border-radius: 30px;
         text-decoration: none;
         transition: all 0.3s ease;
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
         border: 1px solid rgba(255,255,255,0.3);
+        word-wrap: break-word;
       }
       
       .contact-link:hover {
@@ -912,53 +1157,77 @@ ui <- fluidPage(
       
       .feature-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-        margin: 3rem 0;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Reduced */
+        gap: 1.5rem;
+        margin: 2rem 0;
       }
       
       .feature-item {
         background-color: white;
-        padding: 2.2rem; /* Increased */
+        padding: 2rem; /* Reduced */
         border-radius: 10px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         transition: transform 0.3s ease;
         border: 1px solid #e9ecef;
         height: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .feature-item {
+        background-color: #252525;
+        border-color: #444;
       }
       
       .feature-item h4 {
-        font-size: 1.3rem; /* Increased */
+        font-size: 1.3rem; /* Reduced */
         color: var(--hopkins-blue);
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .feature-item h4 {
+        color: var(--hopkins-accent);
       }
       
       .feature-item p {
-        font-size: 1.1rem; /* Increased */
+        font-size: 1.1rem; /* Reduced */
         color: var(--text-secondary);
-        line-height: 1.6;
+        line-height: 1.5;
+        word-wrap: break-word;
       }
       
       .feature-item:hover {
-        transform: translateY(-8px);
+        transform: translateY(-6px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
       }
       
       .feature-icon-large {
-        font-size: 52px; /* Increased */
+        font-size: 50px; /* Reduced */
         color: var(--hopkins-blue);
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
+      }
+      
+      .dark-theme .feature-icon-large {
+        color: var(--hopkins-accent);
       }
       
       .conversion-section {
         background-color: white;
-        padding: 2.2rem; /* Increased */
+        padding: 2rem; /* Reduced */
         border-radius: 10px;
-        margin: 2rem 0;
+        margin: 1.5rem 0;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         border-top: 4px solid var(--hopkins-accent);
         font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      
+      .dark-theme .conversion-section {
+        background-color: #252525;
       }
       
       .data-preview-container {
@@ -966,42 +1235,58 @@ ui <- fluidPage(
         overflow-y: auto;
         border: 1px solid #e9ecef;
         border-radius: 8px;
-        margin: 1.5rem 0;
+        margin: 1.2rem 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .data-preview-container {
+        border-color: #444;
       }
       
       .status-success {
         color: #155724;
         background-color: #d4edda;
         border-color: #c3e6cb;
-        padding: 1.2rem; /* Increased */
+        padding: 1.2rem; /* Reduced */
         border-radius: 6px;
         border-left: 4px solid #28a745;
-        margin: 1rem 0;
-        font-size: 1.1rem; /* Increased */
+        margin: 0.8rem 0;
+        font-size: 1.1rem; /* Reduced */
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
       }
       
       .status-error {
         color: #721c24;
         background-color: #f8d7da;
         border-color: #f5c6cb;
-        padding: 1.2rem; /* Increased */
+        padding: 1.2rem; /* Reduced */
         border-radius: 6px;
         border-left: 4px solid #dc3545;
-        margin: 1rem 0;
-        font-size: 1.1rem; /* Increased */
+        margin: 0.8rem 0;
+        font-size: 1.1rem; /* Reduced */
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
       }
       
       .status-waiting {
         color: #856404;
         background-color: #fff3cd;
         border-color: #ffeaa7;
-        padding: 1.2rem; /* Increased */
+        padding: 1.2rem; /* Reduced */
         border-radius: 6px;
         border-left: 4px solid #ffc107;
-        margin: 1rem 0;
-        font-size: 1.1rem; /* Increased */
+        margin: 0.8rem 0;
+        font-size: 1.1rem; /* Reduced */
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
       }
       
       /* Ensure proper table display with improved fonts */
@@ -1009,10 +1294,12 @@ ui <- fluidPage(
         width: 100% !important;
         margin: 0 auto;
         font-size: 1rem;
+        box-sizing: border-box;
       }
       
       .dataTables_wrapper table {
         font-size: 1rem;
+        width: 100% !important;
       }
       
       .shiny-output-error {
@@ -1020,50 +1307,99 @@ ui <- fluidPage(
         padding: 1.2rem;
         border-radius: 6px;
         background-color: #f8d7da;
-        margin: 1rem 0;
+        margin: 0.8rem 0;
         font-size: 1.1rem;
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
       }
       
       /* Improved heading hierarchy */
       h1, h2, h3, h4, h5, h6 {
         color: var(--hopkins-dark-gray);
         font-weight: 600;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme h1,
+      .dark-theme h2,
+      .dark-theme h3,
+      .dark-theme h4,
+      .dark-theme h5,
+      .dark-theme h6 {
+        color: var(--text-primary);
       }
       
       h2 {
         border-bottom: 2px solid var(--hopkins-light-blue);
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
-        font-size: 2rem;
+        padding-bottom: 0.4rem;
+        margin-bottom: 1.2rem;
+        font-size: 1.8rem; /* Reduced */
       }
       
-      /* Form controls with better font sizes */
+      /* FIXED: Form controls with better font sizes */
       .form-control {
-        font-size: 1.1rem;
+        font-size: 1.1rem; /* Reduced */
         padding: 10px 12px;
+        background-color: white;
+        color: var(--text-primary);
+        border: 1px solid #ced4da;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+      
+      .dark-theme .form-control {
+        background-color: #2A2A2A;
+        color: var(--text-primary);
+        border-color: #555;
+      }
+      
+      .form-group {
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .form-group label {
-        font-size: 1.1rem;
+        font-size: 1.1rem; /* Reduced */
         font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
+        display: block;
+        word-wrap: break-word;
       }
       
       /* File input styling */
       .shiny-input-container {
-        font-size: 1.1rem;
+        font-size: 1.1rem; /* Reduced */
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .shiny-input-container {
+        color: var(--text-primary);
+      }
+      
+      /* Shiny file input styling */
+      .shiny-input-container .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
       }
       
       /* Copyright footer */
       .copyright-footer {
         text-align: center;
-        padding: 2rem;
-        margin-top: 3rem;
+        padding: 2rem; /* Reduced */
+        margin-top: 2.5rem;
         background-color: var(--hopkins-dark-gray);
         color: white;
         font-size: 1rem;
         border-top: 4px solid var(--hopkins-gold);
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
       }
       
       .copyright-footer a {
@@ -1078,40 +1414,65 @@ ui <- fluidPage(
       /* Welcome section specific styles */
       .welcome-section {
         background: linear-gradient(135deg, var(--hopkins-light-blue) 0%, #ffffff 100%);
-        padding: 3rem;
+        padding: 2.5rem; /* Reduced */
         border-radius: 12px;
-        margin: 2rem 0;
+        margin: 1.5rem 0;
         box-shadow: 0 8px 25px rgba(0,45,114,0.1);
         border-left: 6px solid var(--hopkins-blue);
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .welcome-section {
+        background: linear-gradient(135deg, #1A2530 0%, #252525 100%);
       }
       
       .welcome-header {
         text-align: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
       }
       
       .welcome-icon {
-        font-size: 4rem;
+        font-size: 4rem; /* Reduced */
         color: var(--hopkins-blue);
         margin-bottom: 1rem;
       }
       
+      .dark-theme .welcome-icon {
+        color: var(--hopkins-accent);
+      }
+      
       .guide-section {
         background-color: white;
-        padding: 2rem;
+        padding: 2rem; /* Reduced */
         border-radius: 8px;
-        margin: 1.5rem 0;
+        margin: 1.2rem 0;
         border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .guide-section {
+        background-color: #252525;
+        border-color: #444;
       }
       
       .guide-step {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
+        margin-bottom: 1.2rem;
+        padding: 1.2rem; /* Reduced */
         background-color: var(--hopkins-gray);
         border-radius: 6px;
         transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .dark-theme .guide-step {
+        background-color: #2A2A2A;
       }
       
       .guide-step:hover {
@@ -1119,11 +1480,15 @@ ui <- fluidPage(
         transform: translateX(5px);
       }
       
+      .dark-theme .guide-step:hover {
+        background-color: #333;
+      }
+      
       .step-number {
         background-color: var(--hopkins-blue);
         color: white;
-        width: 40px;
-        height: 40px;
+        width: 40px; /* Reduced */
+        height: 40px; /* Reduced */
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -1135,20 +1500,115 @@ ui <- fluidPage(
       
       .step-content {
         flex: 1;
+        min-width: 0; /* Prevents overflow */
       }
       
       .important-note {
         background-color: #fff3cd;
         border-left: 4px solid #ffc107;
-        padding: 1.5rem;
+        padding: 1.5rem; /* Reduced */
         border-radius: 6px;
-        margin: 1.5rem 0;
+        margin: 1.2rem 0;
+        font-size: 1.1rem; /* Reduced */
+        transition: all 0.3s ease;
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+      }
+      
+      .dark-theme .important-note {
+        background-color: #332701;
+      }
+      
+      /* Tab content styling */
+      .tab-content {
+        background-color: transparent !important;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      /* DataTable styling for dark theme */
+      .dark-theme .dataTables_wrapper .dataTables_length,
+      .dark-theme .dataTables_wrapper .dataTables_filter,
+      .dark-theme .dataTables_wrapper .dataTables_info,
+      .dark-theme .dataTables_wrapper .dataTables_processing,
+      .dark-theme .dataTables_wrapper .dataTables_paginate {
+        color: var(--text-primary) !important;
+      }
+      
+      .dark-theme table.dataTable thead th,
+      .dark-theme table.dataTable thead td {
+        border-bottom: 2px solid #555 !important;
+        color: var(--text-primary) !important;
+      }
+      
+      .dark-theme table.dataTable tbody tr {
+        background-color: #252525 !important;
+      }
+      
+      .dark-theme table.dataTable tbody tr:hover {
+        background-color: #2A2A2A !important;
+      }
+      
+      .dark-theme table.dataTable tbody td {
+        border-top: 1px solid #444 !important;
+        color: var(--text-primary) !important;
+      }
+      
+      .dark-theme .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: var(--text-primary) !important;
+      }
+      
+      /* Select input styling */
+      .dark-theme .selectize-input {
+        background-color: #2A2A2A !important;
+        color: var(--text-primary) !important;
+        border-color: #555 !important;
+      }
+      
+      .dark-theme .selectize-dropdown {
+        background-color: #2A2A2A !important;
+        color: var(--text-primary) !important;
+      }
+      
+      /* Modal styling for dark theme */
+      .dark-theme .modal-content {
+        background-color: #252525 !important;
+        color: var(--text-primary) !important;
+        border-color: #444 !important;
+      }
+      
+      .dark-theme .modal-header {
+        border-bottom-color: #444 !important;
+      }
+      
+      .dark-theme .modal-footer {
+        border-top-color: #444 !important;
+      }
+      
+      /* FIXED: Column layout for Data Converter tab */
+      .data-converter-column {
+        padding-right: 15px;
+        padding-left: 15px;
+        box-sizing: border-box;
       }
       
       /* Responsive design with font adjustments */
+      @media (max-width: 992px) {
+        .col-md-3, .col-md-9 {
+          width: 100% !important;
+          float: none !important;
+        }
+        
+        .data-converter-column {
+          padding-right: 0;
+          padding-left: 0;
+        }
+      }
+      
       @media (max-width: 768px) {
         .blog-header {
-          padding: 2rem 0 1.5rem 0;
+          padding: 2.5rem 0 1.8rem 0;
         }
         
         .app-title-main {
@@ -1164,7 +1624,7 @@ ui <- fluidPage(
         }
         
         .blog-card {
-          padding: 1.8rem;
+          padding: 1.5rem;
         }
         
         .blog-card h2 {
@@ -1172,7 +1632,7 @@ ui <- fluidPage(
         }
         
         .blog-card h3 {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
         }
         
         .blog-card p {
@@ -1185,17 +1645,17 @@ ui <- fluidPage(
         }
         
         .nav-tabs > li > a {
-          padding: 12px 15px;
+          padding: 10px 15px;
           font-size: 1rem;
         }
         
         .btn-hopkins-primary, .btn-hopkins-success {
           font-size: 1rem;
-          padding: 12px 20px;
+          padding: 10px 16px;
         }
         
         .welcome-section {
-          padding: 1.5rem;
+          padding: 1.8rem;
         }
         
         .guide-step {
@@ -1206,11 +1666,26 @@ ui <- fluidPage(
           margin-right: 0;
           margin-bottom: 1rem;
         }
+        
+        .floating-app-name {
+          font-size: 20px;
+          padding: 6px 12px;
+        }
+        
+        .theme-toggle-btn {
+          width: 40px;
+          height: 40px;
+          font-size: 16px;
+        }
+        
+        .main-content {
+          padding: 0 1rem 1rem 1rem;
+        }
       }
       
       @media (max-width: 480px) {
         html, body {
-          font-size: 15px;
+          font-size: 14px; /* Adjusted */
         }
         
         .app-title-main {
@@ -1220,14 +1695,36 @@ ui <- fluidPage(
         .app-subtitle-main {
           font-size: 1.1rem;
         }
+        
+        .blog-card {
+          padding: 1.2rem;
+        }
+        
+        .btn-hopkins-primary, .btn-hopkins-success {
+          font-size: 0.9rem;
+          padding: 8px 12px;
+        }
       }
     "))
+  ),
+  
+  # Floating App Name (always visible)
+  tags$a(href = "#", class = "floating-app-name", "Data2SPSS"),
+  
+  # Theme Toggle Button
+  tags$button(
+    id = "themeToggle",
+    class = "theme-toggle-btn",
+    title = "Toggle Dark/Light Theme",
+    icon("moon")
   ),
   
   # Blog-inspired header (similar to Johns Hopkins)
   div(class = "blog-header",
       div(class = "blog-header-content",
           h1(class = "app-title-main", "Data2SPSS"),
+          p(class = "app-subtitle-main", 
+            "Professional Data Conversion Tool"),
           p(class = "app-tagline", 
             "Transform your research data into SPSS-ready format with intelligent variable detection and proper labeling")
       )
@@ -1373,7 +1870,7 @@ ui <- fluidPage(
           )
         ),
         
-        # Tab 2: Data Converter (main functionality)
+        # Tab 2: Data Converter (main functionality) - FIXED LAYOUT
         tabPanel(
           "Data Converter",
           icon = icon("file-export"),
@@ -1381,12 +1878,14 @@ ui <- fluidPage(
               fluidRow(
                 column(
                   width = 3,
+                  class = "data-converter-column",
                   div(class = "blog-card",
                       h4("📁 Data Import"),
                       fileInput("file_input", "Choose Data File",
                                 accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".sas7bdat", 
                                            ".rdata", ".tsv", ".txt", ".jmp"),
-                                multiple = FALSE),
+                                multiple = FALSE,
+                                width = "100%"),
                       
                       conditionalPanel(
                         condition = "output.file_loaded",
@@ -1397,24 +1896,35 @@ ui <- fluidPage(
                         hr(),
                         h4("🔄 SPSS Conversion"),
                         textInput("export_filename", "Export Filename", 
-                                  value = "converted_data.sav"),
+                                  value = "converted_data.sav",
+                                  width = "100%"),
                         
-                        actionButton("convert_btn", "🔧 Convert to SPSS Format", 
-                                     class = "btn-hopkins-primary", style = "width: 100%; margin-bottom: 15px;"),
+                        # FIXED: Button with proper width handling
+                        div(style = "width: 100%; box-sizing: border-box;",
+                            actionButton("convert_btn", "🔧 Convert to SPSS Format", 
+                                         class = "btn-hopkins-primary",
+                                         style = "width: 100%; margin-bottom: 10px; padding: 12px 10px;")
+                        ),
                         
                         conditionalPanel(
                           condition = "output.conversion_complete",
                           div(class = "status-success",
+                              style = "width: 100%; box-sizing: border-box;",
                               h5("✅ Conversion Successful!", style = "margin: 0;"),
                               p("Data is ready for download.", style = "margin: 5px 0 0 0; font-size: 14px;")
                           ),
-                          downloadButton("download_btn", "📥 Download SPSS File", 
-                                         class = "btn-hopkins-success", style = "width: 100%; margin-top: 15px;")
+                          # FIXED: Download button with proper width
+                          div(style = "width: 100%; box-sizing: border-box;",
+                              downloadButton("download_btn", "📥 Download SPSS File", 
+                                             class = "btn-hopkins-success shiny-download-link",
+                                             style = "width: 100%; margin-top: 10px; padding: 12px 10px;")
+                          )
                         ),
                         
                         conditionalPanel(
                           condition = "output.conversion_status == 'error'",
                           div(class = "status-error",
+                              style = "width: 100%; box-sizing: border-box;",
                               h5("❌ Conversion Failed"),
                               textOutput("conversion_error")
                           )
@@ -1425,6 +1935,7 @@ ui <- fluidPage(
                 
                 column(
                   width = 9,
+                  class = "data-converter-column",
                   conditionalPanel(
                     condition = "!output.file_loaded",
                     div(class = "blog-card",
@@ -1567,11 +2078,6 @@ server <- function(input, output, session) {
   cleaned_names <- reactiveVal(NULL)
   
   # Navigate to Data Converter tab when Get Started is clicked
-  observeEvent(input$get_started, {
-    updateTabsetPanel(session, "main_tabs", selected = "Data Converter")
-  })
-  
-  # NEW: Navigate to Data Converter when "Start Converting" is clicked
   observeEvent(input$go_to_converter, {
     updateTabsetPanel(session, "main_tabs", selected = "Data Converter")
   })
