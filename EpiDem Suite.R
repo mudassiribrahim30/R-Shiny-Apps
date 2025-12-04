@@ -28,67 +28,215 @@ library(shinycssloaders)
 library(shinyjs)
 library(colourpicker)
 library(flextable)
+library(polycor) 
+library(psych)   
 
 # Custom CSS for better layout and animations
 custom_css <- "
-.sidebar {
+/* Animated app name in navbar */
+.navbar-brand {
+  animation: gentleMove 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes gentleMove {
+  0% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(0.5deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-1px) rotate(-0.5deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Professional font settings */
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333333;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.main-header .navbar-brand {
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+
+/* Improved sidebar and content panels */
+.sidebar-panel {
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 25px 20px;
+  height: calc(100vh - 80px);
   overflow-y: auto;
-  max-height: 90vh;
   position: sticky;
   top: 0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
 }
 
-.main-content {
+.main-panel {
+  padding: 25px;
+  height: calc(100vh - 80px);
   overflow-y: auto;
-  max-height: 90vh;
+  background: white;
 }
 
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.jumbotron {
-  background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), 
-              url('');
-  background-size: cover;
-  padding: 3rem 2rem;
-  margin-bottom: 2rem;
-  border-radius: 0.3rem;
-}
-
+/* Enhanced card design */
 .card {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   border: 1px solid #e9ecef;
-  border-radius: 0.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
+  background: white;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
 }
 
 .card-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
 }
 
-/* Loading animations */
+/* Button improvements */
+.btn-action {
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-action:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Form control improvements */
+.form-control, .selectize-input {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.form-control:focus, .selectize-input.focus {
+  border-color: #0C5EA8;
+  box-shadow: 0 0 0 0.2rem rgba(12, 94, 168, 0.25);
+}
+
+/* Better selectize dropdown */
+.selectize-dropdown {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Improved tabs */
+.nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 1.5rem;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: 6px 6px 0 0;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin-right: 2px;
+  transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+  color: #0C5EA8;
+  background-color: rgba(12, 94, 168, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+  color: #0C5EA8;
+  background-color: rgba(12, 94, 168, 0.1);
+  border-bottom: 3px solid #0C5EA8;
+  font-weight: 600;
+}
+
+/* Table improvements */
+.dataTables_wrapper {
+  font-size: 0.9rem;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 1rem;
+}
+
+/* Alert improvements */
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 1rem 1.25rem;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+/* Loading spinner improvements */
 .loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 3rem;
 }
 
 .loading-spinner {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #0C5EA8;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 2s linear infinite;
+  width: 50px;
+  height: 50px;
+  animation: spin 1.5s linear infinite;
 }
 
 @keyframes spin {
@@ -96,81 +244,42 @@ custom_css <- "
   100% { transform: rotate(360deg); }
 }
 
-/* Interactive button styles */
-.btn-action {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+/* Section headers */
+.section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e9ecef;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
-.btn-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+/* Input group improvements */
+.input-group-prepend .input-group-text,
+.input-group-append .input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+  font-weight: 500;
 }
 
-.btn-action:active {
-  transform: translateY(0);
+/* Better plot containers */
+.plot-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
 }
 
-.btn-action::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
+/* Tooltip improvements */
+.tooltip {
+  font-size: 0.85rem;
+  max-width: 300px;
 }
 
-.btn-action:active::after {
-  width: 100px;
-  height: 100px;
-}
-
-/* Sidebar and main content layout */
-.sidebar-panel {
-  background: #f8f9fa;
-  border-right: 1px solid #dee2e6;
-  padding: 20px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
-  position: sticky;
-  top: 0;
-}
-
-.main-panel {
-  padding: 20px;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
-}
-
-/* Result card animations */
-.result-card {
-  transition: all 0.3s ease;
-  border-left: 4px solid #0C5EA8;
-}
-
-.result-card:hover {
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  transform: translateX(5px);
-}
-
-/* Tab animations */
-.tab-pane {
-  animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Custom scrollbar */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -187,28 +296,148 @@ custom_css <- "
   background: #094580;
 }
 
-/* Pulse animation for important elements */
-.pulse {
-  animation: pulse 2s infinite;
+/* Correlation analysis specific styles */
+.correlation-plot {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  background: white;
+  margin-top: 20px;
 }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(12, 94, 168, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(12, 94, 168, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(12, 94, 168, 0); }
+.correlation-results {
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 15px;
 }
 
-/* Success and error states */
-.alert-success {
-  border-left: 4px solid #28a745;
+.coefficient-highlight {
+  font-weight: bold;
+  color: #0C5EA8;
+  font-size: 1.1em;
 }
 
-.alert-danger {
-  border-left: 4px solid #dc3545;
+.scatter-point {
+  transition: all 0.3s ease;
 }
 
-.alert-warning {
-  border-left: 4px solid #ffc107;
+.scatter-point:hover {
+  stroke-width: 3;
+  stroke: #000;
+}
+
+/* Dashboard value boxes */
+.value-box {
+  background: linear-gradient(135deg, #0C5EA8 0%, #094580 100%);
+  color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.value-box .value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.value-box .caption {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+/* Home page specific styles */
+.jumbotron-home {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.feature-card {
+  height: 100%;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-color: #0C5EA8;
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  color: #0C5EA8;
+  margin-bottom: 1rem;
+}
+
+/* Help text styling */
+.help-block {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Required field indicators */
+.required:after {
+  content: ' *';
+  color: #dc3545;
+}
+
+/* Better spacing for form groups */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+/* Checkbox and radio improvements */
+.checkbox, .radio {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.checkbox label, .radio label {
+  font-weight: 500;
+}
+
+/* Slider improvements */
+.irs--shiny .irs-bar {
+  background: #0C5EA8;
+}
+
+.irs--shiny .irs-handle {
+  border: 3px solid #0C5EA8;
+}
+
+/* Footer improvements */
+.footer {
+  text-align: center;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-panel, .main-panel {
+    height: auto;
+    position: static;
+  }
+  
+  .sidebar-panel {
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+  }
 }
 "
 
@@ -238,752 +467,2440 @@ convert_labelled <- function(df) {
 # UI
 ui <- navbarPage(
   title = div(
-    img(src = "", 
-        height = "30", 
-        style = "margin-right:10px;padding-bottom:3px;"),
-    "📈 EpiDem Suite™"
+    span("📈 ", style = "font-size: 1.2em; color: white;"),
+    span("EpiDem Suite™", 
+         style = "font-weight: 700; letter-spacing: 0.5px; 
+                  color: white; /* Changed from gradient to solid white */
+                  text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Added shadow for better visibility */
+                  ")
   ),
   footer = div(
-    style = "text-align: center; padding: 10px; background-color: #f8f9fa; border-top: 1px solid #dee2e6;",
-    "Copyright (c) Mudasir Mohammed Ibrahim (mudassiribrahim30@gmail.com)"
+    class = "footer",
+    "Copyright © Mudasir Mohammed Ibrahim (mudassiribrahim30@gmail.com)"
   ),
   windowTitle = "EpiDem Suite - Epidemiological Analysis Tool",
   id = "nav",
   header = tags$head(
     tags$style(HTML(custom_css)),
-    useShinyjs()
+    useShinyjs(),
+    tags$script(HTML("
+      $(document).ready(function() {
+        // Add animation to navbar brand
+        $('.navbar-brand').css({
+          'animation': 'gentleMove 3s ease-in-out infinite',
+          'transform-origin': 'center'
+        });
+        
+        // Smooth scrolling for anchor links
+        $('a[href^=\"#\"]').on('click', function(e) {
+          if(this.hash !== '') {
+            e.preventDefault();
+            const hash = this.hash;
+            $('html, body').animate({
+              scrollTop: $(hash).offset().top - 70
+            }, 800);
+          }
+        });
+      });
+    "))
   ),
-  theme = bslib::bs_theme(version = 5, 
-                          bootswatch = "flatly",
-                          primary = "#0C5EA8",   # CDC Blue
-                          secondary = "#CD2026", # CDC Red
-                          success = "#5CB85C",
-                          font_scale = 0.95),
+  theme = bslib::bs_theme(
+    version = 5, 
+    bootswatch = "flatly",
+    primary = "#0C5EA8",   # CDC Blue
+    secondary = "#CD2026", # CDC Red
+    success = "#5CB85C",
+    base_font = bslib::font_google("Roboto"),
+    heading_font = bslib::font_google("Roboto"),
+    font_scale = 1.05
+  ),
   
   # Home/About Tab
-  tabPanel("Home", icon = icon("house"),
-           div(class = "container-fluid",
-               div(class = "jumbotron",
-                   h1("EpiDem Suite", class = "display-4"),
-                   p("A comprehensive epidemiological analysis platform for public health professionals.", 
-                     class = "lead"),
-                   hr(class = "my-4"),
-                   p("Upload your dataset and utilize the tools in the navigation bar to perform descriptive analyses, 
-                     calculate disease frequency measures, assess statistical associations, and build regression models."),
-                   p("Supported file formats: CSV, Excel (.xls, .xlsx), Stata (.dta), SPSS (.sav), SAS (.sas7bdat), RData (.RData, .rda)"),
-                   p("This tool follows established guidelines for epidemiological analysis. Developed by Mudasir Mohammed Ibrahim (BSc, RN)"),
-                   actionButton("goto_data", "Get Started →", 
-                                class = "btn-primary btn-lg btn-action", 
-                                icon = icon("rocket"))
-               ),
-               
-               fluidRow(
-                 column(4,
-                        div(class = "card pulse",
-                            div(class = "card-body",
-                                h3("📊 Descriptive Analysis", class = "card-title"),
-                                p("Explore frequency distributions, summary statistics, and create epidemic curves to understand your data's basic characteristics."),
-                                tags$ul(
-                                  tags$li("Frequency distributions and bar plots"),
-                                  tags$li("Central tendency measures and histograms"),
-                                  tags$li("Epidemic curves with customizable intervals"),
-                                  tags$li("Spatial analysis and demographic breakdowns")
-                                ),
-                                actionButton("goto_descriptive", "Explore Descriptive Tools", 
-                                             class = "btn-outline-primary btn-action")
-                            )
-                        )
-                 ),
-                 column(4,
-                        div(class = "card pulse",
-                            div(class = "card-body",
-                                h3("🦠 Disease Metrics", class = "card-title"),
-                                p("Calculate incidence rates, prevalence, attack rates, and mortality measures to quantify disease burden in populations."),
-                                tags$ul(
-                                  tags$li("Incidence rates and cumulative incidence"),
-                                  tags$li("Prevalence calculations"),
-                                  tags$li("Attack rates with confidence intervals"),
-                                  tags$li("Mortality rates and case fatality rates"),
-                                  tags$li("Life table analysis")
-                                ),
-                                actionButton("goto_disease", "Calculate Disease Metrics", 
-                                             class = "btn-outline-primary btn-action")
-                            )
-                        )
-                 ),
-                 column(4,
-                        div(class = "card pulse",
-                            div(class = "card-body",
-                                h3("📈 Statistical Tools", class = "card-title"),
-                                p("Perform association tests, regression analyses, and survival analysis to identify risk factors and measure effects."),
-                                tags$ul(
-                                  tags$li("Risk ratios, odds ratios, and attributable risk"),
-                                  tags$li("Poisson regression for count data"),
-                                  tags$li("Survival analysis with Kaplan-Meier curves"),
-                                  tags$li("Cox proportional hazards models"),
-                                  tags$li("Linear and logistic regression"),
-                                  tags$li("Chi-square tests with cross-tabulations")
-                                ),
-                                actionButton("goto_statistics", "Use Statistical Tools", 
-                                             class = "btn-outline-primary btn-action")
-                            )
-                        )
-                 )
-               )
-           )
+  tabPanel(
+    "Home", 
+    icon = icon("house", class = "fa-lg"),
+    div(
+      class = "container-fluid",
+      div(
+        class = "jumbotron jumbotron-home",
+        h1("EpiDem Suite", class = "display-4", style = "font-weight: 700; color: #2c3e50;"),
+        p(
+          "A comprehensive epidemiological analysis platform for public health professionals.", 
+          class = "lead",
+          style = "color: #5a6268; font-size: 1.25rem;"
+        ),
+        hr(class = "my-4", style = "border-color: #dee2e6;"),
+        p(
+          "Upload your dataset and utilize the tools in the navigation bar to perform descriptive analyses, 
+          calculate disease frequency measures, assess statistical associations, and build regression models.",
+          style = "font-size: 1.05rem; line-height: 1.6;"
+        ),
+        p(
+          "Supported file formats: CSV, Excel (.xls, .xlsx), Stata (.dta), SPSS (.sav), SAS (.sas7bdat), RData (.RData, .rda)",
+          style = "font-size: 0.95rem; color: #6c757d;"
+        ),
+        p(
+          "This tool follows established guidelines for epidemiological analysis. Developed by Mudasir Mohammed Ibrahim (BSc, RN)",
+          style = "font-size: 0.9rem; color: #6c757d; font-style: italic;"
+        ),
+        actionButton(
+          "goto_data", 
+          "Get Started →", 
+          class = "btn-primary btn-lg btn-action", 
+          icon = icon("rocket"),
+          style = "margin-top: 1rem; padding: 0.75rem 2rem; font-weight: 600;"
+        )
+      ),
+      
+      fluidRow(
+        column(
+          4,
+          div(
+            class = "card feature-card",
+            div(
+              class = "card-body text-center",
+              div(class = "feature-icon", "📊"),
+              h3("Descriptive Analysis", class = "card-title", style = "font-weight: 600;"),
+              p(
+                "Explore frequency distributions, summary statistics, and create epidemic curves to understand your data's basic characteristics.",
+                class = "card-text",
+                style = "color: #5a6268;"
+              ),
+              tags$ul(
+                class = "text-left",
+                style = "padding-left: 1.5rem;",
+                tags$li("Frequency distributions and bar plots"),
+                tags$li("Central tendency measures and histograms"),
+                tags$li("Epidemic curves with customizable intervals"),
+                tags$li("Spatial analysis and demographic breakdowns")
+              ),
+              actionButton(
+                "goto_descriptive", 
+                "Explore Descriptive Tools", 
+                class = "btn-outline-primary btn-action",
+                style = "margin-top: 1rem;"
+              )
+            )
+          )
+        ),
+        column(
+          4,
+          div(
+            class = "card feature-card",
+            div(
+              class = "card-body text-center",
+              div(class = "feature-icon", "🦠"),
+              h3("Disease Metrics", class = "card-title", style = "font-weight: 600;"),
+              p(
+                "Calculate incidence rates, prevalence, attack rates, and mortality measures to quantify disease burden in populations.",
+                class = "card-text",
+                style = "color: #5a6268;"
+              ),
+              tags$ul(
+                class = "text-left",
+                style = "padding-left: 1.5rem;",
+                tags$li("Incidence rates and cumulative incidence"),
+                tags$li("Prevalence calculations"),
+                tags$li("Attack rates with confidence intervals"),
+                tags$li("Mortality rates and case fatality rates"),
+                tags$li("Life table analysis")
+              ),
+              actionButton(
+                "goto_disease", 
+                "Calculate Disease Metrics", 
+                class = "btn-outline-primary btn-action",
+                style = "margin-top: 1rem;"
+              )
+            )
+          )
+        ),
+        column(
+          4,
+          div(
+            class = "card feature-card",
+            div(
+              class = "card-body text-center",
+              div(class = "feature-icon", "📈"),
+              h3("Statistical Tools", class = "card-title", style = "font-weight: 600;"),
+              p(
+                "Perform association tests, regression analyses, and survival analysis to identify risk factors and measure effects.",
+                class = "card-text",
+                style = "color: #5a6268;"
+              ),
+              tags$ul(
+                class = "text-left",
+                style = "padding-left: 1.5rem;",
+                tags$li("Risk ratios, odds ratios, and attributable risk"),
+                tags$li("Poisson regression for count data"),
+                tags$li("Survival analysis with Kaplan-Meier curves"),
+                tags$li("Cox proportional hazards models"),
+                tags$li("Linear and logistic regression"),
+                tags$li("Chi-square tests with cross-tabulations"),
+                tags$li("Correlation analysis (Pearson, Kendall, Spearman)")
+              ),
+              actionButton(
+                "goto_statistics", 
+                "Use Statistical Tools", 
+                class = "btn-outline-primary btn-action",
+                style = "margin-top: 1rem;"
+              )
+            )
+          )
+        )
+      )
+    )
   ),
   
   # Data Upload Tab
-  tabPanel("Data Upload", icon = icon("database"),
-           fluidRow(
-             column(4, class = "sidebar-panel",
-                    fileInput("file1", "Choose File",
-                              accept = c(".csv", ".xls", ".xlsx", ".sav", ".dta", ".sas7bdat", ".RData", ".rda"),
-                              multiple = FALSE),
-                    helpText("Supported formats: CSV, Excel, Stata, SPSS, SAS, RData"),
-                    tags$hr(),
-                    conditionalPanel(
-                      condition = "input.file1 && input.file1.type.includes('csv')",
-                      checkboxInput("header", "Header", TRUE),
-                      selectInput("sep", "Separator",
-                                  choices = c(Comma = ",", Semicolon = ";", Tab = "\t", Space = " "),
-                                  selected = ","),
-                      selectInput("quote", "Quote",
-                                  choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"),
-                                  selected = '"')
-                    ),
-                    conditionalPanel(
-                      condition = "input.file1 && (input.file1.type.includes('xls') || input.file1.type.includes('xlsx'))",
-                      numericInput("sheet", "Sheet Number", value = 1, min = 1)
-                    ),
-                    actionButton("load_data", "Load Data", 
-                                 class = "btn-primary btn-action",
-                                 icon = icon("upload")),
-                    tags$hr(),
-                    uiOutput("missing_values_alert")
-             ),
-             column(8, class = "main-panel",
-                    withSpinner(DTOutput("contents"), type = 4, color = "#0C5EA8"),
-                    withSpinner(verbatimTextOutput("data_summary"), type = 4, color = "#0C5EA8")
-             )
-           )
+  tabPanel(
+    "Data Upload", 
+    icon = icon("database", class = "fa-lg"),
+    fluidRow(
+      column(
+        4, 
+        class = "sidebar-panel",
+        div(
+          class = "section-header",
+          h4("Data Upload Settings", style = "margin: 0;")
+        ),
+        fileInput(
+          "file1", 
+          "Choose File",
+          accept = c(".csv", ".xls", ".xlsx", ".sav", ".dta", ".sas7bdat", ".RData", ".rda"),
+          multiple = FALSE,
+          width = "100%",
+          buttonLabel = "Browse...",
+          placeholder = "No file selected"
+        ),
+        helpText(
+          "Supported formats: CSV, Excel, Stata, SPSS, SAS, RData",
+          class = "help-block"
+        ),
+        tags$hr(),
+        conditionalPanel(
+          condition = "input.file1 && input.file1.type.includes('csv')",
+          checkboxInput("header", "Header", TRUE, width = "100%"),
+          selectInput(
+            "sep", 
+            "Separator",
+            choices = c(Comma = ",", Semicolon = ";", Tab = "\t", Space = " "),
+            selected = ","
+          ),
+          selectInput(
+            "quote", 
+            "Quote",
+            choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"),
+            selected = '"'
+          )
+        ),
+        conditionalPanel(
+          condition = "input.file1 && (input.file1.type.includes('xls') || input.file1.type.includes('xlsx'))",
+          numericInput("sheet", "Sheet Number", value = 1, min = 1, width = "100%")
+        ),
+        actionButton(
+          "load_data", 
+          "Load Data", 
+          class = "btn-primary btn-action",
+          icon = icon("upload"),
+          width = "100%",
+          style = "margin-top: 10px;"
+        ),
+        tags$hr(),
+        uiOutput("missing_values_alert")
+      ),
+      column(
+        8, 
+        class = "main-panel",
+        div(
+          class = "section-header",
+          h4("Data Preview", style = "margin: 0;")
+        ),
+        withSpinner(
+          DTOutput("contents"), 
+          type = 4, 
+          color = "#0C5EA8",
+          size = 1.5
+        ),
+        div(
+          class = "section-header",
+          style = "margin-top: 30px;",
+          h4("Data Summary", style = "margin: 0;")
+        ),
+        withSpinner(
+          verbatimTextOutput("data_summary"), 
+          type = 4, 
+          color = "#0C5EA8",
+          size = 1.5
+        )
+      )
+    )
   ),
   
-  # Descriptive Analysis Tab - CORRECTED DOWNLOAD HANDLERS
-  tabPanel("Descriptive Analysis", icon = icon("chart-bar"),
-           tabsetPanel(
-             tabPanel("Frequency Analysis",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("freq_var", "Select Variable:", choices = NULL),
-                               colourpicker::colourInput("freq_color", "Bar Color:", value = "#0C5EA8"),
-                               textInput("freq_title", "Plot Title:", value = "Frequency Distribution"),
-                               numericInput("freq_title_size", "Title Size:", value = 16, min = 8, max = 24),
-                               numericInput("freq_x_size", "X-axis Label Size:", value = 14, min = 8, max = 20),
-                               numericInput("freq_y_size", "Y-axis Label Size:", value = 14, min = 8, max = 20),
-                               radioButtons("freq_type", "Download Format:",
-                                            choices = c("Table", "Plot"), selected = "Table"),
-                               actionButton("run_freq", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_freq", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(DTOutput("freq_table"), type = 4, color = "#0C5EA8"),
-                               withSpinner(plotlyOutput("freq_plot"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             ),
-             tabPanel("Central Tendency",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("central_var", "Select Numeric Variable:", choices = NULL),
-                               selectInput("central_stratify", "Stratify by (Optional):", 
-                                           choices = c("None" = "none")),
-                               colourpicker::colourInput("central_color", "Plot Color:", value = "#0C5EA8"),
-                               textInput("central_title", "Plot Title:", value = "Central Tendency"),
-                               numericInput("central_bins", "Number of Bins:", value = 30, min = 5, max = 100),
-                               numericInput("central_title_size", "Title Size:", value = 16, min = 8, max = 24),
-                               numericInput("central_x_size", "X-axis Label Size:", value = 14, min = 8, max = 20),
-                               numericInput("central_y_size", "Y-axis Label Size:", value = 14, min = 8, max = 20),
-                               radioButtons("central_type", "Download Format:",
-                                            choices = c("Table", "Boxplot", "Histogram"), selected = "Table"),
-                               actionButton("run_central", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_central", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(DTOutput("central_table"), type = 4, color = "#0C5EA8"),
-                               withSpinner(plotlyOutput("central_boxplot"), type = 4, color = "#0C5EA8"),
-                               withSpinner(plotlyOutput("central_histogram"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             ),
-             tabPanel("Epidemic Curve",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("epi_date", "Date Variable:", choices = NULL),
-                               selectInput("epi_case", "Case Count Variable:", choices = NULL),
-                               selectInput("epi_group", "Grouping Variable (Optional):", choices = c("None" = "none")),
-                               selectInput("epi_interval", "Time Interval:",
-                                           choices = c("Day", "Week", "Month", "Year"), selected = "Week"),
-                               colourpicker::colourInput("epi_color", "Bar Color:", value = "#CD2026"),
-                               textInput("epi_title", "Plot Title:", value = "Epidemic Curve"),
-                               numericInput("epi_title_size", "Title Size:", value = 16, min = 8, max = 24),
-                               numericInput("epi_x_size", "X-axis Label Size:", value = 14, min = 8, max = 20),
-                               numericInput("epi_y_size", "Y-axis Label Size:", value = 14, min = 8, max = 20),
-                               actionButton("run_epi", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_epicurve", "Download Plot",
-                                              class = "btn-success btn-action"),
-                               downloadButton("download_epi_data", "Download Data",
-                                              class = "btn-info btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(uiOutput("epi_summary"), type = 4, color = "#0C5EA8"),
-                               withSpinner(plotlyOutput("epi_curve"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             )
-           )
+  # Descriptive Analysis Tab
+  tabPanel(
+    "Descriptive Analysis", 
+    icon = icon("chart-bar", class = "fa-lg"),
+    tabsetPanel(
+      id = "desc_tabs",
+      tabPanel(
+        "Frequency Analysis",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Frequency Analysis Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "freq_var", 
+              "Select Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            colourpicker::colourInput(
+              "freq_color", 
+              "Bar Color:", 
+              value = "#0C5EA8",
+              showColour = "background",
+              allowTransparent = TRUE
+            ),
+            textInput(
+              "freq_title", 
+              "Plot Title:", 
+              value = "Frequency Distribution",
+              width = "100%"
+            ),
+            fluidRow(
+              column(
+                6,
+                numericInput(
+                  "freq_title_size", 
+                  "Title Size:", 
+                  value = 16, 
+                  min = 8, 
+                  max = 24,
+                  width = "100%"
+                )
+              ),
+              column(
+                6,
+                numericInput(
+                  "freq_x_size", 
+                  "X-axis Label Size:", 
+                  value = 14, 
+                  min = 8, 
+                  max = 20,
+                  width = "100%"
+                )
+              )
+            ),
+            radioButtons(
+              "freq_type", 
+              "Download Format:",
+              choices = c("Table", "Plot"), 
+              selected = "Table",
+              inline = TRUE
+            ),
+            actionButton(
+              "run_freq", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_freq", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              DTOutput("freq_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            div(
+              class = "plot-container",
+              withSpinner(
+                plotlyOutput("freq_plot"), 
+                type = 4, 
+                color = "#0C5EA8",
+                size = 1.5
+              )
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Central Tendency",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Central Tendency Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "central_var", 
+              "Select Numeric Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "central_stratify", 
+              "Stratify by (Optional):", 
+              choices = c("None" = "none"),
+              width = "100%"
+            ),
+            colourpicker::colourInput(
+              "central_color", 
+              "Plot Color:", 
+              value = "#0C5EA8",
+              showColour = "background",
+              allowTransparent = TRUE
+            ),
+            textInput(
+              "central_title", 
+              "Plot Title:", 
+              value = "Central Tendency",
+              width = "100%"
+            ),
+            numericInput(
+              "central_bins", 
+              "Number of Bins:", 
+              value = 30, 
+              min = 5, 
+              max = 100,
+              width = "100%"
+            ),
+            fluidRow(
+              column(
+                4,
+                numericInput(
+                  "central_title_size", 
+                  "Title Size:", 
+                  value = 16, 
+                  min = 8, 
+                  max = 24,
+                  width = "100%"
+                )
+              ),
+              column(
+                4,
+                numericInput(
+                  "central_x_size", 
+                  "X-axis Label Size:", 
+                  value = 14, 
+                  min = 8, 
+                  max = 20,
+                  width = "100%"
+                )
+              ),
+              column(
+                4,
+                numericInput(
+                  "central_y_size", 
+                  "Y-axis Label Size:", 
+                  value = 14, 
+                  min = 8, 
+                  max = 20,
+                  width = "100%"
+                )
+              )
+            ),
+            radioButtons(
+              "central_type", 
+              "Download Format:",
+              choices = c("Table", "Boxplot", "Histogram"), 
+              selected = "Table",
+              inline = TRUE
+            ),
+            actionButton(
+              "run_central", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_central", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              DTOutput("central_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            div(
+              class = "plot-container",
+              withSpinner(
+                plotlyOutput("central_boxplot"), 
+                type = 4, 
+                color = "#0C5EA8",
+                size = 1.5
+              )
+            ),
+            div(
+              class = "plot-container",
+              withSpinner(
+                plotlyOutput("central_histogram"), 
+                type = 4, 
+                color = "#0C5EA8",
+                size = 1.5
+              )
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Epidemic Curve",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Epidemic Curve Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "epi_date", 
+              "Date Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "epi_case", 
+              "Case Count Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "epi_group", 
+              "Grouping Variable (Optional):", 
+              choices = c("None" = "none"),
+              width = "100%"
+            ),
+            selectInput(
+              "epi_interval", 
+              "Time Interval:",
+              choices = c("Day", "Week", "Month", "Year"), 
+              selected = "Week",
+              width = "100%"
+            ),
+            colourpicker::colourInput(
+              "epi_color", 
+              "Bar Color:", 
+              value = "#CD2026",
+              showColour = "background",
+              allowTransparent = TRUE
+            ),
+            textInput(
+              "epi_title", 
+              "Plot Title:", 
+              value = "Epidemic Curve",
+              width = "100%"
+            ),
+            fluidRow(
+              column(
+                4,
+                numericInput(
+                  "epi_title_size", 
+                  "Title Size:", 
+                  value = 16, 
+                  min = 8, 
+                  max = 24,
+                  width = "100%"
+                )
+              ),
+              column(
+                4,
+                numericInput(
+                  "epi_x_size", 
+                  "X-axis Label Size:", 
+                  value = 14, 
+                  min = 8, 
+                  max = 20,
+                  width = "100%"
+                )
+              ),
+              column(
+                4,
+                numericInput(
+                  "epi_y_size", 
+                  "Y-axis Label Size:", 
+                  value = 14, 
+                  min = 8, 
+                  max = 20,
+                  width = "100%"
+                )
+              )
+            ),
+            actionButton(
+              "run_epi", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_epicurve", 
+              "Download Plot",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_epi_data", 
+              "Download Data",
+              class = "btn-info btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              uiOutput("epi_summary"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            div(
+              class = "plot-container",
+              withSpinner(
+                plotlyOutput("epi_curve"), 
+                type = 4, 
+                color = "#0C5EA8",
+                size = 1.5
+              )
+            )
+          )
+        )
+      )
+    )
   ),
   
   # Disease Frequency Tab
-  tabPanel("Disease Frequency", icon = icon("viruses"),
-           tabsetPanel(
-             tabPanel("Incidence/Prevalence",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("ip_measure", "Select Measure:",
-                                           choices = c("Incidence Rate", "Cumulative Incidence", "Prevalence"),
-                                           selected = "Incidence Rate"),
-                               selectInput("ip_case", "Case Count Variable:", choices = NULL),
-                               selectInput("ip_pop", "Population Variable:", choices = NULL),
-                               conditionalPanel(
-                                 condition = "input.ip_measure == 'Incidence Rate'",
-                                 selectInput("ip_time", "Person-Time Variable:", choices = NULL)
-                               ),
-                               actionButton("run_ip", "Calculate", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("calculator")),
-                               downloadButton("download_ip", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(DTOutput("ip_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             )
-           )
+  tabPanel(
+    "Disease Frequency", 
+    icon = icon("viruses", class = "fa-lg"),
+    tabsetPanel(
+      id = "disease_tabs",
+      tabPanel(
+        "Incidence/Prevalence",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Incidence/Prevalence Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "ip_measure", 
+              "Select Measure:",
+              choices = c("Incidence Rate", "Cumulative Incidence", "Prevalence"),
+              selected = "Incidence Rate",
+              width = "100%"
+            ),
+            selectInput(
+              "ip_case", 
+              "Case Count Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "ip_pop", 
+              "Population Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            conditionalPanel(
+              condition = "input.ip_measure == 'Incidence Rate'",
+              selectInput(
+                "ip_time", 
+                "Person-Time Variable:", 
+                choices = NULL,
+                width = "100%"
+              )
+            ),
+            actionButton(
+              "run_ip", 
+              "Calculate", 
+              class = "btn-primary btn-action",
+              icon = icon("calculator"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_ip", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              DTOutput("ip_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      )
+    )
   ),
   
-  # Statistical Associations Tab - CORRECTED RISK RATIO SECTION
-  tabPanel("Statistical Associations", icon = icon("calculator"),
-           tabsetPanel(
-             tabPanel("Risk Ratios",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("rr_outcome", "Outcome Variable:", choices = NULL),
-                               selectInput("rr_exposure", "Exposure Variable:", choices = NULL),
-                               uiOutput("rr_outcome_levels_ui"),
-                               uiOutput("rr_exposure_levels_ui"),
-                               sliderInput("rr_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                               actionButton("run_rr", "Calculate", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("calculator")),
-                               downloadButton("download_rr", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("rr_results"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("rr_table"), type = 4, color = "#0C5EA8"),
-                               withSpinner(verbatimTextOutput("rr_interpretation"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             ),
-             
-             tabPanel("Odds Ratios",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("or_outcome", "Outcome Variable:", choices = NULL),
-                               selectInput("or_exposure", "Exposure Variable:", choices = NULL),
-                               sliderInput("or_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                               actionButton("run_or", "Calculate", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("calculator")),
-                               downloadButton("download_or", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("or_results"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("or_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             )
-           )
+  # Statistical Associations Tab
+  tabPanel(
+    "Statistical Associations", 
+    icon = icon("calculator", class = "fa-lg"),
+    tabsetPanel(
+      id = "assoc_tabs",
+      tabPanel(
+        "Risk Ratios",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Risk Ratio Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "rr_outcome", 
+              "Outcome Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "rr_exposure", 
+              "Exposure Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            uiOutput("rr_outcome_levels_ui"),
+            uiOutput("rr_exposure_levels_ui"),
+            sliderInput(
+              "rr_conf", 
+              "Confidence Level:", 
+              min = 0.90, 
+              max = 0.99, 
+              value = 0.95, 
+              step = 0.01,
+              width = "100%"
+            ),
+            actionButton(
+              "run_rr", 
+              "Calculate", 
+              class = "btn-primary btn-action",
+              icon = icon("calculator"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_rr", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("rr_results"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("rr_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              verbatimTextOutput("rr_interpretation"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Odds Ratios",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Odds Ratio Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "or_outcome", 
+              "Outcome Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "or_exposure", 
+              "Exposure Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            sliderInput(
+              "or_conf", 
+              "Confidence Level:", 
+              min = 0.90, 
+              max = 0.99, 
+              value = 0.95, 
+              step = 0.01,
+              width = "100%"
+            ),
+            actionButton(
+              "run_or", 
+              "Calculate", 
+              class = "btn-primary btn-action",
+              icon = icon("calculator"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_or", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("or_results"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("or_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      )
+    )
   ),
   
   # Survival Analysis Tab
-  tabPanel("Survival Analysis", icon = icon("heartbeat"),
-           tabsetPanel(
-             tabPanel("Kaplan-Meier",
-                      tabsetPanel(
-                        tabPanel("Analysis Settings",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("surv_time", "Time Variable:", choices = NULL),
-                                          selectInput("surv_event", "Event Variable:", choices = NULL),
-                                          selectInput("surv_group", "Grouping Variable (Optional):", choices = c("None" = "none")),
-                                          actionButton("run_surv", "Run Analysis", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("", "",
-                                                         class = "btn-info btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(uiOutput("surv_stats"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(verbatimTextOutput("surv_summary"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        tabPanel("Plot Options",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          h4("Display Options"),
-                                          checkboxInput("surv_ci", "Show Confidence Intervals", TRUE),
-                                          checkboxInput("surv_risktable", "Show Risk Table", TRUE),
-                                          checkboxInput("surv_median", "Show Median Survival Lines", TRUE),
-                                          checkboxInput("surv_labels", "Show Survival Probability Labels", TRUE),
-                                          br(),
-                                          h4("Color Settings"),
-                                          colourpicker::colourInput("surv_color1", "Group 1 Color:", value = "#0C5EA8"),
-                                          colourpicker::colourInput("surv_color2", "Group 2 Color:", value = "#CD2026"),
-                                          colourpicker::colourInput("surv_color3", "Group 3 Color:", value = "#5CB85C"),
-                                          br(),
-                                          h4("Text Settings"),
-                                          textInput("surv_title", "Plot Title:", value = "Kaplan-Meier Curve"),
-                                          textInput("surv_xlab", "X-axis Label:", value = "Time"),
-                                          textInput("surv_ylab", "Y-axis Label:", value = "Survival Probability"),
-                                          numericInput("surv_title_size", "Title Size:", value = 18, min = 8, max = 24),
-                                          numericInput("surv_x_size", "X-axis Label Size:", value = 14, min = 8, max = 20),
-                                          numericInput("surv_y_size", "Y-axis Label Size:", value = 14, min = 8, max = 20),
-                                          numericInput("surv_label_size", "Label Size:", value = 5, min = 3, max = 10),
-                                          br(),
-                                          downloadButton("download_surv", "Download Plot",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(plotOutput("surv_plot", height = "600px"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        tabPanel("Life Table",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          h4("Time Points Configuration"),
-                                          helpText("Specify time points (comma-separated) to evaluate survival probabilities:"),
-                                          textInput("life_table_times", "Time Points:", value = "0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0"),
-                                          helpText("Example: 0.1, 0.25, 0.5, 0.75, 1.0 or specific time values like 30, 60, 90"),
-                                          numericInput("life_table_decimals", "Decimal Places:", value = 4, min = 2, max = 6),
-                                          actionButton("update_life_table", "Update Life Table", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("refresh")),
-                                          br(), br(),
-                                          downloadButton("download_life_table", "Download Life Table (Excel)",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          h3("Life Table - Survival Probabilities at Specified Time Points"),
-                                          helpText("This table shows the survival probabilities at the specified time points for each group."),
-                                          withSpinner(DTOutput("life_table_output"), type = 4, color = "#0C5EA8"),
-                                          br(),
-                                          h4("Life Table Summary"),
-                                          withSpinner(verbatimTextOutput("life_table_summary"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        )
-                      )
-             ),
-             tabPanel("Cox Regression",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("cox_time", "Time Variable:", choices = NULL),
-                               selectInput("cox_event", "Event Variable:", choices = NULL),
-                               selectizeInput("cox_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
-                               uiOutput("cox_ref_ui"),
-                               sliderInput("cox_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                               actionButton("run_cox", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_cox", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("cox_summary"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("cox_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             ),
-             # NEW POISSON REGRESSION SUBTAB
-             tabPanel("Poisson Regression",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("poisson_outcome", "Outcome Variable (Count):", choices = NULL),
-                               selectizeInput("poisson_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
-                               uiOutput("poisson_ref_ui"),
-                               checkboxInput("poisson_offset", "Include Offset Variable", FALSE),
-                               conditionalPanel(
-                                 condition = "input.poisson_offset",
-                                 selectInput("poisson_offset_var", "Offset Variable:", choices = NULL)
-                               ),
-                               sliderInput("poisson_conf", "Confidence Level:", min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                               actionButton("run_poisson", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_poisson", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("poisson_summary"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("poisson_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             )
-           )
+  tabPanel(
+    "Survival Analysis", 
+    icon = icon("heartbeat", class = "fa-lg"),
+    tabsetPanel(
+      id = "surv_tabs",
+      tabPanel(
+        "Kaplan-Meier",
+        tabsetPanel(
+          tabPanel(
+            "Analysis Settings",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Kaplan-Meier Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "surv_time", 
+                  "Time Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "surv_event", 
+                  "Event Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "surv_group", 
+                  "Grouping Variable (Optional):", 
+                  choices = c("None" = "none"),
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_surv", 
+                  "Run Analysis", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_surv_data", 
+                  "Download Data",
+                  class = "btn-info btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  uiOutput("surv_stats"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  verbatimTextOutput("surv_summary"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Plot Options",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Display Options", style = "margin: 0;")
+                ),
+                checkboxInput(
+                  "surv_ci", 
+                  "Show Confidence Intervals", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "surv_risktable", 
+                  "Show Risk Table", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "surv_median", 
+                  "Show Median Survival Lines", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "surv_labels", 
+                  "Show Survival Probability Labels", 
+                  TRUE,
+                  width = "100%"
+                ),
+                br(),
+                div(
+                  class = "section-header",
+                  h4("Color Settings", style = "margin: 0;")
+                ),
+                colourpicker::colourInput(
+                  "surv_color1", 
+                  "Group 1 Color:", 
+                  value = "#0C5EA8",
+                  showColour = "background"
+                ),
+                colourpicker::colourInput(
+                  "surv_color2", 
+                  "Group 2 Color:", 
+                  value = "#CD2026",
+                  showColour = "background"
+                ),
+                colourpicker::colourInput(
+                  "surv_color3", 
+                  "Group 3 Color:", 
+                  value = "#5CB85C",
+                  showColour = "background"
+                ),
+                br(),
+                div(
+                  class = "section-header",
+                  h4("Text Settings", style = "margin: 0;")
+                ),
+                textInput(
+                  "surv_title", 
+                  "Plot Title:", 
+                  value = "Kaplan-Meier Curve",
+                  width = "100%"
+                ),
+                textInput(
+                  "surv_xlab", 
+                  "X-axis Label:", 
+                  value = "Time",
+                  width = "100%"
+                ),
+                textInput(
+                  "surv_ylab", 
+                  "Y-axis Label:", 
+                  value = "Survival Probability",
+                  width = "100%"
+                ),
+                fluidRow(
+                  column(
+                    6,
+                    numericInput(
+                      "surv_title_size", 
+                      "Title Size:", 
+                      value = 18, 
+                      min = 8, 
+                      max = 24,
+                      width = "100%"
+                    )
+                  ),
+                  column(
+                    6,
+                    numericInput(
+                      "surv_label_size", 
+                      "Label Size:", 
+                      value = 5, 
+                      min = 3, 
+                      max = 10,
+                      width = "100%"
+                    )
+                  )
+                ),
+                br(),
+                downloadButton(
+                  "download_surv", 
+                  "Download Plot",
+                  class = "btn-success btn-action",
+                  width = "100%"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                div(
+                  class = "plot-container",
+                  withSpinner(
+                    plotOutput("surv_plot", height = "600px"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Life Table",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Life Table Configuration", style = "margin: 0;")
+                ),
+                helpText(
+                  "Specify time points (comma-separated) to evaluate survival probabilities:"
+                ),
+                textInput(
+                  "life_table_times", 
+                  "Time Points:", 
+                  value = "0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0",
+                  width = "100%"
+                ),
+                helpText(
+                  "Example: 0.1, 0.25, 0.5, 0.75, 1.0 or specific time values like 30, 60, 90"
+                ),
+                numericInput(
+                  "life_table_decimals", 
+                  "Decimal Places:", 
+                  value = 4, 
+                  min = 2, 
+                  max = 6,
+                  width = "100%"
+                ),
+                actionButton(
+                  "update_life_table", 
+                  "Update Life Table", 
+                  class = "btn-primary btn-action",
+                  icon = icon("refresh"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                br(), br(),
+                downloadButton(
+                  "download_life_table", 
+                  "Download Life Table (Excel)",
+                  class = "btn-success btn-action",
+                  width = "100%"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                h3("Life Table - Survival Probabilities at Specified Time Points"),
+                helpText(
+                  "This table shows the survival probabilities at the specified time points for each group."
+                ),
+                withSpinner(
+                  DTOutput("life_table_output"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                br(),
+                h4("Life Table Summary"),
+                withSpinner(
+                  verbatimTextOutput("life_table_summary"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Cox Regression",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Cox Regression Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "cox_time", 
+              "Time Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "cox_event", 
+              "Event Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectizeInput(
+              "cox_vars", 
+              "Predictor Variables:", 
+              choices = NULL, 
+              multiple = TRUE,
+              width = "100%",
+              options = list(placeholder = 'Select variables...')
+            ),
+            uiOutput("cox_ref_ui"),
+            sliderInput(
+              "cox_conf", 
+              "Confidence Level:", 
+              min = 0.90, 
+              max = 0.99, 
+              value = 0.95, 
+              step = 0.01,
+              width = "100%"
+            ),
+            actionButton(
+              "run_cox", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_cox", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("cox_summary"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("cox_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Poisson Regression",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Poisson Regression Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "poisson_outcome", 
+              "Outcome Variable (Count):", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectizeInput(
+              "poisson_vars", 
+              "Predictor Variables:", 
+              choices = NULL, 
+              multiple = TRUE,
+              width = "100%",
+              options = list(placeholder = 'Select variables...')
+            ),
+            uiOutput("poisson_ref_ui"),
+            checkboxInput(
+              "poisson_offset", 
+              "Include Offset Variable", 
+              FALSE,
+              width = "100%"
+            ),
+            conditionalPanel(
+              condition = "input.poisson_offset",
+              selectInput(
+                "poisson_offset_var", 
+                "Offset Variable:", 
+                choices = NULL,
+                width = "100%"
+              )
+            ),
+            sliderInput(
+              "poisson_conf", 
+              "Confidence Level:", 
+              min = 0.90, 
+              max = 0.99, 
+              value = 0.95, 
+              step = 0.01,
+              width = "100%"
+            ),
+            actionButton(
+              "run_poisson", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_poisson", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("poisson_summary"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("poisson_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      )
+    )
   ),
   
   # Regression Analysis Tab
-  tabPanel("Regression Analysis", icon = icon("line-chart"),
-           tabsetPanel(
-             tabPanel("Linear Regression",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("linear_outcome", "Outcome Variable:", choices = NULL),
-                               selectizeInput("linear_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
-                               uiOutput("linear_ref_ui"),
-                               checkboxInput("linear_std", "Show Standardized Coefficients", FALSE),
-                               actionButton("run_linear", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_linear", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("linear_summary"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("linear_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             ),
-             tabPanel("Logistic Regression", icon = icon("line-chart"),
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("logistic_outcome", "Outcome Variable:", choices = NULL),
-                               uiOutput("logistic_outcome_ui"),
-                               selectizeInput("logistic_vars", "Predictor Variables:", choices = NULL, multiple = TRUE),
-                               uiOutput("logistic_ref_ui"),
-                               checkboxInput("logistic_or", "Show Odds Ratios", TRUE),
-                               actionButton("run_logistic", "Run Analysis", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_logistic", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("logistic_summary"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("logistic_table"), type = 4, color = "#0C5EA8")
-                        )
-                      )
-             )
-           )
+  tabPanel(
+    "Regression Analysis", 
+    icon = icon("line-chart", class = "fa-lg"),
+    tabsetPanel(
+      id = "reg_tabs",
+      tabPanel(
+        "Linear Regression",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Linear Regression Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "linear_outcome", 
+              "Outcome Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectizeInput(
+              "linear_vars", 
+              "Predictor Variables:", 
+              choices = NULL, 
+              multiple = TRUE,
+              width = "100%",
+              options = list(placeholder = 'Select variables...')
+            ),
+            uiOutput("linear_ref_ui"),
+            checkboxInput(
+              "linear_std", 
+              "Show Standardized Coefficients", 
+              FALSE,
+              width = "100%"
+            ),
+            actionButton(
+              "run_linear", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_linear", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("linear_summary"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("linear_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "Logistic Regression",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Logistic Regression Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "logistic_outcome", 
+              "Outcome Variable:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            uiOutput("logistic_outcome_ui"),
+            selectizeInput(
+              "logistic_vars", 
+              "Predictor Variables:", 
+              choices = NULL, 
+              multiple = TRUE,
+              width = "100%",
+              options = list(placeholder = 'Select variables...')
+            ),
+            uiOutput("logistic_ref_ui"),
+            checkboxInput(
+              "logistic_or", 
+              "Show Odds Ratios", 
+              TRUE,
+              width = "100%"
+            ),
+            actionButton(
+              "run_logistic", 
+              "Run Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_logistic", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("logistic_summary"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("logistic_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      )
+    )
   ),
   
-  # Statistical Tests Tab - CORRECTED WITH ANOVA AND T-TESTS
-  tabPanel("Statistical Tests", icon = icon("check-square"),
-           tabsetPanel(
-             tabPanel("Chi-square Test",
-                      fluidRow(
-                        column(4, class = "sidebar-panel",
-                               selectInput("chisq_var1", "Variable 1:", choices = NULL),
-                               selectInput("chisq_var2", "Variable 2:", choices = NULL),
-                               checkboxInput("chisq_expected", "Show Expected Counts", FALSE),
-                               checkboxInput("chisq_residuals", "Show Residuals", FALSE),
-                               checkboxInput("chisq_fisher", "Include Fisher's Exact Test", FALSE),
-                               checkboxInput("chisq_rr", "Include Relative Risk", FALSE),
-                               actionButton("run_chisq", "Run Test", 
-                                            class = "btn-primary btn-action",
-                                            icon = icon("play")),
-                               downloadButton("download_chisq", "Download Results",
-                                              class = "btn-success btn-action")
-                        ),
-                        column(8, class = "main-panel",
-                               withSpinner(verbatimTextOutput("chisq_results"), type = 4, color = "#0C5EA8"),
-                               withSpinner(DTOutput("chisq_table"), type = 4, color = "#0C5EA8"),
-                               withSpinner(plotOutput("chisq_plot"), type = 4, color = "#0C5EA8"),
-                               downloadButton("download_chisq_plot", "Download Plot",
-                                              class = "btn-info btn-action")
-                        )
-                      )
-             ),
-             
-             # NEW: ANOVA SUBTAB
-             tabPanel("ANOVA",
-                      tabsetPanel(
-                        tabPanel("One-Way ANOVA",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("anova_outcome", "Outcome Variable (Continuous):", choices = NULL),
-                                          selectInput("anova_group", "Grouping Variable (Categorical):", choices = NULL),
-                                          checkboxInput("anova_assumptions", "Check ANOVA Assumptions", TRUE),
-                                          checkboxInput("anova_posthoc", "Perform Post-hoc Comparisons", TRUE),
-                                          conditionalPanel(
-                                            condition = "input.anova_posthoc",
-                                            selectInput("anova_posthoc_method", "Post-hoc Method:",
-                                                        choices = c("Tukey HSD" = "tukey",
-                                                                    "Bonferroni" = "bonferroni",
-                                                                    "Scheffe" = "scheffe",
-                                                                    "Dunnett" = "dunnett"),
-                                                        selected = "tukey")
-                                          ),
-                                          actionButton("run_anova", "Run ANOVA", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_anova", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("anova_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("anova_table"), type = 4, color = "#0C5EA8"),
-                                          conditionalPanel(
-                                            condition = "input.anova_assumptions",
-                                            h4("ANOVA Assumptions Check"),
-                                            withSpinner(verbatimTextOutput("anova_assumptions_results"), type = 4, color = "#0C5EA8"),
-                                            withSpinner(plotOutput("anova_assumptions_plots"), type = 4, color = "#0C5EA8")
-                                          ),
-                                          conditionalPanel(
-                                            condition = "input.anova_posthoc",
-                                            h4("Post-hoc Comparisons"),
-                                            withSpinner(verbatimTextOutput("anova_posthoc_results"), type = 4, color = "#0C5EA8"),
-                                            withSpinner(DTOutput("anova_posthoc_table"), type = 4, color = "#0C5EA8"),
-                                            withSpinner(plotOutput("anova_posthoc_plot"), type = 4, color = "#0C5EA8")
-                                          )
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("Two-Way ANOVA",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("anova_outcome_2way", "Outcome Variable:", choices = NULL),
-                                          selectInput("anova_factor1", "Factor 1:", choices = NULL),
-                                          selectInput("anova_factor2", "Factor 2:", choices = NULL),
-                                          checkboxInput("anova_interaction", "Include Interaction Term", TRUE),
-                                          checkboxInput("anova_2way_posthoc", "Perform Post-hoc Tests", TRUE),
-                                          actionButton("run_anova_2way", "Run Two-Way ANOVA", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_anova_2way", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("anova_2way_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("anova_2way_table"), type = 4, color = "#0C5EA8"),
-                                          conditionalPanel(
-                                            condition = "input.anova_2way_posthoc",
-                                            h4("Simple Effects Analysis"),
-                                            withSpinner(verbatimTextOutput("anova_2way_posthoc"), type = 4, color = "#0C5EA8")
-                                          )
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("Welch ANOVA",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("welch_outcome", "Outcome Variable:", choices = NULL),
-                                          selectInput("welch_group", "Grouping Variable:", choices = NULL),
-                                          helpText("Welch ANOVA is robust to violations of homogeneity of variance."),
-                                          actionButton("run_welch_anova", "Run Welch ANOVA", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_welch_anova", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("welch_anova_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("welch_anova_table"), type = 4, color = "#0C5EA8"),
-                                          h4("Games-Howell Post-hoc Test"),
-                                          withSpinner(verbatimTextOutput("welch_posthoc_results"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("ANOVA Assumptions",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("assumptions_outcome", "Outcome Variable:", choices = NULL),
-                                          selectInput("assumptions_group", "Grouping Variable:", choices = NULL),
-                                          h4("Tests for Assumptions"),
-                                          checkboxInput("levene_test", "Levene's Test (Homogeneity of Variance)", TRUE),
-                                          checkboxInput("normality_test", "Normality Tests", TRUE),
-                                          checkboxInput("outlier_test", "Outlier Detection", TRUE),
-                                          actionButton("run_assumptions", "Check Assumptions", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("check")),
-                                          downloadButton("download_assumptions", "Download Report",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          conditionalPanel(
-                                            condition = "input.levene_test",
-                                            h4("Homogeneity of Variance Tests"),
-                                            withSpinner(verbatimTextOutput("levene_results"), type = 4, color = "#0C5EA8")
-                                          ),
-                                          conditionalPanel(
-                                            condition = "input.normality_test",
-                                            h4("Normality Tests"),
-                                            withSpinner(verbatimTextOutput("normality_results"), type = 4, color = "#0C5EA8")
-                                          ),
-                                          conditionalPanel(
-                                            condition = "input.outlier_test",
-                                            h4("Outlier Detection"),
-                                            withSpinner(verbatimTextOutput("outlier_results"), type = 4, color = "#0C5EA8")
-                                          ),
-                                          h4("Diagnostic Plots"),
-                                          withSpinner(plotOutput("assumptions_plots"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        )
-                      )
-             ),
-             
-             # NEW: T-TESTS SUBTAB
-             tabPanel("T-Tests",
-                      tabsetPanel(
-                        tabPanel("One-Sample T-Test",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("ttest_onesample_var", "Variable:", choices = NULL),
-                                          numericInput("ttest_onesample_mu", "Test Value (μ₀):", value = 0),
-                                          selectInput("ttest_onesample_alternative", "Alternative Hypothesis:",
-                                                      choices = c("Two-sided" = "two.sided",
-                                                                  "Greater than" = "greater",
-                                                                  "Less than" = "less"),
-                                                      selected = "two.sided"),
-                                          sliderInput("ttest_onesample_conf", "Confidence Level:", 
-                                                      min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                                          actionButton("run_ttest_onesample", "Run One-Sample T-Test", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_ttest_onesample", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("ttest_onesample_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("ttest_onesample_table"), type = 4, color = "#0C5EA8"),
-                                          h4("Descriptive Statistics"),
-                                          withSpinner(verbatimTextOutput("ttest_onesample_descriptives"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(plotOutput("ttest_onesample_plot"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("Independent T-Test",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("ttest_independent_var", "Outcome Variable:", choices = NULL),
-                                          selectInput("ttest_independent_group", "Grouping Variable:", choices = NULL),
-                                          uiOutput("ttest_independent_levels_ui"),
-                                          checkboxInput("ttest_var_equal", "Assume Equal Variances", FALSE),
-                                          selectInput("ttest_alternative", "Alternative Hypothesis:",
-                                                      choices = c("Two-sided" = "two.sided",
-                                                                  "Greater than" = "greater",
-                                                                  "Less than" = "less"),
-                                                      selected = "two.sided"),
-                                          sliderInput("ttest_conf", "Confidence Level:", 
-                                                      min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                                          actionButton("run_ttest_independent", "Run Independent T-Test", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_ttest_independent", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("ttest_independent_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("ttest_independent_table"), type = 4, color = "#0C5EA8"),
-                                          h4("Group Descriptives"),
-                                          withSpinner(verbatimTextOutput("ttest_independent_descriptives"), type = 4, color = "#0C5EA8"),
-                                          h4("Variance Check"),
-                                          withSpinner(verbatimTextOutput("ttest_variance_check"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(plotOutput("ttest_independent_plot"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("Paired T-Test",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          selectInput("ttest_paired_var1", "Variable 1 (Before/Time 1):", choices = NULL),
-                                          selectInput("ttest_paired_var2", "Variable 2 (After/Time 2):", choices = NULL),
-                                          selectInput("ttest_paired_alternative", "Alternative Hypothesis:",
-                                                      choices = c("Two-sided" = "two.sided",
-                                                                  "Greater than" = "greater",
-                                                                  "Less than" = "less"),
-                                                      selected = "two.sided"),
-                                          sliderInput("ttest_paired_conf", "Confidence Level:", 
-                                                      min = 0.90, max = 0.99, value = 0.95, step = 0.01),
-                                          actionButton("run_ttest_paired", "Run Paired T-Test", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_ttest_paired", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          withSpinner(verbatimTextOutput("ttest_paired_results"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(DTOutput("ttest_paired_table"), type = 4, color = "#0C5EA8"),
-                                          h4("Paired Descriptives"),
-                                          withSpinner(verbatimTextOutput("ttest_paired_descriptives"), type = 4, color = "#0C5EA8"),
-                                          h4("Difference Analysis"),
-                                          withSpinner(verbatimTextOutput("ttest_paired_differences"), type = 4, color = "#0C5EA8"),
-                                          withSpinner(plotOutput("ttest_paired_plot"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        ),
-                        
-                        tabPanel("Non-parametric Tests",
-                                 fluidRow(
-                                   column(4, class = "sidebar-panel",
-                                          h4("Mann-Whitney U Test"),
-                                          selectInput("mannwhitney_var", "Outcome Variable:", choices = NULL),
-                                          selectInput("mannwhitney_group", "Grouping Variable:", choices = NULL),
-                                          actionButton("run_mannwhitney", "Run Mann-Whitney Test", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          tags$hr(),
-                                          h4("Wilcoxon Signed-Rank Test"),
-                                          selectInput("wilcoxon_var1", "Variable 1:", choices = NULL),
-                                          selectInput("wilcoxon_var2", "Variable 2:", choices = NULL),
-                                          actionButton("run_wilcoxon", "Run Wilcoxon Test", 
-                                                       class = "btn-primary btn-action",
-                                                       icon = icon("play")),
-                                          downloadButton("download_nonparametric", "Download Results",
-                                                         class = "btn-success btn-action")
-                                   ),
-                                   column(8, class = "main-panel",
-                                          h4("Mann-Whitney U Test Results"),
-                                          withSpinner(verbatimTextOutput("mannwhitney_results"), type = 4, color = "#0C5EA8"),
-                                          tags$hr(),
-                                          h4("Wilcoxon Signed-Rank Test Results"),
-                                          withSpinner(verbatimTextOutput("wilcoxon_results"), type = 4, color = "#0C5EA8")
-                                   )
-                                 )
-                        )
-                      )
-             )
-           )
+  # Statistical Tests Tab
+  tabPanel(
+    "Statistical Tests", 
+    icon = icon("check-square", class = "fa-lg"),
+    tabsetPanel(
+      id = "test_tabs",
+      tabPanel(
+        "Chi-square Test",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Chi-square Test Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "chisq_var1", 
+              "Variable 1:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "chisq_var2", 
+              "Variable 2:", 
+              choices = NULL,
+              width = "100%"
+            ),
+            checkboxInput(
+              "chisq_expected", 
+              "Show Expected Counts", 
+              FALSE,
+              width = "100%"
+            ),
+            checkboxInput(
+              "chisq_residuals", 
+              "Show Residuals", 
+              FALSE,
+              width = "100%"
+            ),
+            checkboxInput(
+              "chisq_fisher", 
+              "Include Fisher's Exact Test", 
+              FALSE,
+              width = "100%"
+            ),
+            checkboxInput(
+              "chisq_rr", 
+              "Include Relative Risk", 
+              FALSE,
+              width = "100%"
+            ),
+            actionButton(
+              "run_chisq", 
+              "Run Test", 
+              class = "btn-primary btn-action",
+              icon = icon("play"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_chisq", 
+              "Download Results",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("chisq_results"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            withSpinner(
+              DTOutput("chisq_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            div(
+              class = "plot-container",
+              withSpinner(
+                plotOutput("chisq_plot"), 
+                type = 4, 
+                color = "#0C5EA8",
+                size = 1.5
+              )
+            ),
+            downloadButton(
+              "download_chisq_plot", 
+              "Download Plot",
+              class = "btn-info btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          )
+        )
+      ),
+      
+      # Correlation Analysis Tab (NEW)
+      tabPanel(
+        "Correlation Analysis",
+        fluidRow(
+          column(
+            4, 
+            class = "sidebar-panel",
+            div(
+              class = "section-header",
+              h4("Correlation Analysis Settings", style = "margin: 0;")
+            ),
+            selectInput(
+              "cor_var1", 
+              "Variable 1 (X-axis):", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "cor_var2", 
+              "Variable 2 (Y-axis):", 
+              choices = NULL,
+              width = "100%"
+            ),
+            selectInput(
+              "cor_method", 
+              "Correlation Method:",
+              choices = c(
+                "Pearson" = "pearson",
+                "Kendall" = "kendall", 
+                "Spearman" = "spearman"
+              ),
+              selected = "pearson",
+              width = "100%"
+            ),
+            checkboxInput(
+              "cor_scatter", 
+              "Show Scatter Plot", 
+              TRUE,
+              width = "100%"
+            ),
+            checkboxInput(
+              "cor_fit", 
+              "Add Trend Line", 
+              TRUE,
+              width = "100%"
+            ),
+            conditionalPanel(
+              condition = "input.cor_scatter == true",
+              colourpicker::colourInput(
+                "cor_point_color", 
+                "Point Color:", 
+                value = "#0C5EA8",
+                showColour = "background",
+                allowTransparent = TRUE
+              ),
+              numericInput(
+                "cor_point_size", 
+                "Point Size:", 
+                value = 3, 
+                min = 1, 
+                max = 10,
+                width = "100%"
+              ),
+              numericInput(
+                "cor_point_alpha", 
+                "Point Transparency:", 
+                value = 0.6, 
+                min = 0.1, 
+                max = 1,
+                step = 0.1,
+                width = "100%"
+              )
+            ),
+            conditionalPanel(
+              condition = "input.cor_fit == true && input.cor_scatter == true",
+              colourpicker::colourInput(
+                "cor_line_color", 
+                "Trend Line Color:", 
+                value = "#CD2026",
+                showColour = "background"
+              ),
+              numericInput(
+                "cor_line_size", 
+                "Line Size:", 
+                value = 1.5, 
+                min = 0.5, 
+                max = 5,
+                step = 0.5,
+                width = "100%"
+              )
+            ),
+            sliderInput(
+              "cor_conf", 
+              "Confidence Level:", 
+              min = 0.90, 
+              max = 0.99, 
+              value = 0.95, 
+              step = 0.01,
+              width = "100%"
+            ),
+            actionButton(
+              "run_cor", 
+              "Run Correlation Analysis", 
+              class = "btn-primary btn-action",
+              icon = icon("calculator"),
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_cor", 
+              "Download Results (Word)",
+              class = "btn-success btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            ),
+            downloadButton(
+              "download_cor_plot", 
+              "Download Plot",
+              class = "btn-info btn-action",
+              width = "100%",
+              style = "margin-top: 10px;"
+            )
+          ),
+          column(
+            8, 
+            class = "main-panel",
+            withSpinner(
+              verbatimTextOutput("cor_results"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            ),
+            conditionalPanel(
+              condition = "input.cor_scatter == true",
+              div(
+                class = "plot-container",
+                withSpinner(
+                  plotlyOutput("cor_plot"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            ),
+            withSpinner(
+              DTOutput("cor_table"), 
+              type = 4, 
+              color = "#0C5EA8",
+              size = 1.5
+            )
+          )
+        )
+      ),
+      
+      tabPanel(
+        "ANOVA",
+        tabsetPanel(
+          tabPanel(
+            "One-Way ANOVA",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("One-Way ANOVA Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "anova_outcome", 
+                  "Outcome Variable (Continuous):", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "anova_group", 
+                  "Grouping Variable (Categorical):", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "anova_assumptions", 
+                  "Check ANOVA Assumptions", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "anova_posthoc", 
+                  "Perform Post-hoc Comparisons", 
+                  TRUE,
+                  width = "100%"
+                ),
+                conditionalPanel(
+                  condition = "input.anova_posthoc",
+                  selectInput(
+                    "anova_posthoc_method", 
+                    "Post-hoc Method:",
+                    choices = c(
+                      "Tukey HSD" = "tukey",
+                      "Bonferroni" = "bonferroni",
+                      "Scheffe" = "scheffe",
+                      "Dunnett" = "dunnett"
+                    ),
+                    selected = "tukey",
+                    width = "100%"
+                  )
+                ),
+                actionButton(
+                  "run_anova", 
+                  "Run ANOVA", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_anova", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("anova_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("anova_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                conditionalPanel(
+                  condition = "input.anova_assumptions",
+                  h4("ANOVA Assumptions Check"),
+                  withSpinner(
+                    verbatimTextOutput("anova_assumptions_results"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  ),
+                  withSpinner(
+                    plotOutput("anova_assumptions_plots"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                ),
+                conditionalPanel(
+                  condition = "input.anova_posthoc",
+                  h4("Post-hoc Comparisons"),
+                  withSpinner(
+                    verbatimTextOutput("anova_posthoc_results"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  ),
+                  withSpinner(
+                    DTOutput("anova_posthoc_table"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  ),
+                  withSpinner(
+                    plotOutput("anova_posthoc_plot"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Two-Way ANOVA",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Two-Way ANOVA Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "anova_outcome_2way", 
+                  "Outcome Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "anova_factor1", 
+                  "Factor 1:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "anova_factor2", 
+                  "Factor 2:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "anova_interaction", 
+                  "Include Interaction Term", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "anova_2way_posthoc", 
+                  "Perform Post-hoc Tests", 
+                  TRUE,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_anova_2way", 
+                  "Run Two-Way ANOVA", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_anova_2way", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("anova_2way_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("anova_2way_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                conditionalPanel(
+                  condition = "input.anova_2way_posthoc",
+                  h4("Simple Effects Analysis"),
+                  withSpinner(
+                    verbatimTextOutput("anova_2way_posthoc"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Welch ANOVA",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Welch ANOVA Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "welch_outcome", 
+                  "Outcome Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "welch_group", 
+                  "Grouping Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                helpText(
+                  "Welch ANOVA is robust to violations of homogeneity of variance."
+                ),
+                actionButton(
+                  "run_welch_anova", 
+                  "Run Welch ANOVA", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_welch_anova", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("welch_anova_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("welch_anova_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Games-Howell Post-hoc Test"),
+                withSpinner(
+                  verbatimTextOutput("welch_posthoc_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "ANOVA Assumptions",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("ANOVA Assumptions Check", style = "margin: 0;")
+                ),
+                selectInput(
+                  "assumptions_outcome", 
+                  "Outcome Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "assumptions_group", 
+                  "Grouping Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                h4("Tests for Assumptions"),
+                checkboxInput(
+                  "levene_test", 
+                  "Levene's Test (Homogeneity of Variance)", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "normality_test", 
+                  "Normality Tests", 
+                  TRUE,
+                  width = "100%"
+                ),
+                checkboxInput(
+                  "outlier_test", 
+                  "Outlier Detection", 
+                  TRUE,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_assumptions", 
+                  "Check Assumptions", 
+                  class = "btn-primary btn-action",
+                  icon = icon("check"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_assumptions", 
+                  "Download Report",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                conditionalPanel(
+                  condition = "input.levene_test",
+                  h4("Homogeneity of Variance Tests"),
+                  withSpinner(
+                    verbatimTextOutput("levene_results"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                ),
+                conditionalPanel(
+                  condition = "input.normality_test",
+                  h4("Normality Tests"),
+                  withSpinner(
+                    verbatimTextOutput("normality_results"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                ),
+                conditionalPanel(
+                  condition = "input.outlier_test",
+                  h4("Outlier Detection"),
+                  withSpinner(
+                    verbatimTextOutput("outlier_results"), 
+                    type = 4, 
+                    color = "#0C5EA8",
+                    size = 1.5
+                  )
+                ),
+                h4("Diagnostic Plots"),
+                withSpinner(
+                  plotOutput("assumptions_plots"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          )
+        )
+      ),
+      tabPanel(
+        "T-Tests",
+        tabsetPanel(
+          tabPanel(
+            "One-Sample T-Test",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("One-Sample T-Test Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "ttest_onesample_var", 
+                  "Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                numericInput(
+                  "ttest_onesample_mu", 
+                  "Test Value (μ₀):", 
+                  value = 0,
+                  width = "100%"
+                ),
+                selectInput(
+                  "ttest_onesample_alternative", 
+                  "Alternative Hypothesis:",
+                  choices = c(
+                    "Two-sided" = "two.sided",
+                    "Greater than" = "greater",
+                    "Less than" = "less"
+                  ),
+                  selected = "two.sided",
+                  width = "100%"
+                ),
+                sliderInput(
+                  "ttest_onesample_conf", 
+                  "Confidence Level:", 
+                  min = 0.90, 
+                  max = 0.99, 
+                  value = 0.95, 
+                  step = 0.01,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_ttest_onesample", 
+                  "Run One-Sample T-Test", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_ttest_onesample", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("ttest_onesample_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("ttest_onesample_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Descriptive Statistics"),
+                withSpinner(
+                  verbatimTextOutput("ttest_onesample_descriptives"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  plotOutput("ttest_onesample_plot"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Independent T-Test",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Independent T-Test Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "ttest_independent_var", 
+                  "Outcome Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "ttest_independent_group", 
+                  "Grouping Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                uiOutput("ttest_independent_levels_ui"),
+                checkboxInput(
+                  "ttest_var_equal", 
+                  "Assume Equal Variances", 
+                  FALSE,
+                  width = "100%"
+                ),
+                selectInput(
+                  "ttest_alternative", 
+                  "Alternative Hypothesis:",
+                  choices = c(
+                    "Two-sided" = "two.sided",
+                    "Greater than" = "greater",
+                    "Less than" = "less"
+                  ),
+                  selected = "two.sided",
+                  width = "100%"
+                ),
+                sliderInput(
+                  "ttest_conf", 
+                  "Confidence Level:", 
+                  min = 0.90, 
+                  max = 0.99, 
+                  value = 0.95, 
+                  step = 0.01,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_ttest_independent", 
+                  "Run Independent T-Test", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_ttest_independent", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("ttest_independent_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("ttest_independent_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Group Descriptives"),
+                withSpinner(
+                  verbatimTextOutput("ttest_independent_descriptives"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Variance Check"),
+                withSpinner(
+                  verbatimTextOutput("ttest_variance_check"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  plotOutput("ttest_independent_plot"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Paired T-Test",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Paired T-Test Settings", style = "margin: 0;")
+                ),
+                selectInput(
+                  "ttest_paired_var1", 
+                  "Variable 1 (Before/Time 1):", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "ttest_paired_var2", 
+                  "Variable 2 (After/Time 2):", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "ttest_paired_alternative", 
+                  "Alternative Hypothesis:",
+                  choices = c(
+                    "Two-sided" = "two.sided",
+                    "Greater than" = "greater",
+                    "Less than" = "less"
+                  ),
+                  selected = "two.sided",
+                  width = "100%"
+                ),
+                sliderInput(
+                  "ttest_paired_conf", 
+                  "Confidence Level:", 
+                  min = 0.90, 
+                  max = 0.99, 
+                  value = 0.95, 
+                  step = 0.01,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_ttest_paired", 
+                  "Run Paired T-Test", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_ttest_paired", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                withSpinner(
+                  verbatimTextOutput("ttest_paired_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  DTOutput("ttest_paired_table"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Paired Descriptives"),
+                withSpinner(
+                  verbatimTextOutput("ttest_paired_descriptives"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                h4("Difference Analysis"),
+                withSpinner(
+                  verbatimTextOutput("ttest_paired_differences"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                withSpinner(
+                  plotOutput("ttest_paired_plot"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          ),
+          tabPanel(
+            "Non-parametric Tests",
+            fluidRow(
+              column(
+                4, 
+                class = "sidebar-panel",
+                div(
+                  class = "section-header",
+                  h4("Non-parametric Tests Settings", style = "margin: 0;")
+                ),
+                h4("Mann-Whitney U Test"),
+                selectInput(
+                  "mannwhitney_var", 
+                  "Outcome Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "mannwhitney_group", 
+                  "Grouping Variable:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_mannwhitney", 
+                  "Run Mann-Whitney Test", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                tags$hr(),
+                h4("Wilcoxon Signed-Rank Test"),
+                selectInput(
+                  "wilcoxon_var1", 
+                  "Variable 1:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                selectInput(
+                  "wilcoxon_var2", 
+                  "Variable 2:", 
+                  choices = NULL,
+                  width = "100%"
+                ),
+                actionButton(
+                  "run_wilcoxon", 
+                  "Run Wilcoxon Test", 
+                  class = "btn-primary btn-action",
+                  icon = icon("play"),
+                  width = "100%",
+                  style = "margin-top: 10px;"
+                ),
+                downloadButton(
+                  "download_nonparametric", 
+                  "Download Results",
+                  class = "btn-success btn-action",
+                  width = "100%",
+                  style = "margin-top: 20px;"
+                )
+              ),
+              column(
+                8, 
+                class = "main-panel",
+                h4("Mann-Whitney U Test Results"),
+                withSpinner(
+                  verbatimTextOutput("mannwhitney_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                ),
+                tags$hr(),
+                h4("Wilcoxon Signed-Rank Test Results"),
+                withSpinner(
+                  verbatimTextOutput("wilcoxon_results"), 
+                  type = 4, 
+                  color = "#0C5EA8",
+                  size = 1.5
+                )
+              )
+            )
+          )
+        )
+      )
+    )
   )
 )
 
@@ -1001,15 +2918,14 @@ server <- function(input, output, session) {
     shinyjs::html("run_freq", "<i class='fas fa-spinner fa-spin'></i> Analyzing...")
   })
   
-  # Add to your button state management section (around line 600 in your original code)
+  observeEvent(input$run_cor, {
+    shinyjs::disable("run_cor")
+    shinyjs::html("run_cor", "<i class='fas fa-spinner fa-spin'></i> Calculating...")
+  })
+  
   observeEvent(input$run_poisson, {
     shinyjs::disable("run_poisson")
     shinyjs::html("run_poisson", "<i class='fas fa-spinner fa-spin'></i> Running...")
-  })
-  
-  observeEvent(poisson_results(), {
-    shinyjs::enable("run_poisson")
-    shinyjs::html("run_poisson", "<i class='fas fa-play'></i> Run Analysis")
   })
   
   observeEvent(input$run_central, {
@@ -1062,9 +2978,18 @@ server <- function(input, output, session) {
     shinyjs::html("run_chisq", "<i class='fas fa-spinner fa-spin'></i> Testing...")
   })
   
+  observeEvent(input$run_anova, {
+    shinyjs::disable("run_anova")
+    shinyjs::html("run_anova", "<i class='fas fa-spinner fa-spin'></i> Running...")
+  })
+  
+  observeEvent(input$run_ttest_onesample, {
+    shinyjs::disable("run_ttest_onesample")
+    shinyjs::html("run_ttest_onesample", "<i class='fas fa-spinner fa-spin'></i> Running...")
+  })
+  
   # Reset button states after calculations
   observe({
-    # Reset load data button
     if (!is.null(processed_data())) {
       shinyjs::enable("load_data")
       shinyjs::html("load_data", "<i class='fas fa-upload'></i> Load Data")
@@ -1075,6 +3000,11 @@ server <- function(input, output, session) {
   observeEvent(freq_results(), {
     shinyjs::enable("run_freq")
     shinyjs::html("run_freq", "<i class='fas fa-play'></i> Run Analysis")
+  })
+  
+  observeEvent(cor_results(), {
+    shinyjs::enable("run_cor")
+    shinyjs::html("run_cor", "<i class='fas fa-calculator'></i> Run Correlation Analysis")
   })
   
   observeEvent(central_results(), {
@@ -1125,6 +3055,16 @@ server <- function(input, output, session) {
   observeEvent(chisq_results(), {
     shinyjs::enable("run_chisq")
     shinyjs::html("run_chisq", "<i class='fas fa-play'></i> Run Test")
+  })
+  
+  observeEvent(anova_results(), {
+    shinyjs::enable("run_anova")
+    shinyjs::html("run_anova", "<i class='fas fa-play'></i> Run ANOVA")
+  })
+  
+  observeEvent(ttest_onesample_results(), {
+    shinyjs::enable("run_ttest_onesample")
+    shinyjs::html("run_ttest_onesample", "<i class='fas fa-play'></i> Run One-Sample T-Test")
   })
   
   # Reactive data with proper handling
@@ -1205,6 +3145,40 @@ server <- function(input, output, session) {
       updateSelectInput(session, "chisq_var1", choices = names(df_processed))
       updateSelectInput(session, "chisq_var2", choices = names(df_processed))
       
+      # Update correlation analysis inputs
+      updateSelectInput(session, "cor_var1", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "cor_var2", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      
+      # Update ANOVA inputs
+      updateSelectInput(session, "anova_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "anova_group", choices = names(df_processed))
+      updateSelectInput(session, "anova_outcome_2way", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "anova_factor1", choices = names(df_processed))
+      updateSelectInput(session, "anova_factor2", choices = names(df_processed))
+      updateSelectInput(session, "welch_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "welch_group", choices = names(df_processed))
+      updateSelectInput(session, "assumptions_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "assumptions_group", choices = names(df_processed))
+      
+      # Update T-test inputs
+      updateSelectInput(session, "ttest_onesample_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "ttest_independent_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "ttest_independent_group", choices = names(df_processed))
+      updateSelectInput(session, "ttest_paired_var1", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "ttest_paired_var2", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "mannwhitney_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "mannwhitney_group", choices = names(df_processed))
+      updateSelectInput(session, "wilcoxon_var1", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "wilcoxon_var2", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      
+      # Update Poisson regression inputs
+      updateSelectInput(session, "poisson_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      updateSelectInput(session, "poisson_vars", choices = names(df_processed))
+      updateSelectInput(session, "poisson_offset_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+      
+      # Update central tendency inputs
+      updateSelectInput(session, "central_stratify", choices = c("None" = "none", names(df_processed)))
+      
       # Show success notification
       showNotification("Data loaded successfully!", type = "message", duration = 3)
       
@@ -1241,8 +3215,19 @@ server <- function(input, output, session) {
   output$contents <- renderDT({
     req(processed_data())
     datatable(processed_data(), 
-              options = list(scrollX = TRUE, pageLength = 10),
-              rownames = FALSE)
+              options = list(
+                scrollX = TRUE, 
+                pageLength = 10,
+                dom = 'Blfrtip',
+                buttons = c('copy', 'csv', 'excel', 'pdf')
+              ),
+              rownames = FALSE,
+              extensions = 'Buttons',
+              class = 'cell-border stripe hover'
+    ) %>%
+      formatStyle(names(processed_data()),
+                  backgroundColor = 'white',
+                  fontWeight = 'normal')
   })
   
   # Data summary
@@ -1253,7 +3238,10 @@ server <- function(input, output, session) {
     cat("Number of observations:", nrow(df), "\n")
     cat("Number of variables:", ncol(df), "\n\n")
     cat("Variable types:\n")
-    print(table(sapply(df, class)))
+    type_summary <- table(sapply(df, class))
+    for (type in names(type_summary)) {
+      cat(paste0("  ", type, ": ", type_summary[type], "\n"))
+    }
   })
   
   # Ultra-robust Frequency Analysis
@@ -1314,248 +3302,30 @@ server <- function(input, output, session) {
     results <- freq_results()
     
     if (!results$success) {
-      # Show error in table format
       datatable(results$table, 
                 options = list(dom = 't'),
-                rownames = FALSE)
+                rownames = FALSE,
+                caption = "Frequency Analysis - Error")
     } else {
-      # Show frequency table
       datatable(results$table,
                 options = list(
                   pageLength = 10,
-                  dom = 'Blfrtip'
+                  dom = 'Blfrtip',
+                  buttons = c('copy', 'csv', 'excel')
                 ),
-                rownames = FALSE) %>%
-        formatRound(columns = c('Proportion', 'Percentage'), digits = 2)
-    }
-  })
-  
-  # ANOVA Table Output
-  output$anova_table <- renderDT({
-    req(anova_results())
-    results <- anova_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    # Convert ANOVA summary to data frame
-    anova_df <- as.data.frame(results$summary[[1]])
-    anova_df <- cbind(Source = rownames(anova_df), anova_df)
-    rownames(anova_df) <- NULL
-    
-    datatable(
-      anova_df,
-      options = list(
-        dom = 't',
-        pageLength = 10
-      ),
-      rownames = FALSE,
-      caption = "One-Way ANOVA Results"
-    ) %>%
-      formatRound(columns = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), digits = 4)
-  })
-  
-  # ANOVA Post-hoc Table
-  output$anova_posthoc_table <- renderDT({
-    req(anova_results())
-    results <- anova_results()
-    
-    if (!results$success || is.null(results$posthoc)) {
-      return(datatable(
-        data.frame(Message = "No post-hoc results available"),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    if (input$anova_posthoc_method == "tukey") {
-      posthoc_df <- as.data.frame(results$posthoc$group_clean)
-      posthoc_df <- cbind(Comparison = rownames(posthoc_df), posthoc_df)
-      rownames(posthoc_df) <- NULL
-      
-      datatable(
-        posthoc_df,
-        options = list(
-          dom = 't',
-          pageLength = 10
-        ),
-        rownames = FALSE,
-        caption = "Tukey HSD Post-hoc Comparisons"
+                rownames = FALSE,
+                caption = "Frequency Distribution",
+                extensions = 'Buttons'
       ) %>%
-        formatRound(columns = c('diff', 'lwr', 'upr', 'p adj'), digits = 4)
-    } else {
-      # For other post-hoc methods
-      datatable(
-        as.data.frame(results$posthoc$p.value),
-        options = list(
-          dom = 't',
-          pageLength = 10
-        ),
-        caption = "Post-hoc Comparisons"
-      )
+        formatRound(columns = c('Proportion', 'Percentage'), digits = 2) %>%
+        formatStyle(
+          'Frequency',
+          background = styleColorBar(range(results$table$Frequency), '#0C5EA8'),
+          backgroundSize = '100% 90%',
+          backgroundRepeat = 'no-repeat',
+          backgroundPosition = 'center'
+        )
     }
-  })
-  
-  # Two-Way ANOVA Table
-  output$anova_2way_table <- renderDT({
-    req(anova_2way_results())
-    results <- anova_2way_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    anova_df <- as.data.frame(results$summary[[1]])
-    anova_df <- cbind(Source = rownames(anova_df), anova_df)
-    rownames(anova_df) <- NULL
-    
-    datatable(
-      anova_df,
-      options = list(
-        dom = 't',
-        pageLength = 10
-      ),
-      rownames = FALSE,
-      caption = "Two-Way ANOVA Results"
-    ) %>%
-      formatRound(columns = c('Df', 'Sum Sq', 'Mean Sq', 'F value', 'Pr(>F)'), digits = 4)
-  })
-  
-  # Welch ANOVA Table
-  output$welch_anova_table <- renderDT({
-    req(welch_anova_results())
-    results <- welch_anova_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    welch_df <- data.frame(
-      Statistic = c("F value", "Num DF", "Denom DF", "P-value"),
-      Value = c(
-        round(results$welch_test$statistic, 4),
-        round(results$welch_test$parameter[1], 2),
-        round(results$welch_test$parameter[2], 2),
-        round(results$welch_test$p.value, 4)
-      )
-    )
-    
-    datatable(
-      welch_df,
-      options = list(dom = 't'),
-      rownames = FALSE,
-      caption = "Welch ANOVA Results"
-    )
-  })
-  
-  # One-Sample T-Test Table
-  output$ttest_onesample_table <- renderDT({
-    req(ttest_onesample_results())
-    results <- ttest_onesample_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    ttest_df <- data.frame(
-      Statistic = c("t value", "Degrees of Freedom", "P-value", "Confidence Level", "Alternative"),
-      Value = c(
-        round(results$ttest$statistic, 4),
-        round(results$ttest$parameter, 2),
-        round(results$ttest$p.value, 4),
-        paste0(input$ttest_onesample_conf * 100, "%"),
-        results$ttest$alternative
-      )
-    )
-    
-    datatable(
-      ttest_df,
-      options = list(dom = 't'),
-      rownames = FALSE,
-      caption = "One-Sample T-Test Results"
-    )
-  })
-  
-  # Independent T-Test Table
-  output$ttest_independent_table <- renderDT({
-    req(ttest_independent_results())
-    results <- ttest_independent_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    ttest_df <- data.frame(
-      Statistic = c("t value", "Degrees of Freedom", "P-value", "Confidence Level", "Alternative", "Equal Variances"),
-      Value = c(
-        round(results$ttest$statistic, 4),
-        round(results$ttest$parameter, 2),
-        round(results$ttest$p.value, 4),
-        paste0(input$ttest_conf * 100, "%"),
-        results$ttest$alternative,
-        ifelse(input$ttest_var_equal, "Yes", "No")
-      )
-    )
-    
-    datatable(
-      ttest_df,
-      options = list(dom = 't'),
-      rownames = FALSE,
-      caption = "Independent T-Test Results"
-    )
-  })
-  
-  # Paired T-Test Table
-  output$ttest_paired_table <- renderDT({
-    req(ttest_paired_results())
-    results <- ttest_paired_results()
-    
-    if (!results$success) {
-      return(datatable(
-        data.frame(Error = results$error),
-        options = list(dom = 't'),
-        rownames = FALSE
-      ))
-    }
-    
-    ttest_df <- data.frame(
-      Statistic = c("t value", "Degrees of Freedom", "P-value", "Confidence Level", "Alternative"),
-      Value = c(
-        round(results$ttest$statistic, 4),
-        round(results$ttest$parameter, 2),
-        round(results$ttest$p.value, 4),
-        paste0(input$ttest_paired_conf * 100, "%"),
-        results$ttest$alternative
-      )
-    )
-    
-    datatable(
-      ttest_df,
-      options = list(dom = 't'),
-      rownames = FALSE,
-      caption = "Paired T-Test Results"
-    )
   })
   
   output$freq_plot <- renderPlotly({
@@ -1564,7 +3334,6 @@ server <- function(input, output, session) {
     results <- freq_results()
     
     if (!results$success) {
-      # Error plot
       p <- plot_ly() %>%
         add_annotations(
           text = results$table$Error[1],
@@ -1576,76 +3345,914 @@ server <- function(input, output, session) {
           font = list(size = 16, color = "red")
         ) %>%
         layout(
+          title = "Frequency Plot - Error",
+          xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+          margin = list(t = 50)
+        )
+      return(p)
+    }
+    
+    # Create bar plot
+    p <- plot_ly(results$table,
+                 x = ~Category,
+                 y = ~Frequency,
+                 type = 'bar',
+                 marker = list(color = input$freq_color,
+                               line = list(color = 'rgba(0,0,0,0.2)', width = 1)),
+                 hoverinfo = 'text',
+                 text = ~paste('Category:', Category,
+                               '<br>Count:', Frequency,
+                               '<br>Percentage:', round(Percentage, 1), '%'),
+                 textposition = 'none') %>%
+      layout(
+        title = list(text = input$freq_title, 
+                     font = list(size = input$freq_title_size, 
+                                 family = 'Arial, sans-serif')),
+        xaxis = list(title = input$freq_var, 
+                     tickangle = 45,
+                     titlefont = list(size = input$freq_x_size)),
+        yaxis = list(title = "Frequency",
+                     titlefont = list(size = input$freq_y_size)),
+        margin = list(b = 100, l = 60, r = 40, t = 60),
+        hoverlabel = list(font = list(size = 12)),
+        showlegend = FALSE
+      )
+    
+    return(p)
+  })
+  
+ 
+  # ULTRA-ROBUST CORRELATION ANALYSIS - WITHOUT WGCNA
+  cor_results <- eventReactive(input$run_cor, {
+    req(input$cor_var1, input$cor_var2, processed_data())
+    
+    tryCatch({
+      df <- processed_data()
+      
+      # 1. VALIDATE VARIABLES EXIST
+      if (!input$cor_var1 %in% names(df) || !input$cor_var2 %in% names(df)) {
+        return(list(
+          error = "Selected variables not found in dataset",
+          success = FALSE
+        ))
+      }
+      
+      # 2. GET AND PREPARE VARIABLES
+      var1_raw <- df[[input$cor_var1]]
+      var2_raw <- df[[input$cor_var2]]
+      
+      # 3. ULTRA-ROBUST NUMERIC CONVERSION FUNCTION - FIXED VERSION
+      convert_to_numeric_safe <- function(x, var_name = "variable") {
+        # Store original indices for alignment
+        orig_indices <- seq_along(x)
+        
+        # Remove NA values first and keep track of indices
+        non_na_indices <- which(!is.na(x))
+        x_clean <- x[non_na_indices]
+        orig_indices_clean <- orig_indices[non_na_indices]
+        
+        if (length(x_clean) == 0) {
+          return(list(
+            numeric_data = numeric(0),
+            indices = integer(0),
+            warning = paste(var_name, ": No non-missing values"),
+            success = FALSE
+          ))
+        }
+        
+        # Try multiple conversion strategies
+        conversion_attempts <- list()
+        
+        # Strategy 1: Direct numeric conversion
+        attempt1 <- suppressWarnings(as.numeric(x_clean))
+        valid_indices1 <- which(!is.na(attempt1))
+        conversion_attempts[[1]] <- list(
+          method = "as.numeric()",
+          valid_indices = orig_indices_clean[valid_indices1],
+          data = attempt1[valid_indices1],
+          valid_count = length(valid_indices1)
+        )
+        
+        # Strategy 2: Convert factor to numeric via levels
+        if (is.factor(x_clean)) {
+          attempt2 <- as.numeric(as.character(x_clean))
+          valid_indices2 <- which(!is.na(attempt2))
+          conversion_attempts[[2]] <- list(
+            method = "as.numeric(as.character()) for factor",
+            valid_indices = orig_indices_clean[valid_indices2],
+            data = attempt2[valid_indices2],
+            valid_count = length(valid_indices2)
+          )
+        }
+        
+        # Strategy 3: Character to numeric with pattern matching
+        if (is.character(x_clean)) {
+          # Extract numbers from strings
+          attempt3 <- sapply(x_clean, function(val) {
+            # Try direct conversion first
+            num_val <- suppressWarnings(as.numeric(val))
+            if (!is.na(num_val)) return(num_val)
+            
+            # Extract first number found in string
+            matches <- regmatches(val, gregexpr("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?", val))
+            if (length(matches[[1]]) > 0) {
+              as.numeric(matches[[1]][1])
+            } else {
+              NA_real_
+            }
+          })
+          valid_indices3 <- which(!is.na(attempt3))
+          conversion_attempts[[3]] <- list(
+            method = "numeric extraction from character",
+            valid_indices = orig_indices_clean[valid_indices3],
+            data = attempt3[valid_indices3],
+            valid_count = length(valid_indices3)
+          )
+        }
+        
+        # Strategy 4: Convert logical to numeric
+        if (is.logical(x_clean)) {
+          attempt4 <- as.numeric(x_clean)
+          valid_indices4 <- which(!is.na(attempt4))
+          conversion_attempts[[4]] <- list(
+            method = "logical to numeric",
+            valid_indices = orig_indices_clean[valid_indices4],
+            data = attempt4[valid_indices4],
+            valid_count = length(valid_indices4)
+          )
+        }
+        
+        # Choose the best conversion method
+        best_method <- NULL
+        best_data <- NULL
+        best_indices <- NULL
+        max_valid <- 0
+        
+        for (attempt in conversion_attempts) {
+          if (attempt$valid_count > max_valid && attempt$valid_count > 0) {
+            max_valid <- attempt$valid_count
+            best_method <- attempt$method
+            best_data <- attempt$data
+            best_indices <- attempt$valid_indices
+          }
+        }
+        
+        if (is.null(best_method)) {
+          return(list(
+            numeric_data = numeric(0),
+            indices = integer(0),
+            warning = paste(var_name, ": No valid numeric conversion found"),
+            success = FALSE
+          ))
+        }
+        
+        # Check if we have enough data
+        if (length(best_data) < 3) {
+          return(list(
+            numeric_data = best_data,
+            indices = best_indices,
+            warning = paste(var_name, ": Only", length(best_data), "valid numeric values after conversion"),
+            success = TRUE  # Still success, but with warning
+          ))
+        }
+        
+        return(list(
+          numeric_data = best_data,
+          indices = best_indices,
+          method = best_method,
+          original_length = length(x),
+          converted_length = length(best_data),
+          success = TRUE
+        ))
+      }
+      
+      # 4. APPLY CONVERSION TO BOTH VARIABLES
+      var1_conversion <- convert_to_numeric_safe(var1_raw, input$cor_var1)
+      var2_conversion <- convert_to_numeric_safe(var2_raw, input$cor_var2)
+      
+      # 5. CHECK CONVERSION SUCCESS
+      if (!var1_conversion$success || !var2_conversion$success) {
+        error_msg <- paste(
+          "Numeric conversion failed:",
+          if (!var1_conversion$success) paste("\n-", input$cor_var1, ":", var1_conversion$warning),
+          if (!var2_conversion$success) paste("\n-", input$cor_var2, ":", var2_conversion$warning),
+          "\n\nPlease ensure variables contain numeric data or can be converted to numeric."
+        )
+        return(list(
+          error = error_msg,
+          success = FALSE
+        ))
+      }
+      
+      # 6. ALIGN DATA BY COMMON INDICES (CRITICAL FIX)
+      # Find common indices that have valid numeric values in BOTH variables
+      common_indices <- intersect(var1_conversion$indices, var2_conversion$indices)
+      
+      if (length(common_indices) < 3) {
+        return(list(
+          error = paste("Insufficient data for correlation analysis (only", length(common_indices), 
+                        "common valid pairs available)"),
+          success = FALSE
+        ))
+      }
+      
+      # Extract aligned data using common indices
+      get_aligned_data <- function(conversion_result, indices) {
+        # Match the indices to find positions in the converted data
+        positions <- match(indices, conversion_result$indices)
+        return(conversion_result$numeric_data[positions])
+      }
+      
+      var1_final <- get_aligned_data(var1_conversion, common_indices)
+      var2_final <- get_aligned_data(var2_conversion, common_indices)
+      
+      # 7. PERFORM CORRELATION WITH PROPER ERROR HANDLING
+      cor_test <- NULL
+      
+      tryCatch({
+        # Use pairwise complete observations for all methods
+        if (input$cor_method == "pearson") {
+          # For Pearson, use standard cor.test but ensure pairwise complete data
+          cor_test <- cor.test(var1_final, var2_final,
+                               method = "pearson",
+                               conf.level = input$cor_conf,
+                               use = "complete.obs")
+          
+        } else if (input$cor_method == "kendall") {
+          # For Kendall, use standard cor function (NO WGCNA)
+          cor_value <- cor(var1_final, var2_final, 
+                           method = "kendall", 
+                           use = "pairwise.complete.obs")
+          
+          # Calculate p-value and confidence interval
+          n <- sum(!is.na(var1_final) & !is.na(var2_final))
+          if (n > 3) {
+            # Using approximate method for Kendall's tau
+            z <- cor_value * sqrt((9 * n * (n - 1)) / (2 * (2 * n + 5)))
+            p_value <- 2 * pnorm(-abs(z))
+            
+            # Approximate confidence interval for Kendall's tau
+            se <- sqrt((4 * n + 10) / (9 * n * (n - 1)))
+            z_crit <- qnorm(1 - (1 - input$cor_conf) / 2)
+            ci_lower <- cor_value - z_crit * se
+            ci_upper <- cor_value + z_crit * se
+            
+            # Ensure bounds are within [-1, 1]
+            ci_lower <- max(-1, ci_lower)
+            ci_upper <- min(1, ci_upper)
+          } else {
+            p_value <- NA
+            ci_lower <- NA
+            ci_upper <- NA
+          }
+          
+          cor_test <- list(
+            estimate = cor_value,
+            statistic = z,
+            p.value = p_value,
+            conf.int = c(ci_lower, ci_upper),
+            parameter = n - 2,
+            alternative = "two.sided",
+            method = "Kendall's rank correlation tau",
+            data.name = paste(input$cor_var1, "and", input$cor_var2)
+          )
+          class(cor_test) <- "htest"
+          
+        } else if (input$cor_method == "spearman") {
+          # For Spearman, use standard cor function
+          cor_value <- cor(var1_final, var2_final, 
+                           method = "spearman", 
+                           use = "pairwise.complete.obs")
+          
+          # Calculate p-value and confidence interval
+          n <- sum(!is.na(var1_final) & !is.na(var2_final))
+          if (n > 3) {
+            # Using approximate method for Spearman's rho
+            t_stat <- cor_value * sqrt((n - 2) / (1 - cor_value^2))
+            df <- n - 2
+            p_value <- 2 * pt(-abs(t_stat), df)
+            
+            # Confidence interval using Fisher's z transformation
+            if (abs(cor_value) < 1) {
+              z <- 0.5 * log((1 + cor_value) / (1 - cor_value))
+              se <- 1 / sqrt(n - 3)
+              z_crit <- qnorm(1 - (1 - input$cor_conf) / 2)
+              ci_lower_z <- z - z_crit * se
+              ci_upper_z <- z + z_crit * se
+              ci_lower <- (exp(2 * ci_lower_z) - 1) / (exp(2 * ci_lower_z) + 1)
+              ci_upper <- (exp(2 * ci_upper_z) - 1) / (exp(2 * ci_upper_z) + 1)
+            } else {
+              ci_lower <- NA
+              ci_upper <- NA
+            }
+          } else {
+            p_value <- NA
+            ci_lower <- NA
+            ci_upper <- NA
+          }
+          
+          cor_test <- list(
+            estimate = cor_value,
+            statistic = t_stat,
+            p.value = p_value,
+            conf.int = c(ci_lower, ci_upper),
+            parameter = df,
+            alternative = "two.sided",
+            method = "Spearman's rank correlation rho",
+            data.name = paste(input$cor_var1, "and", input$cor_var2)
+          )
+          class(cor_test) <- "htest"
+        }
+        
+      }, error = function(e) {
+        # Fallback to psych package if above fails
+        tryCatch({
+          if (input$cor_method == "pearson") {
+            cor_test <- cor.test(var1_final, var2_final, 
+                                 method = "pearson", 
+                                 conf.level = input$cor_conf)
+          } else {
+            # Use psych package for robust correlation
+            cor_result <- psych::corr.test(var1_final, var2_final, 
+                                           method = input$cor_method,
+                                           ci = TRUE, 
+                                           conf.level = input$cor_conf)
+            
+            cor_test <- list(
+              estimate = cor_result$r[1, 2],
+              p.value = cor_result$p[1, 2],
+              conf.int = c(cor_result$ci$lower[1], cor_result$ci$upper[1]),
+              statistic = NA,
+              parameter = cor_result$n[1, 2] - 2,
+              alternative = "two.sided",
+              method = paste(tools::toTitleCase(input$cor_method), "correlation (psych package)"),
+              data.name = paste(input$cor_var1, "and", input$cor_var2)
+            )
+            class(cor_test) <- "htest"
+          }
+        }, error = function(e2) {
+          # Ultimate fallback - simple correlation with no inference
+          cor_value <- cor(var1_final, var2_final, 
+                           method = input$cor_method, 
+                           use = "pairwise.complete.obs")
+          n <- sum(!is.na(var1_final) & !is.na(var2_final))
+          
+          cor_test <- list(
+            estimate = cor_value,
+            statistic = NA,
+            p.value = NA,
+            conf.int = c(NA, NA),
+            parameter = n - 2,
+            alternative = "two.sided",
+            method = paste(tools::toTitleCase(input$cor_method), "correlation (simple)"),
+            data.name = paste(input$cor_var1, "and", input$cor_var2)
+          )
+          class(cor_test) <- "htest"
+        })
+      })
+      
+      if (is.null(cor_test)) {
+        return(list(
+          error = "Correlation calculation failed with all methods",
+          success = FALSE
+        ))
+      }
+      
+      # 8. CREATE RESULTS TABLE
+      # Calculate actual number of pairs used
+      n_pairs <- sum(!is.na(var1_final) & !is.na(var2_final))
+      
+      results_df <- data.frame(
+        Statistic = c(
+          "Correlation Method",
+          "Correlation Coefficient",
+          paste(input$cor_conf * 100, "% CI Lower"),
+          paste(input$cor_conf * 100, "% CI Upper"),
+          "Test Statistic",
+          "Degrees of Freedom",
+          "P-value",
+          "Interpretation",
+          "Number of Complete Pairs",
+          "Variable 1 Mean",
+          "Variable 1 SD",
+          "Variable 2 Mean",
+          "Variable 2 SD",
+          "Data Conversion Method (Var1)",
+          "Data Conversion Method (Var2)",
+          "Missing Value Handling"
+        ),
+        Value = c(
+          tools::toTitleCase(input$cor_method),
+          round(cor_test$estimate, 4),
+          ifelse(!is.na(cor_test$conf.int[1]), round(cor_test$conf.int[1], 4), "N/A"),
+          ifelse(!is.na(cor_test$conf.int[2]), round(cor_test$conf.int[2], 4), "N/A"),
+          ifelse(!is.na(cor_test$statistic), round(cor_test$statistic, 4), "N/A"),
+          ifelse(!is.na(cor_test$parameter), round(cor_test$parameter, 2), "N/A"),
+          ifelse(!is.na(cor_test$p.value), 
+                 ifelse(cor_test$p.value < 0.001, "<0.001", round(cor_test$p.value, 4)), 
+                 "N/A"),
+          ifelse(abs(cor_test$estimate) < 0.3, "Weak correlation",
+                 ifelse(abs(cor_test$estimate) < 0.7, "Moderate correlation", 
+                        "Strong correlation")),
+          n_pairs,
+          round(mean(var1_final, na.rm = TRUE), 3),
+          round(sd(var1_final, na.rm = TRUE), 3),
+          round(mean(var2_final, na.rm = TRUE), 3),
+          round(sd(var2_final, na.rm = TRUE), 3),
+          var1_conversion$method,
+          var2_conversion$method,
+          "Pairwise complete observations"
+        ),
+        stringsAsFactors = FALSE
+      )
+      
+      # 9. CREATE INTERPRETATION
+      r_value <- cor_test$estimate
+      strength <- ifelse(abs(r_value) < 0.3, "weak",
+                         ifelse(abs(r_value) < 0.7, "moderate", "strong"))
+      direction <- ifelse(r_value > 0, "positive", "negative")
+      
+      interpretation <- list(
+        strength = strength,
+        direction = direction,
+        r_value = r_value,
+        p_value = cor_test$p.value,
+        ci_lower = cor_test$conf.int[1],
+        ci_upper = cor_test$conf.int[2],
+        n_pairs = n_pairs,
+        method = input$cor_method
+      )
+      
+      # 10. RETURN COMPREHENSIVE RESULTS
+      list(
+        test = cor_test,
+        data = data.frame(
+          var1 = var1_final,
+          var2 = var2_final,
+          index = common_indices
+        ),
+        table = results_df,
+        interpretation = interpretation,
+        conversion_info = list(
+          var1 = var1_conversion,
+          var2 = var2_conversion
+        ),
+        success = TRUE
+      )
+      
+    }, error = function(e) {
+      # COMPREHENSIVE ERROR HANDLING
+      error_details <- paste(
+        "Correlation analysis failed with error: ", e$message,
+        "\n\nTroubleshooting steps:",
+        "\n1. Check that variables contain numeric data",
+        "\n2. Ensure variables have at least 3 common observations after removing missing values",
+        "\n3. Try recoding categorical variables to numeric",
+        "\n4. Remove non-numeric characters from data",
+        "\n5. Check for extreme outliers that might affect correlation",
+        "\n6. Consider using Chi-square test for categorical variables"
+      )
+      
+      return(list(
+        error = error_details,
+        success = FALSE
+      ))
+    })
+  })
+    # Add this function to check data types
+  check_variable_types <- function(df, var1, var2) {
+    type1 <- class(df[[var1]])[1]
+    type2 <- class(df[[var2]])[1]
+    unique1 <- length(unique(df[[var1]]))
+    unique2 <- length(unique(df[[var2]]))
+    
+    cat("VARIABLE TYPE DIAGNOSTICS\n")
+    cat("==========================\n")
+    cat(var1, ":\n")
+    cat("  Type:", type1, "\n")
+    cat("  Unique values:", unique1, "\n")
+    cat("  Sample values:", paste(head(df[[var1]], 5), collapse = ", "), "\n")
+    cat(var2, ":\n")
+    cat("  Type:", type2, "\n")
+    cat("  Unique values:", unique2, "\n")
+    cat("  Sample values:", paste(head(df[[var2]], 5), collapse = ", "), "\n")
+  }
+  # Correlation diagnostic information
+  output$cor_diagnostic <- renderPrint({
+    req(cor_results())
+    
+    results <- cor_results()
+    
+    if (!results$success) {
+      cat("DIAGNOSTIC INFORMATION\n")
+      cat("=====================\n")
+      cat("Error:", results$error, "\n")
+    } else if (!is.null(results$data_info)) {
+      cat("DATA DIAGNOSTICS\n")
+      cat("================\n")
+      cat("Original variable types:", paste(results$data_info$original_types, collapse = ", "), "\n")
+      cat("Converted variable types:", paste(results$data_info$converted_types, collapse = ", "), "\n")
+      cat("Original N:", results$data_info$n_original, "\n")
+      cat("Converted N:", results$data_info$n_converted, "\n")
+      cat("Data loss:", results$data_info$n_original - results$data_info$n_converted, "observations\n")
+      cat("\nFirst few values of converted data:\n")
+      print(head(results$data))
+    }
+  })
+  # Correlation Results Output
+  output$cor_results <- renderPrint({
+    req(cor_results())
+    
+    results <- cor_results()
+    
+    if (!results$success) {
+      cat("CORRELATION ANALYSIS - ERROR\n")
+      cat("============================\n")
+      cat(results$error, "\n")
+      return()
+    }
+    
+    cat("CORRELATION ANALYSIS\n")
+    cat("====================\n\n")
+    
+    cat("Variables:\n")
+    cat("- X Variable:", input$cor_var1, "\n")
+    cat("- Y Variable:", input$cor_var2, "\n")
+    cat("- Method:", tools::toTitleCase(input$cor_method), "\n\n")
+    
+    cat("Descriptive Statistics:\n")
+    cat("- N =", nrow(results$data), "\n")
+    cat("-", input$cor_var1, "Mean =", round(mean(results$data$var1), 3), 
+        ", SD =", round(sd(results$data$var1), 3), "\n")
+    cat("-", input$cor_var2, "Mean =", round(mean(results$data$var2), 3), 
+        ", SD =", round(sd(results$data$var2), 3), "\n\n")
+    
+    cat("Correlation Results:\n")
+    print(results$test)
+    
+    cat("\nInterpretation:\n")
+    cat("- Correlation coefficient (r) =", round(results$interpretation$r_value, 3), "\n")
+    cat("- This indicates a", results$interpretation$strength, 
+        results$interpretation$direction, "relationship.\n")
+    if (results$interpretation$p_value < 0.05) {
+      cat("- The correlation is statistically significant (p =", 
+          round(results$interpretation$p_value, 4), ").\n")
+    } else {
+      cat("- The correlation is not statistically significant (p =", 
+          round(results$interpretation$p_value, 4), ").\n")
+    }
+    cat("- We are", input$cor_conf * 100, "% confident that the true correlation lies between",
+        round(results$interpretation$ci_lower, 3), "and",
+        round(results$interpretation$ci_upper, 3), ".\n")
+  })
+  
+  # Correlation Plot
+  output$cor_plot <- renderPlotly({
+    req(cor_results(), input$cor_scatter)
+    
+    results <- cor_results()
+    
+    if (!results$success) {
+      p <- plot_ly() %>%
+        add_annotations(
+          text = "Error: Unable to generate scatter plot",
+          x = 0.5,
+          y = 0.5,
+          xref = "paper",
+          yref = "paper",
+          showarrow = FALSE,
+          font = list(size = 16, color = "red")
+        ) %>%
+        layout(
+          title = "Scatter Plot - Error",
           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
         )
       return(p)
     }
     
-    # Create bar plot using plot_ly directly (more reliable)
-    p <- plot_ly(results$table,
-                 x = ~Category,
-                 y = ~Frequency,
-                 type = 'bar',
-                 marker = list(color = input$freq_color),
+    # Create scatter plot
+    p <- plot_ly(results$data,
+                 x = ~var1,
+                 y = ~var2,
+                 type = 'scatter',
+                 mode = 'markers',
+                 marker = list(
+                   color = input$cor_point_color,
+                   size = input$cor_point_size,
+                   opacity = input$cor_point_alpha,
+                   line = list(color = 'rgba(0,0,0,0.2)', width = 1)
+                 ),
                  hoverinfo = 'text',
-                 text = ~paste('Category:', Category,
-                               '<br>Count:', Frequency,
-                               '<br>Percentage:', round(Percentage, 1), '%')) %>%
+                 text = ~paste(input$cor_var1, ":", round(var1, 2),
+                               '<br>', input$cor_var2, ":", round(var2, 2)),
+                 name = 'Data Points') %>%
       layout(
-        title = list(text = input$freq_title, size = input$freq_title_size),
-        xaxis = list(title = input$freq_var, tickangle = 45),
-        yaxis = list(title = "Frequency"),
-        margin = list(b = 100)
+        title = paste("Scatter Plot:", input$cor_var1, "vs", input$cor_var2),
+        xaxis = list(title = input$cor_var1),
+        yaxis = list(title = input$cor_var2),
+        hoverlabel = list(font = list(size = 12)),
+        showlegend = TRUE
+      )
+    
+    # Add trend line if requested
+    if (input$cor_fit) {
+      # Fit linear model
+      fit <- lm(var2 ~ var1, data = results$data)
+      x_range <- range(results$data$var1, na.rm = TRUE)
+      x_seq <- seq(x_range[1], x_range[2], length.out = 100)
+      pred_data <- data.frame(var1 = x_seq)
+      pred_data$var2 <- predict(fit, newdata = pred_data)
+      
+      p <- p %>%
+        add_trace(x = ~var1, y = ~var2,
+                  data = pred_data,
+                  type = 'scatter',
+                  mode = 'lines',
+                  line = list(color = input$cor_line_color, 
+                              width = input$cor_line_size),
+                  name = 'Trend Line',
+                  hoverinfo = 'skip')
+      
+      # Add equation to plot
+      slope <- round(coef(fit)[2], 3)
+      intercept <- round(coef(fit)[1], 3)
+      r_squared <- round(summary(fit)$r.squared, 3)
+      
+      p <- p %>%
+        add_annotations(
+          x = 0.05,
+          y = 0.95,
+          xref = "paper",
+          yref = "paper",
+          text = paste0("y = ", intercept, " + ", slope, "x<br>R² = ", r_squared),
+          showarrow = FALSE,
+          font = list(size = 12, color = input$cor_line_color),
+          bgcolor = "rgba(255,255,255,0.8)",
+          bordercolor = input$cor_line_color,
+          borderwidth = 1,
+          borderpad = 4
+        )
+    }
+    
+    # Add correlation coefficient annotation
+    p <- p %>%
+      add_annotations(
+        x = 0.05,
+        y = 0.85,
+        xref = "paper",
+        yref = "paper",
+        text = paste0("r = ", round(results$interpretation$r_value, 3)),
+        showarrow = FALSE,
+        font = list(size = 14, color = "#0C5EA8", weight = "bold"),
+        bgcolor = "rgba(255,255,255,0.8)",
+        bordercolor = "#0C5EA8",
+        borderwidth = 1,
+        borderpad = 4
       )
     
     return(p)
   })
   
-  # Add to the data loading observer (around line 1070 in your original code)
-  observeEvent(processed_data(), {
-    req(processed_data())
-    df_processed <- processed_data()
+  # Correlation Table
+  output$cor_table <- renderDT({
+    req(cor_results())
     
-    # Update Poisson regression inputs
-    updateSelectInput(session, "poisson_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "poisson_vars", choices = names(df_processed))
-    updateSelectInput(session, "poisson_offset_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    
-    # Update central tendency inputs
-    updateSelectInput(session, "central_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "central_stratify", choices = c("None" = "none", names(df_processed)))
-  })
-  
-  
-  # Ultra-robust Central Tendency Analysis - UPDATED VERSION with stratification
-  # Central tendency table output - ADD THIS SECTION
-  output$central_table <- renderDT({
-    req(central_results())
-    
-    results <- central_results()
+    results <- cor_results()
     
     if (!results$success) {
-      # Show error in table format
-      datatable(results$table, 
-                options = list(dom = 't'),
-                rownames = FALSE,
-                caption = "Central Tendency Analysis - Error")
+      datatable(
+        data.frame(Error = results$error),
+        options = list(dom = 't'),
+        rownames = FALSE,
+        caption = "Correlation Analysis - Error"
+      )
     } else {
-      # Show central tendency table
-      datatable(results$table,
-                options = list(
-                  pageLength = 20,
-                  dom = 'Blfrtip',
-                  scrollX = TRUE
-                ),
-                rownames = FALSE,
-                caption = "Central Tendency Measures") %>%
-        formatRound(columns = c('Mean', 'Median', 'SD', 'Variance', 'Min', 'Max', 
-                                'Q1', 'Q3', 'IQR', 'Skewness', 'Kurtosis'), 
-                    digits = 4)
+      datatable(
+        results$table,
+        options = list(
+          pageLength = 15,
+          dom = 'Blfrtip',
+          scrollX = TRUE,
+          buttons = c('copy', 'csv', 'excel')
+        ),
+        rownames = FALSE,
+        caption = "Correlation Analysis Results",
+        extensions = 'Buttons'
+      ) %>%
+        formatStyle(
+          'Value',
+          backgroundColor = styleEqual(
+            c("Weak correlation", "Moderate correlation", "Strong correlation"),
+            c('#FFE5E5', '#FFF3CD', '#D4EDDA')
+          )
+        )
     }
   })
+  
+  # Download handler for correlation results (Word)
+  output$download_cor <- downloadHandler(
+    filename = function() {
+      paste("correlation_analysis_", input$cor_var1, "_", input$cor_var2, "_", 
+            Sys.Date(), ".docx", sep = "")
+    },
+    content = function(file) {
+      req(cor_results())
+      
+      results <- cor_results()
+      
+      if (!results$success) {
+        # Create error document
+        ft <- flextable(data.frame(Error = results$error)) %>%
+          set_caption("Correlation Analysis - Error") %>%
+          theme_zebra()
+        
+        doc <- read_docx() %>% 
+          body_add_flextable(ft)
+      } else {
+        # Create comprehensive report
+        doc <- read_docx()
+        
+        # Title and overview
+        doc <- doc %>%
+          body_add_par("CORRELATION ANALYSIS REPORT", style = "heading 1") %>%
+          body_add_par(paste("Variable 1 (X):", input$cor_var1), style = "Normal") %>%
+          body_add_par(paste("Variable 2 (Y):", input$cor_var2), style = "Normal") %>%
+          body_add_par(paste("Method:", tools::toTitleCase(input$cor_method)), style = "Normal") %>%
+          body_add_par(paste("Confidence Level:", input$cor_conf * 100, "%"), style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Descriptive statistics
+        doc <- doc %>%
+          body_add_par("DESCRIPTIVE STATISTICS", style = "heading 2")
+        
+        desc_stats <- data.frame(
+          Statistic = c("Number of Observations", 
+                        paste(input$cor_var1, "Mean"),
+                        paste(input$cor_var1, "SD"),
+                        paste(input$cor_var2, "Mean"),
+                        paste(input$cor_var2, "SD")),
+          Value = c(
+            nrow(results$data),
+            round(mean(results$data$var1), 3),
+            round(sd(results$data$var1), 3),
+            round(mean(results$data$var2), 3),
+            round(sd(results$data$var2), 3)
+          )
+        )
+        
+        ft_desc <- flextable(desc_stats) %>%
+          theme_zebra() %>%
+          autofit()
+        
+        doc <- doc %>% body_add_flextable(ft_desc)
+        
+        # Correlation results
+        doc <- doc %>%
+          body_add_par("CORRELATION RESULTS", style = "heading 2")
+        
+        ft_cor <- flextable(results$table) %>%
+          theme_zebra() %>%
+          autofit()
+        
+        doc <- doc %>% body_add_flextable(ft_cor)
+        
+        # Interpretation
+        doc <- doc %>%
+          body_add_par("INTERPRETATION", style = "heading 2")
+        
+        interpretation_text <- paste(
+          "The correlation analysis revealed a ", 
+          results$interpretation$strength, " ", 
+          results$interpretation$direction, " relationship between ", 
+          input$cor_var1, " and ", input$cor_var2, 
+          " (r = ", round(results$interpretation$r_value, 3), 
+          ifelse(results$interpretation$p_value < 0.05, 
+                 ", p < 0.05, statistically significant).", 
+                 ", p > 0.05, not statistically significant)."),
+          " The ", input$cor_conf * 100, "% confidence interval for the correlation coefficient is [",
+          round(results$interpretation$ci_lower, 3), ", ",
+          round(results$interpretation$ci_upper, 3), "].",
+          sep = ""
+        )
+        
+        doc <- doc %>% 
+          body_add_par(interpretation_text, style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Statistical significance note
+        if (results$interpretation$p_value < 0.05) {
+          doc <- doc %>%
+            body_add_par("Statistical Significance:", style = "heading 3") %>%
+            body_add_par("The correlation is statistically significant (p < 0.05), suggesting that the observed relationship is unlikely to be due to chance.", style = "Normal")
+        } else {
+          doc <- doc %>%
+            body_add_par("Statistical Significance:", style = "heading 3") %>%
+            body_add_par("The correlation is not statistically significant (p > 0.05), suggesting that any observed relationship could be due to chance.", style = "Normal")
+        }
+        
+        # Practical significance note
+        doc <- doc %>%
+          body_add_par("Practical Significance:", style = "heading 3")
+        
+        practical_text <- if (abs(results$interpretation$r_value) < 0.3) {
+          "The correlation is weak, suggesting little practical relationship between the variables."
+        } else if (abs(results$interpretation$r_value) < 0.7) {
+          "The correlation is moderate, suggesting a meaningful but not strong relationship between the variables."
+        } else {
+          "The correlation is strong, suggesting a substantial relationship between the variables."
+        }
+        
+        doc <- doc %>% body_add_par(practical_text, style = "Normal")
+        
+        # Assumptions check
+        doc <- doc %>%
+          body_add_par("ASSUMPTIONS CHECK", style = "heading 2") %>%
+          body_add_par("For Pearson correlation, the key assumptions are:", style = "Normal") %>%
+          body_add_par("1. Linearity: Relationship between variables should be linear", style = "Normal") %>%
+          body_add_par("2. Homoscedasticity: Constant variance of residuals", style = "Normal") %>%
+          body_add_par("3. Normality: Variables should be approximately normally distributed", style = "Normal") %>%
+          body_add_par("Note: Kendall and Spearman correlations are non-parametric and do not require normality assumptions.", style = "Normal")
+      }
+      
+      print(doc, target = file)
+    }
+  )
+  
+  # Download handler for correlation plot
+  output$download_cor_plot <- downloadHandler(
+    filename = function() {
+      paste("correlation_plot_", input$cor_var1, "_", input$cor_var2, "_", 
+            Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      req(cor_results(), input$cor_scatter)
+      
+      results <- cor_results()
+      
+      if (!results$success) {
+        # Create error plot
+        p <- ggplot() +
+          annotate("text", x = 0.5, y = 0.5, 
+                   label = "Error: Unable to generate correlation plot", 
+                   size = 6, color = "red") +
+          theme_void()
+      } else {
+        # Create high-quality scatter plot with ggplot2
+        p <- ggplot(results$data, aes(x = var1, y = var2)) +
+          geom_point(color = input$cor_point_color, 
+                     size = input$cor_point_size,
+                     alpha = input$cor_point_alpha) +
+          labs(
+            title = paste("Scatter Plot:", input$cor_var1, "vs", input$cor_var2),
+            x = input$cor_var1,
+            y = input$cor_var2,
+            caption = paste("Correlation (", tools::toTitleCase(input$cor_method), 
+                            "): r = ", round(results$interpretation$r_value, 3),
+                            ", p = ", round(results$interpretation$p_value, 4))
+          ) +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+            axis.title = element_text(size = 14, face = "bold"),
+            axis.text = element_text(size = 12),
+            plot.caption = element_text(size = 11, face = "italic", hjust = 0.5),
+            panel.grid.minor = element_blank(),
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5)
+          )
+        
+        # Add trend line if requested
+        if (input$cor_fit) {
+          p <- p +
+            geom_smooth(method = "lm", 
+                        se = FALSE, 
+                        color = input$cor_line_color,
+                        size = input$cor_line_size)
+          
+          # Add equation and R-squared
+          fit <- lm(var2 ~ var1, data = results$data)
+          eq <- paste0("y = ", round(coef(fit)[1], 3), 
+                       ifelse(coef(fit)[2] >= 0, " + ", " - "), 
+                       abs(round(coef(fit)[2], 3)), "x")
+          r2 <- paste0("R² = ", round(summary(fit)$r.squared, 3))
+          
+          p <- p +
+            annotate("text", 
+                     x = min(results$data$var1) + 0.1 * diff(range(results$data$var1)),
+                     y = max(results$data$var2) - 0.1 * diff(range(results$data$var2)),
+                     label = paste(eq, r2, sep = "\n"),
+                     color = input$cor_line_color,
+                     size = 4,
+                     fontface = "bold")
+        }
+      }
+      
+      ggsave(file, plot = p, device = "png", width = 10, height = 8, dpi = 300, bg = "white")
+    }
+  )
+  
+  # Ultra-robust Central Tendency Analysis
   central_results <- eventReactive(input$run_central, {
     req(input$central_var, processed_data())
     
@@ -1781,14 +4388,47 @@ server <- function(input, output, session) {
     })
   })
   
-  # Updated boxplot output with stratification
+  output$central_table <- renderDT({
+    req(central_results())
+    
+    results <- central_results()
+    
+    if (!results$success) {
+      datatable(results$table, 
+                options = list(dom = 't'),
+                rownames = FALSE,
+                caption = "Central Tendency Analysis - Error")
+    } else {
+      datatable(results$table,
+                options = list(
+                  pageLength = 20,
+                  dom = 'Blfrtip',
+                  scrollX = TRUE,
+                  buttons = c('copy', 'csv', 'excel')
+                ),
+                rownames = FALSE,
+                caption = "Central Tendency Measures",
+                extensions = 'Buttons'
+      ) %>%
+        formatRound(columns = c('Mean', 'Median', 'SD', 'Variance', 'Min', 'Max', 
+                                'Q1', 'Q3', 'IQR', 'Skewness', 'Kurtosis'), 
+                    digits = 4) %>%
+        formatStyle(
+          'Mean',
+          background = styleColorBar(range(results$table$Mean, na.rm = TRUE), '#0C5EA8'),
+          backgroundSize = '100% 90%',
+          backgroundRepeat = 'no-repeat',
+          backgroundPosition = 'center'
+        )
+    }
+  })
+  
   output$central_boxplot <- renderPlotly({
     req(central_results())
     
     results <- central_results()
     
     if (!results$success) {
-      # Error plot
       p <- plot_ly() %>%
         add_annotations(
           text = results$table$Error[1],
@@ -1822,12 +4462,16 @@ server <- function(input, output, session) {
                    boxpoints = "all",
                    jitter = 0.3,
                    pointpos = -1.8,
-                   marker = list(size = 3)) %>%
+                   marker = list(size = 3, opacity = 0.7),
+                   line = list(width = 1.5)) %>%
         layout(
           title = list(text = paste(input$central_title, "- Boxplot by", input$central_stratify), 
-                       size = input$central_title_size),
-          yaxis = list(title = input$central_var),
-          xaxis = list(title = input$central_stratify),
+                       font = list(size = input$central_title_size)),
+          yaxis = list(title = input$central_var,
+                       titlefont = list(size = input$central_y_size)),
+          xaxis = list(title = input$central_stratify,
+                       titlefont = list(size = input$central_x_size)),
+          margin = list(b = 80, l = 60, r = 40, t = 60),
           showlegend = FALSE
         )
     } else {
@@ -1838,14 +4482,18 @@ server <- function(input, output, session) {
                    boxpoints = "all",
                    jitter = 0.3,
                    pointpos = -1.8,
-                   marker = list(color = input$central_color, size = 3),
-                   line = list(color = input$central_color),
+                   marker = list(color = input$central_color, 
+                                 size = 3,
+                                 opacity = 0.7),
+                   line = list(color = input$central_color, width = 1.5),
                    fillcolor = paste0(input$central_color, "33")) %>%
         layout(
           title = list(text = paste(input$central_title, "- Boxplot"), 
-                       size = input$central_title_size),
-          yaxis = list(title = input$central_var),
+                       font = list(size = input$central_title_size)),
+          yaxis = list(title = input$central_var,
+                       titlefont = list(size = input$central_y_size)),
           xaxis = list(title = "", showticklabels = FALSE),
+          margin = list(l = 60, r = 40, t = 60),
           showlegend = FALSE
         )
     }
@@ -1853,14 +4501,12 @@ server <- function(input, output, session) {
     return(p)
   })
   
-  # Updated histogram output with stratification
   output$central_histogram <- renderPlotly({
     req(central_results())
     
     results <- central_results()
     
     if (!results$success) {
-      # Error plot
       p <- plot_ly() %>%
         add_annotations(
           text = results$table$Error[1],
@@ -1887,14 +4533,19 @@ server <- function(input, output, session) {
       )
       
       p <- plot_ly(plot_data) %>%
-        add_histogram(x = ~value, color = ~group, opacity = 0.7) %>%
+        add_histogram(x = ~value, color = ~group, opacity = 0.7,
+                      marker = list(line = list(color = 'white', width = 1))) %>%
         layout(
           title = list(text = paste(input$central_title, "- Histogram by", input$central_stratify), 
-                       size = input$central_title_size),
-          xaxis = list(title = input$central_var),
-          yaxis = list(title = "Frequency"),
+                       font = list(size = input$central_title_size)),
+          xaxis = list(title = input$central_var,
+                       titlefont = list(size = input$central_x_size)),
+          yaxis = list(title = "Frequency",
+                       titlefont = list(size = input$central_y_size)),
           barmode = "overlay",
-          bargap = 0.1
+          bargap = 0.1,
+          margin = list(b = 80, l = 60, r = 40, t = 60),
+          legend = list(orientation = "h", y = -0.2)
         )
     } else {
       # Create single histogram
@@ -1906,10 +4557,13 @@ server <- function(input, output, session) {
                    opacity = 0.7) %>%
         layout(
           title = list(text = paste(input$central_title, "- Histogram"), 
-                       size = input$central_title_size),
-          xaxis = list(title = input$central_var),
-          yaxis = list(title = "Frequency"),
-          bargap = 0.1
+                       font = list(size = input$central_title_size)),
+          xaxis = list(title = input$central_var,
+                       titlefont = list(size = input$central_x_size)),
+          yaxis = list(title = "Frequency",
+                       titlefont = list(size = input$central_y_size)),
+          bargap = 0.1,
+          margin = list(b = 80, l = 60, r = 40, t = 60)
         )
     }
     
@@ -1934,7 +4588,6 @@ server <- function(input, output, session) {
       
       if(input$freq_type == "Table") {
         if (!results$success) {
-          # Create error document
           ft <- flextable(data.frame(Error = "Unable to generate frequency table due to error")) %>%
             set_caption("Frequency Analysis - Error") %>%
             theme_zebra()
@@ -1942,7 +4595,6 @@ server <- function(input, output, session) {
           doc <- read_docx() %>% 
             body_add_flextable(ft)
         } else {
-          # Create formatted table for download
           ft <- flextable(results$table) %>%
             set_caption(paste("Frequency Distribution -", input$freq_var)) %>%
             theme_zebra() %>%
@@ -1954,27 +4606,28 @@ server <- function(input, output, session) {
         print(doc, target = file)
         
       } else {
-        # Download plot
         if (!results$success) {
-          # Create error plot
           p <- ggplot() +
             annotate("text", x = 1, y = 1, 
                      label = "Error: Unable to generate frequency plot", 
                      size = 6, color = "red") +
             theme_void()
         } else {
-          # Create high-quality bar plot using ggplot2
           p <- ggplot(results$table, aes(x = Category, y = Frequency)) +
             geom_bar(stat = "identity", fill = input$freq_color, alpha = 0.8) +
+            geom_text(aes(label = Frequency), vjust = -0.5, size = 4) +
             labs(title = input$freq_title,
                  x = input$freq_var,
                  y = "Frequency") +
             theme_minimal() +
             theme(
-              plot.title = element_text(size = input$freq_title_size, face = "bold"),
-              axis.title.x = element_text(size = input$freq_x_size),
-              axis.title.y = element_text(size = input$freq_y_size),
-              axis.text.x = element_text(angle = 45, hjust = 1)
+              plot.title = element_text(size = input$freq_title_size, face = "bold", hjust = 0.5),
+              axis.title.x = element_text(size = input$freq_x_size, face = "bold"),
+              axis.title.y = element_text(size = input$freq_y_size, face = "bold"),
+              axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
+              axis.text.y = element_text(size = 11),
+              panel.grid.major = element_line(color = "grey90"),
+              panel.grid.minor = element_blank()
             )
         }
         ggsave(file, plot = p, device = "png", width = 10, height = 6, dpi = 300)
@@ -1982,7 +4635,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # Central Tendency Download (already exists in your code, but ensure it's properly placed)
+  # Central Tendency Download
   output$download_central <- downloadHandler(
     filename = function() {
       if(input$central_type == "Table") {
@@ -2000,7 +4653,6 @@ server <- function(input, output, session) {
       
       if(input$central_type == "Table") {
         if (!results$success) {
-          # Create error document
           ft <- flextable(data.frame(Error = "Unable to generate central tendency table due to error")) %>%
             set_caption("Central Tendency Analysis - Error") %>%
             theme_zebra()
@@ -2008,7 +4660,6 @@ server <- function(input, output, session) {
           doc <- read_docx() %>% 
             body_add_flextable(ft)
         } else {
-          # Create formatted table for download
           ft <- flextable(results$table) %>%
             set_caption(paste("Central Tendency Measures -", input$central_var)) %>%
             theme_zebra() %>%
@@ -2020,37 +4671,40 @@ server <- function(input, output, session) {
         print(doc, target = file)
         
       } else if(input$central_type == "Boxplot") {
-        # Download boxplot
         if (!results$success) {
-          # Create error plot
           p <- ggplot() +
             annotate("text", x = 1, y = 1, 
                      label = "Error: Unable to generate boxplot", 
                      size = 6, color = "red") +
             theme_void()
         } else {
-          # Create boxplot using ggplot2 for high-quality download
           df_plot <- data.frame(value = results$data)
           if (!is.null(results$stratify)) {
             df_plot$group <- results$stratify
             p <- ggplot(df_plot, aes(x = group, y = value, fill = group)) +
-              geom_boxplot(alpha = 0.7, outlier.color = "red") +
+              geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.size = 2) +
+              stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "blue") +
               labs(title = paste(input$central_title, "- Boxplot by", input$central_stratify),
                    y = input$central_var,
                    x = input$central_stratify) +
               theme_minimal() +
               theme(
-                plot.title = element_text(size = input$central_title_size, face = "bold"),
+                plot.title = element_text(size = input$central_title_size, face = "bold", hjust = 0.5),
+                axis.title.x = element_text(size = 14, face = "bold"),
+                axis.title.y = element_text(size = 14, face = "bold"),
                 legend.position = "none"
-              )
+              ) +
+              scale_fill_brewer(palette = "Set2")
           } else {
             p <- ggplot(df_plot, aes(y = value)) +
-              geom_boxplot(fill = input$central_color, alpha = 0.7, outlier.color = "red") +
+              geom_boxplot(fill = input$central_color, alpha = 0.7, outlier.color = "red", outlier.size = 2) +
+              stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "blue") +
               labs(title = paste(input$central_title, "- Boxplot"),
                    y = input$central_var) +
               theme_minimal() +
               theme(
-                plot.title = element_text(size = input$central_title_size, face = "bold"),
+                plot.title = element_text(size = input$central_title_size, face = "bold", hjust = 0.5),
+                axis.title.y = element_text(size = 14, face = "bold"),
                 axis.title.x = element_blank(),
                 axis.text.x = element_blank(),
                 axis.ticks.x = element_blank()
@@ -2060,16 +4714,13 @@ server <- function(input, output, session) {
         ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 300)
         
       } else {
-        # Download histogram
         if (!results$success) {
-          # Create error plot
           p <- ggplot() +
             annotate("text", x = 1, y = 1, 
                      label = "Error: Unable to generate histogram", 
                      size = 6, color = "red") +
             theme_void()
         } else {
-          # Create histogram using ggplot2 for high-quality download
           df_plot <- data.frame(value = results$data)
           if (!is.null(results$stratify)) {
             df_plot$group <- results$stratify
@@ -2077,11 +4728,15 @@ server <- function(input, output, session) {
               geom_histogram(alpha = 0.7, position = "identity", bins = input$central_bins) +
               labs(title = paste(input$central_title, "- Histogram by", input$central_stratify),
                    x = input$central_var, 
-                   y = "Frequency") +
+                   y = "Frequency",
+                   fill = input$central_stratify) +
               theme_minimal() +
               theme(
-                plot.title = element_text(size = input$central_title_size, face = "bold")
-              )
+                plot.title = element_text(size = input$central_title_size, face = "bold", hjust = 0.5),
+                axis.title = element_text(size = 14, face = "bold"),
+                legend.position = "right"
+              ) +
+              scale_fill_brewer(palette = "Set2")
           } else {
             p <- ggplot(df_plot, aes(x = value)) +
               geom_histogram(fill = input$central_color, bins = input$central_bins, 
@@ -2091,7 +4746,8 @@ server <- function(input, output, session) {
                    y = "Frequency") +
               theme_minimal() +
               theme(
-                plot.title = element_text(size = input$central_title_size, face = "bold")
+                plot.title = element_text(size = input$central_title_size, face = "bold", hjust = 0.5),
+                axis.title = element_text(size = 14, face = "bold")
               )
           }
         }
@@ -2100,85 +4756,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # Epidemic Curve Plot Download
-  output$download_epicurve <- downloadHandler(
-    filename = function() {
-      paste("epidemic_curve_", input$epi_interval, "_", Sys.Date(), ".png", sep = "")
-    },
-    content = function(file) {
-      req(epi_results())
-      
-      results <- epi_results()
-      
-      if (!results$success) {
-        # Create error plot
-        p <- ggplot() +
-          annotate("text", x = 1, y = 1, 
-                   label = paste("Error:", results$error), 
-                   size = 5, color = "red") +
-          theme_void()
-      } else {
-        epi_data <- results$data
-        
-        # Create high-quality epidemic curve using ggplot2
-        if (input$epi_group != "none") {
-          p <- ggplot(epi_data, aes(x = time_group, y = cases, fill = Group)) +
-            geom_col(position = "stack") +
-            scale_fill_brewer(palette = "Set1") +
-            labs(
-              title = input$epi_title,
-              subtitle = paste("Time Interval:", input$epi_interval),
-              x = "Date",
-              y = "Number of Cases",
-              fill = input$epi_group
-            )
-        } else {
-          p <- ggplot(epi_data, aes(x = time_group, y = cases)) +
-            geom_col(fill = input$epi_color, alpha = 0.8) +
-            labs(
-              title = input$epi_title,
-              subtitle = paste("Time Interval:", input$epi_interval),
-              x = "Date",
-              y = "Number of Cases"
-            )
-        }
-        
-        p <- p +
-          theme_minimal() +
-          theme(
-            plot.title = element_text(size = input$epi_title_size, face = "bold"),
-            plot.subtitle = element_text(size = input$epi_title_size - 2, color = "gray50"),
-            axis.title.x = element_text(size = input$epi_x_size),
-            axis.title.y = element_text(size = input$epi_y_size),
-            axis.text.x = element_text(angle = 45, hjust = 1),
-            legend.position = ifelse(input$epi_group != "none", "right", "none")
-          )
-      }
-      
-      ggsave(file, plot = p, device = "png", width = 12, height = 8, dpi = 300)
-    }
-  )
-  
-  # Epidemic Curve Data Download
-  output$download_epi_data <- downloadHandler(
-    filename = function() {
-      paste("epidemic_data_", input$epi_interval, "_", Sys.Date(), ".csv", sep = "")
-    },
-    content = function(file) {
-      req(epi_results())
-      
-      results <- epi_results()
-      
-      if (!results$success) {
-        # Create error data frame
-        write.csv(data.frame(Error = results$error), file, row.names = FALSE)
-      } else {
-        # Write epidemic data to CSV
-        write.csv(results$data, file, row.names = FALSE)
-      }
-    }
-  )
-  # Ultra-robust Epidemic Curve Analysis - CORRECTED VERSION
+  # Ultra-robust Epidemic Curve Analysis
   epi_results <- eventReactive(input$run_epi, {
     req(input$epi_date, input$epi_case, processed_data())
     
@@ -2231,7 +4809,6 @@ server <- function(input, output, session) {
         ))
       }
       
-      # NEW APPROACH: Handle date variable as categorical for all interval types
       # Convert date variable to character/factor for categorical handling
       df$date_converted <- as.character(date_data)
       
@@ -2263,33 +4840,14 @@ server <- function(input, output, session) {
         df$group_var[is.na(df$group_var)] <- "Missing"
       }
       
-      # NEW: For Day/Week/Month/Year intervals, treat date as categorical
-      # The aggregation will be done by the unique date values as categories
-      
-      # Remove rows with invalid case counts
-      df_clean <- df %>%
-        filter(!is.na(case_numeric))
-      
-      if (nrow(df_clean) == 0) {
-        return(list(
-          data = data.frame(),
-          error = "No valid data after removing missing case counts",
-          success = FALSE
-        ))
-      }
-      
       # Use date_converted directly as time_group for categorical aggregation
-      df_clean$time_group <- df_clean$date_converted
+      df$time_group <- df$date_converted
       
-      # For date-like categorical variables, we can try to convert to proper dates
-      # but if it fails, we'll keep them as categorical
+      # For date-like categorical variables, try to convert to proper dates
       if (input$epi_interval %in% c("Day", "Week", "Month", "Year")) {
-        # Try to parse as dates, but if it fails, keep as categorical
         tryCatch({
-          # Sample a few values to check if they look like dates
-          sample_dates <- head(na.omit(unique(df_clean$date_converted)), 10)
+          sample_dates <- head(na.omit(unique(df$date_converted)), 10)
           
-          # Check if any sample looks like a date
           looks_like_date <- any(
             grepl("\\d{1,4}[/-]\\d{1,2}[/-]\\d{1,4}", sample_dates) |
               grepl("\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}", sample_dates) |
@@ -2297,9 +4855,7 @@ server <- function(input, output, session) {
           )
           
           if (looks_like_date) {
-            # Try to convert to dates for proper interval grouping
             convert_date <- function(x) {
-              # Try different date formats
               formats <- c("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y.%m.%d", 
                            "%d-%m-%Y", "%m-%d-%Y", "%B %d, %Y", "%d %B %Y",
                            "%b %d, %Y", "%d %b %Y", "%Y/%m/%d", "%m/%d/%y")
@@ -2313,33 +4869,30 @@ server <- function(input, output, session) {
               return(as.Date(NA))
             }
             
-            df_clean$date_attempt <- convert_date(df_clean$date_converted)
+            df$date_attempt <- convert_date(df$date_converted)
             
-            # Only use date conversion if it worked for at least some values
-            if (!all(is.na(df_clean$date_attempt))) {
+            if (!all(is.na(df$date_attempt))) {
               if (input$epi_interval == "Day") {
-                df_clean$time_group <- df_clean$date_attempt
+                df$time_group <- df$date_attempt
               } else if (input$epi_interval == "Week") {
-                df_clean$time_group <- lubridate::floor_date(df_clean$date_attempt, "week")
+                df$time_group <- lubridate::floor_date(df$date_attempt, "week")
               } else if (input$epi_interval == "Month") {
-                df_clean$time_group <- lubridate::floor_date(df_clean$date_attempt, "month")
+                df$time_group <- lubridate::floor_date(df$date_attempt, "month")
               } else {
-                df_clean$time_group <- lubridate::floor_date(df_clean$date_attempt, "year")
+                df$time_group <- lubridate::floor_date(df$date_attempt, "year")
               }
               
-              # Convert back to character for consistent handling
-              df_clean$time_group <- as.character(df_clean$time_group)
+              df$time_group <- as.character(df$time_group)
             }
           }
         }, error = function(e) {
-          # If date conversion fails, keep as categorical
-          message("Date conversion failed, using categorical approach: ", e$message)
+          message("Date conversion failed: ", e$message)
         })
       }
       
       # Aggregate data
       if (input$epi_group != "none") {
-        epi_data <- df_clean %>%
+        epi_data <- df %>%
           group_by(time_group, group_var) %>%
           summarise(
             cases = sum(case_numeric, na.rm = TRUE),
@@ -2348,7 +4901,7 @@ server <- function(input, output, session) {
           ) %>%
           rename(Group = group_var)
       } else {
-        epi_data <- df_clean %>%
+        epi_data <- df %>%
           group_by(time_group) %>%
           summarise(
             cases = sum(case_numeric, na.rm = TRUE),
@@ -2403,7 +4956,6 @@ server <- function(input, output, session) {
     results <- epi_results()
     
     if (!results$success) {
-      # Error plot
       p <- plot_ly() %>%
         add_annotations(
           text = results$error,
@@ -2426,7 +4978,6 @@ server <- function(input, output, session) {
     
     # Create epidemic curve
     if (input$epi_group != "none") {
-      # Grouped epidemic curve
       p <- plot_ly(epi_data, 
                    x = ~time_group, 
                    y = ~cases, 
@@ -2438,37 +4989,44 @@ server <- function(input, output, session) {
                                  '<br>Cases:', cases,
                                  '<br>Records:', n_records)) %>%
         layout(
-          title = list(text = input$epi_title, size = input$epi_title_size),
-          xaxis = list(title = "Date", tickangle = 45),
-          yaxis = list(title = "Number of Cases"),
+          title = list(text = input$epi_title, 
+                       font = list(size = input$epi_title_size)),
+          xaxis = list(title = "Date", tickangle = 45,
+                       titlefont = list(size = input$epi_x_size)),
+          yaxis = list(title = "Number of Cases",
+                       titlefont = list(size = input$epi_y_size)),
           barmode = 'stack',
           margin = list(b = 100, l = 60, r = 40, t = 60),
-          showlegend = TRUE
+          legend = list(orientation = "h", y = -0.2),
+          hoverlabel = list(font = list(size = 12))
         )
     } else {
-      # Simple epidemic curve
       p <- plot_ly(epi_data, 
                    x = ~time_group, 
                    y = ~cases,
                    type = 'bar',
-                   marker = list(color = input$epi_color),
+                   marker = list(color = input$epi_color,
+                                 line = list(color = 'rgba(0,0,0,0.2)', width = 1)),
                    hoverinfo = 'text',
                    text = ~paste('Date:', time_group,
                                  '<br>Cases:', cases,
                                  '<br>Records:', n_records)) %>%
         layout(
-          title = list(text = input$epi_title, size = input$epi_title_size),
-          xaxis = list(title = "Date", tickangle = 45),
-          yaxis = list(title = "Number of Cases"),
+          title = list(text = input$epi_title, 
+                       font = list(size = input$epi_title_size)),
+          xaxis = list(title = "Date", tickangle = 45,
+                       titlefont = list(size = input$epi_x_size)),
+          yaxis = list(title = "Number of Cases",
+                       titlefont = list(size = input$epi_y_size)),
           margin = list(b = 100, l = 60, r = 40, t = 60),
-          showlegend = FALSE
+          showlegend = FALSE,
+          hoverlabel = list(font = list(size = 12))
         )
     }
     
     return(p)
   })
   
-  # Add summary statistics output
   output$epi_summary <- renderUI({
     req(epi_results())
     
@@ -2487,25 +5045,27 @@ server <- function(input, output, session) {
     summary <- results$summary
     
     div(
-      class = "panel panel-default",
+      class = "card",
       div(
-        class = "panel-heading",
-        h4("Epidemic Summary Statistics", class = "panel-title")
+        class = "card-header",
+        h4("Epidemic Summary Statistics", class = "card-title", style = "margin: 0;")
       ),
       div(
-        class = "panel-body",
+        class = "card-body",
         fluidRow(
           column(6,
                  tags$ul(
+                   class = "list-unstyled",
                    tags$li(tags$strong("Total Cases:"), summary$total_cases),
-                   tags$li(tags$strong("Date Range:"), summary$date_range),
+                   tags$li(tags$strong("Date Range:"), summary$time_range),
                    tags$li(tags$strong("Time Periods:"), summary$n_time_periods)
                  )
           ),
           column(6,
                  tags$ul(
+                   class = "list-unstyled",
                    tags$li(tags$strong("Peak Cases:"), summary$peak_cases),
-                   tags$li(tags$strong("Peak Date:"), summary$peak_date)
+                   tags$li(tags$strong("Peak Time:"), summary$peak_time)
                  )
           )
         )
@@ -2523,7 +5083,6 @@ server <- function(input, output, session) {
       results <- epi_results()
       
       if (!results$success) {
-        # Create error plot
         p <- ggplot() +
           annotate("text", x = 1, y = 1, 
                    label = paste("Error:", results$error), 
@@ -2532,7 +5091,6 @@ server <- function(input, output, session) {
       } else {
         epi_data <- results$data
         
-        # Create high-quality epidemic curve using ggplot2
         if (input$epi_group != "none") {
           p <- ggplot(epi_data, aes(x = time_group, y = cases, fill = Group)) +
             geom_col(position = "stack") +
@@ -2558,12 +5116,16 @@ server <- function(input, output, session) {
         p <- p +
           theme_minimal() +
           theme(
-            plot.title = element_text(size = input$epi_title_size, face = "bold"),
-            plot.subtitle = element_text(size = input$epi_title_size - 2, color = "gray50"),
-            axis.title.x = element_text(size = input$epi_x_size),
-            axis.title.y = element_text(size = input$epi_y_size),
-            axis.text.x = element_text(angle = 45, hjust = 1),
-            legend.position = ifelse(input$epi_group != "none", "right", "none")
+            plot.title = element_text(size = input$epi_title_size, face = "bold", hjust = 0.5),
+            plot.subtitle = element_text(size = input$epi_title_size - 2, color = "gray50", hjust = 0.5),
+            axis.title.x = element_text(size = input$epi_x_size, face = "bold"),
+            axis.title.y = element_text(size = input$epi_y_size, face = "bold"),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+            axis.text.y = element_text(size = 10),
+            legend.position = ifelse(input$epi_group != "none", "right", "none"),
+            panel.grid.major = element_line(color = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.border = element_rect(color = "black", fill = NA, size = 0.5)
           )
       }
       
@@ -2571,7 +5133,6 @@ server <- function(input, output, session) {
     }
   )
   
-  # Also add data table download
   output$download_epi_data <- downloadHandler(
     filename = function() {
       paste("epidemic_data_", input$epi_interval, "_", Sys.Date(), ".csv", sep = "")
@@ -2582,10 +5143,8 @@ server <- function(input, output, session) {
       results <- epi_results()
       
       if (!results$success) {
-        # Create error data frame
         write.csv(data.frame(Error = results$error), file, row.names = FALSE)
       } else {
-        # Write epidemic data to CSV
         write.csv(results$data, file, row.names = FALSE)
       }
     }
@@ -2645,7 +5204,15 @@ server <- function(input, output, session) {
   
   output$ip_table <- renderDT({
     req(ip_results())
-    datatable(ip_results()$table, options = list(dom = 't'))
+    datatable(ip_results()$table, 
+              options = list(dom = 't'),
+              rownames = FALSE,
+              caption = "Disease Frequency Measures") %>%
+      formatStyle(
+        'Rate',
+        backgroundColor = styleInterval(c(0.1, 1, 10), 
+                                        c('#FFE5E5', '#FFF3CD', '#D4EDDA', '#D1ECF1'))
+      )
   })
   
   output$download_ip <- downloadHandler(
@@ -2653,7 +5220,8 @@ server <- function(input, output, session) {
     content = function(file) {
       ft <- flextable(ip_results()$table) %>%
         set_caption("Disease Frequency Measures") %>%
-        theme_zebra()
+        theme_zebra() %>%
+        autofit()
       
       doc <- read_docx() %>% 
         body_add_flextable(ft)
@@ -2679,7 +5247,6 @@ server <- function(input, output, session) {
           body_add_par("ONE-WAY ANOVA ANALYSIS - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("ONE-WAY ANOVA ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$anova_outcome), style = "Normal") %>%
@@ -2687,7 +5254,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Number of Groups:", length(unique(processed_data()[[input$anova_group]]))), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # ANOVA results table
         doc <- doc %>%
           body_add_par("ANOVA RESULTS", style = "heading 2")
         
@@ -2702,14 +5268,10 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_anova)
         
-        # Group descriptives
         doc <- doc %>%
           body_add_par("GROUP DESCRIPTIVES", style = "heading 2")
         
         df <- processed_data()
-        outcome <- df[[input$anova_outcome]]
-        group <- df[[input$anova_group]]
-        
         descriptives <- df %>%
           group_by(Group = !!sym(input$anova_group)) %>%
           summarise(
@@ -2726,7 +5288,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_desc)
         
-        # Post-hoc results if available
         if (!is.null(results$posthoc)) {
           doc <- doc %>%
             body_add_par("POST-HOC COMPARISONS", style = "heading 2")
@@ -2748,7 +5309,6 @@ server <- function(input, output, session) {
           }
         }
         
-        # Assumptions check if available
         if (!is.null(results$assumptions)) {
           doc <- doc %>%
             body_add_par("ASSUMPTIONS CHECK", style = "heading 2")
@@ -2776,7 +5336,6 @@ server <- function(input, output, session) {
           doc <- doc %>% body_add_flextable(ft_assumptions)
         }
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -2818,7 +5377,6 @@ server <- function(input, output, session) {
           body_add_par("TWO-WAY ANOVA ANALYSIS - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("TWO-WAY ANOVA ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$anova_outcome_2way), style = "Normal") %>%
@@ -2827,7 +5385,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Interaction Term:", ifelse(input$anova_interaction, "Included", "Excluded")), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # ANOVA results table
         doc <- doc %>%
           body_add_par("TWO-WAY ANOVA RESULTS", style = "heading 2")
         
@@ -2842,7 +5399,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_anova)
         
-        # Simple effects if available
         if (!is.null(results$simple_effects)) {
           doc <- doc %>%
             body_add_par("SIMPLE EFFECTS ANALYSIS", style = "heading 2")
@@ -2853,11 +5409,9 @@ server <- function(input, output, session) {
           }
         }
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
-        # Extract main effects and interaction p-values
         p_values <- results$summary[[1]]$`Pr(>F)`
         sources <- rownames(results$summary[[1]])
         
@@ -2894,7 +5448,6 @@ server <- function(input, output, session) {
           body_add_par("WELCH ANOVA ANALYSIS - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("WELCH ANOVA ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$welch_outcome), style = "Normal") %>%
@@ -2902,7 +5455,6 @@ server <- function(input, output, session) {
           body_add_par("Method: Welch ANOVA (robust to unequal variances)", style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # Welch ANOVA results
         doc <- doc %>%
           body_add_par("WELCH ANOVA RESULTS", style = "heading 2")
         
@@ -2922,7 +5474,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_welch)
         
-        # Games-Howell post-hoc if available
         if (!is.null(results$posthoc)) {
           doc <- doc %>%
             body_add_par("GAMES-HOWELL POST-HOC TEST", style = "heading 2")
@@ -2933,7 +5484,6 @@ server <- function(input, output, session) {
           }
         }
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -2972,7 +5522,6 @@ server <- function(input, output, session) {
           body_add_par("ONE-SAMPLE T-TEST - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("ONE-SAMPLE T-TEST ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Variable:", input$ttest_onesample_var), style = "Normal") %>%
@@ -2981,7 +5530,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Confidence Level:", input$ttest_onesample_conf * 100, "%"), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # T-test results
         doc <- doc %>%
           body_add_par("T-TEST RESULTS", style = "heading 2")
         
@@ -3007,7 +5555,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_ttest)
         
-        # Descriptive statistics
         doc <- doc %>%
           body_add_par("DESCRIPTIVE STATISTICS", style = "heading 2")
         
@@ -3031,7 +5578,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_desc)
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -3079,7 +5625,6 @@ server <- function(input, output, session) {
           body_add_par("INDEPENDENT T-TEST - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("INDEPENDENT T-TEST ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$ttest_independent_var), style = "Normal") %>%
@@ -3090,7 +5635,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Alternative Hypothesis:", input$ttest_alternative), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # T-test results
         doc <- doc %>%
           body_add_par("T-TEST RESULTS", style = "heading 2")
         
@@ -3114,7 +5658,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_ttest)
         
-        # Group descriptives
         doc <- doc %>%
           body_add_par("GROUP DESCRIPTIVES", style = "heading 2")
         
@@ -3124,7 +5667,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_desc)
         
-        # Variance test results
         doc <- doc %>%
           body_add_par("VARIANCE EQUALITY TEST", style = "heading 2")
         
@@ -3147,7 +5689,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_var)
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -3203,7 +5744,6 @@ server <- function(input, output, session) {
           body_add_par("PAIRED T-TEST - ERROR", style = "heading 1") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        # Title and overview
         doc <- doc %>%
           body_add_par("PAIRED T-TEST ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Variable 1 (Before/Time 1):", input$ttest_paired_var1), style = "Normal") %>%
@@ -3212,7 +5752,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Alternative Hypothesis:", input$ttest_paired_alternative), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # T-test results
         doc <- doc %>%
           body_add_par("PAIRED T-TEST RESULTS", style = "heading 2")
         
@@ -3236,7 +5775,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_ttest)
         
-        # Descriptive statistics
         doc <- doc %>%
           body_add_par("DESCRIPTIVE STATISTICS", style = "heading 2")
         
@@ -3246,7 +5784,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_desc)
         
-        # Difference analysis
         doc <- doc %>%
           body_add_par("DIFFERENCE ANALYSIS", style = "heading 2")
         
@@ -3269,7 +5806,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_diff)
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -3317,7 +5853,6 @@ server <- function(input, output, session) {
         body_add_par("NON-PARAMETRIC TESTS REPORT", style = "heading 1") %>%
         body_add_par("", style = "Normal")
       
-      # Mann-Whitney U Test results
       mann_results <- mannwhitney_results()
       if (mann_results$success) {
         doc <- doc %>%
@@ -3342,7 +5877,6 @@ server <- function(input, output, session) {
         doc <- doc %>% body_add_flextable(ft_mann)
       }
       
-      # Wilcoxon Signed-Rank Test results
       wilcox_results <- wilcoxon_results()
       if (wilcox_results$success) {
         doc <- doc %>%
@@ -3371,126 +5905,243 @@ server <- function(input, output, session) {
     }
   )
   
-  # ANOVA Assumptions Download
+  # ANOVA Assumptions Download - CORRECTED VERSION
   output$download_assumptions <- downloadHandler(
     filename = function() {
-      paste("anova_assumptions_", Sys.Date(), ".docx", sep = "")
+      paste("anova_assumptions_report_", Sys.Date(), ".docx", sep = "")
     },
     content = function(file) {
       req(assumptions_results())
+      
       results <- assumptions_results()
       
+      # Create a new Word document
       doc <- read_docx()
       
-      if (!results$success) {
+      # Title
+      doc <- doc %>%
+        body_add_par("ANOVA ASSUMPTIONS CHECK REPORT", style = "heading 1") %>%
+        body_add_par("", style = "Normal") %>%
+        body_add_par(paste("Analysis Date:", Sys.Date()), style = "Normal") %>%
+        body_add_par(paste("Outcome Variable:", input$assumptions_outcome), style = "Normal") %>%
+        body_add_par(paste("Grouping Variable:", input$assumptions_group), style = "Normal") %>%
+        body_add_par("", style = "Normal")
+      
+      # Error section if analysis failed
+      if (!is.null(results$error)) {
         doc <- doc %>%
-          body_add_par("ANOVA ASSUMPTIONS CHECK - ERROR", style = "heading 1") %>%
+          body_add_par("ANALYSIS ERROR", style = "heading 2") %>%
           body_add_par(results$error, style = "Normal")
       } else {
-        doc <- doc %>%
-          body_add_par("ANOVA ASSUMPTIONS CHECK REPORT", style = "heading 1") %>%
-          body_add_par(paste("Outcome Variable:", input$assumptions_outcome), style = "Normal") %>%
-          body_add_par(paste("Grouping Variable:", input$assumptions_group), style = "Normal") %>%
-          body_add_par("", style = "Normal")
-        
-        # Levene's test results
-        if (!is.null(results$levene)) {
+        # Levene's Test section
+        if (input$levene_test && !is.null(results$levene)) {
           doc <- doc %>%
-            body_add_par("HOMOGENEITY OF VARIANCE", style = "heading 2")
+            body_add_par("HOMOGENEITY OF VARIANCE", style = "heading 2") %>%
+            body_add_par("Levene's Test Results:", style = "Normal")
           
-          levene_df <- data.frame(
-            Statistic = c("F value", "DF1", "DF2", "P-value", "Interpretation"),
-            Value = c(
-              round(results$levene$`F value`[1], 4),
-              round(results$levene$Df[1], 0),
-              round(results$levene$Df[2], 0),
-              round(results$levene$`Pr(>F)`[1], 4),
-              ifelse(results$levene$`Pr(>F)`[1] > 0.05, 
-                     "Assumption met - variances are homogeneous", 
-                     "Assumption violated - variances are not homogeneous")
-            )
-          )
+          # Format Levene's test results
+          levene_df <- as.data.frame(results$levene)
+          levene_df <- cbind(Source = rownames(levene_df), levene_df)
+          rownames(levene_df) <- NULL
+          
+          # Clean column names
+          colnames(levene_df) <- c("Source", "DF1", "DF2", "F Value", "P Value")
           
           ft_levene <- flextable(levene_df) %>%
             theme_zebra() %>%
             autofit()
           
           doc <- doc %>% body_add_flextable(ft_levene)
+          
+          # Interpretation
+          p_value <- results$levene$`Pr(>F)`[1]
+          interpretation <- if (p_value > 0.05) {
+            "✓ Assumption met: Variances are homogeneous across groups (p > 0.05)"
+          } else {
+            paste("✗ Assumption violated: Variances are not homogeneous across groups (p =", 
+                  round(p_value, 4), ")")
+          }
+          
+          doc <- doc %>%
+            body_add_par("", style = "Normal") %>%
+            body_add_par(interpretation, style = "Normal") %>%
+            body_add_par("", style = "Normal")
         }
         
-        # Normality tests
-        if (!is.null(results$shapiro)) {
+        # Normality Tests section
+        if (input$normality_test && !is.null(results$shapiro)) {
           doc <- doc %>%
             body_add_par("NORMALITY TESTS", style = "heading 2")
           
+          # Create normality test results table
           normality_df <- data.frame(
-            Test = c("Shapiro-Wilk", "Kolmogorov-Smirnov"),
-            Statistic = c(
-              round(results$shapiro$statistic, 4),
-              ifelse(!is.null(results$ks), round(results$ks$statistic, 4), "N/A")
-            ),
-            P_Value = c(
-              round(results$shapiro$p.value, 4),
-              ifelse(!is.null(results$ks), round(results$ks$p.value, 4), "N/A")
-            ),
-            Interpretation = c(
-              ifelse(results$shapiro$p.value > 0.05, "Normal", "Non-normal"),
-              ifelse(!is.null(results$ks) && results$ks$p.value > 0.05, "Normal", "Non-normal")
-            )
+            Test = character(),
+            Statistic = character(),
+            P_Value = character(),
+            Interpretation = character(),
+            stringsAsFactors = FALSE
           )
+          
+          # Shapiro-Wilk test
+          normality_df <- rbind(normality_df, data.frame(
+            Test = "Shapiro-Wilk",
+            Statistic = round(results$shapiro$statistic, 4),
+            P_Value = round(results$shapiro$p.value, 4),
+            Interpretation = ifelse(results$shapiro$p.value > 0.05, 
+                                    "✓ Assumption met", 
+                                    "✗ Assumption violated")
+          ))
+          
+          # Kolmogorov-Smirnov test if available
+          if (!is.null(results$ks)) {
+            normality_df <- rbind(normality_df, data.frame(
+              Test = "Kolmogorov-Smirnov",
+              Statistic = round(results$ks$statistic, 4),
+              P_Value = round(results$ks$p.value, 4),
+              Interpretation = ifelse(results$ks$p.value > 0.05, 
+                                      "✓ Assumption met", 
+                                      "✗ Assumption violated")
+            ))
+          }
           
           ft_normality <- flextable(normality_df) %>%
             theme_zebra() %>%
             autofit()
           
           doc <- doc %>% body_add_flextable(ft_normality)
+          
+          doc <- doc %>%
+            body_add_par("", style = "Normal") %>%
+            body_add_par("Interpretation Guide:", style = "Normal") %>%
+            body_add_par("• P > 0.05: Residuals are normally distributed", style = "Normal") %>%
+            body_add_par("• P ≤ 0.05: Residuals are not normally distributed", style = "Normal") %>%
+            body_add_par("", style = "Normal")
         }
         
-        # Outlier detection
-        if (!is.null(results$outliers)) {
+        # Outlier Detection section
+        if (input$outlier_test && !is.null(results$outliers)) {
           doc <- doc %>%
             body_add_par("OUTLIER DETECTION", style = "heading 2")
           
-          outlier_text <- if (length(results$outliers) > 0) {
-            paste("Outliers detected at observations:", paste(results$outliers, collapse = ", "))
+          if (length(results$outliers) > 0) {
+            outlier_text <- paste("Outliers detected at observation numbers:", 
+                                  paste(results$outliers, collapse = ", "))
+            outlier_count <- length(results$outliers)
+            total_obs <- nrow(processed_data())
+            percentage <- round((outlier_count / total_obs) * 100, 2)
+            
+            doc <- doc %>%
+              body_add_par(outlier_text, style = "Normal") %>%
+              body_add_par(paste("Total outliers:", outlier_count, "out of", total_obs, 
+                                 "observations (", percentage, "%)"), style = "Normal")
+            
+            # Create outlier summary table
+            outlier_summary <- data.frame(
+              Metric = c("Number of Outliers", "Total Observations", "Percentage", 
+                         "Threshold (SD > |2.5|)"),
+              Value = c(outlier_count, total_obs, 
+                        paste0(percentage, "%"), "2.5")
+            )
+            
+            ft_outliers <- flextable(outlier_summary) %>%
+              theme_zebra() %>%
+              autofit()
+            
+            doc <- doc %>% body_add_flextable(ft_outliers)
+            
+            doc <- doc %>%
+              body_add_par("", style = "Normal") %>%
+              body_add_par("Recommendations:", style = "Normal") %>%
+              body_add_par("• Review outliers for data entry errors", style = "Normal") %>%
+              body_add_par("• Consider robust ANOVA methods if outliers are valid", style = "Normal") %>%
+              body_add_par("• Transform data if outliers affect normality", style = "Normal")
           } else {
-            "No significant outliers detected (standardized residuals < |2.5|)"
+            doc <- doc %>%
+              body_add_par("✓ No significant outliers detected (standardized residuals < |2.5|)", 
+                           style = "Normal")
           }
-          
-          doc <- doc %>% body_add_par(outlier_text, style = "Normal")
+          doc <- doc %>% body_add_par("", style = "Normal")
         }
         
-        # Overall assessment
+        # Overall Assessment section
         doc <- doc %>%
           body_add_par("OVERALL ASSESSMENT", style = "heading 2")
         
-        assumptions_met <- TRUE
-        issues <- c()
+        # Collect issues
+        issues <- character()
+        recommendations <- character()
         
-        if (!is.null(results$levene) && results$levene$`Pr(>F)`[1] < 0.05) {
-          assumptions_met <- FALSE
-          issues <- c(issues, "Heterogeneous variances detected")
+        # Check Levene's test
+        if (input$levene_test && !is.null(results$levene)) {
+          if (results$levene$`Pr(>F)`[1] < 0.05) {
+            issues <- c(issues, "Heterogeneous variances (p < 0.05)")
+            recommendations <- c(recommendations, "Use Welch ANOVA or data transformation")
+          }
         }
         
-        if (!is.null(results$shapiro) && results$shapiro$p.value < 0.05) {
-          assumptions_met <- FALSE
-          issues <- c(issues, "Non-normal residuals detected")
+        # Check normality
+        if (input$normality_test && !is.null(results$shapiro)) {
+          if (results$shapiro$p.value < 0.05) {
+            issues <- c(issues, "Non-normal residuals (p < 0.05)")
+            recommendations <- c(recommendations, "Use non-parametric tests or data transformation")
+          }
         }
         
-        if (!is.null(results$outliers) && length(results$outliers) > 0) {
-          issues <- c(issues, paste(length(results$outliers), "outliers detected"))
+        # Check outliers
+        if (input$outlier_test && !is.null(results$outliers)) {
+          if (length(results$outliers) > 0) {
+            outlier_count <- length(results$outliers)
+            issues <- c(issues, paste(outlier_count, "outliers detected"))
+            recommendations <- c(recommendations, "Review outliers or use robust methods")
+          }
         }
         
-        assessment <- if (assumptions_met && length(issues) == 0) {
-          "All key ANOVA assumptions appear to be reasonably met. Results should be valid."
+        # Create assessment
+        if (length(issues) == 0) {
+          assessment <- "All key ANOVA assumptions appear to be reasonably met. Results from standard ANOVA should be valid."
         } else {
-          paste("Potential issues detected:", paste(issues, collapse = "; "), 
-                ". Consider using robust alternatives or data transformations.")
+          assessment <- paste("Potential issues detected:", paste(issues, collapse = "; "))
         }
         
-        doc <- doc %>% body_add_par(assessment, style = "Normal")
+        doc <- doc %>%
+          body_add_par(assessment, style = "Normal") %>%
+          body_add_par("", style = "Normal")
+        
+        # Add recommendations if any issues
+        if (length(recommendations) > 0) {
+          doc <- doc %>%
+            body_add_par("RECOMMENDATIONS", style = "heading 2")
+          
+          for (rec in unique(recommendations)) {
+            doc <- doc %>% body_add_par(paste("•", rec), style = "Normal")
+          }
+        }
+        
+        # Add statistical notes
+        doc <- doc %>%
+          body_add_par("", style = "Normal") %>%
+          body_add_par("STATISTICAL NOTES", style = "heading 2") %>%
+          body_add_par("ANOVA Assumptions:", style = "Normal") %>%
+          body_add_par("1. Independence: Observations are independent", style = "Normal") %>%
+          body_add_par("2. Normality: Residuals are normally distributed", style = "Normal") %>%
+          body_add_par("3. Homogeneity of variance: Equal variances across groups", style = "Normal") %>%
+          body_add_par("4. No influential outliers", style = "Normal") %>%
+          body_add_par("", style = "Normal") %>%
+          body_add_par("Robust Alternatives:", style = "Normal") %>%
+          body_add_par("• Welch ANOVA: For unequal variances", style = "Normal") %>%
+          body_add_par("• Kruskal-Wallis test: For non-normal data", style = "Normal") %>%
+          body_add_par("• Transformations: Log, square root, or rank transformations", style = "Normal")
       }
       
+      # Add footer
+      doc <- doc %>%
+        body_add_par("", style = "Normal") %>%
+        body_add_par("", style = "Normal") %>%
+        body_add_par("Report generated by EpiDem Suite™", style = "Normal") %>%
+        body_add_par("Epidemiological Analysis Tool", style = "Normal") %>%
+        body_add_par(paste("Generated on:", Sys.time()), style = "Normal")
+      
+      # Save the document
       print(doc, target = file)
     }
   )
@@ -3606,7 +6257,6 @@ server <- function(input, output, session) {
       
       # Check for zero cells
       if (any(tab_2x2 == 0)) {
-        # Apply Haldane-Anscombe correction for zero cells
         tab_2x2_corrected <- tab_2x2 + 0.5
         correction_applied <- TRUE
       } else {
@@ -3807,11 +6457,20 @@ server <- function(input, output, session) {
         options = list(
           pageLength = 20,
           dom = 'Blfrtip',
-          scrollX = TRUE
+          scrollX = TRUE,
+          buttons = c('copy', 'csv', 'excel')
         ),
         rownames = FALSE,
-        caption = "Risk Ratio Analysis Results"
-      )
+        caption = "Risk Ratio Analysis Results",
+        extensions = 'Buttons'
+      ) %>%
+        formatStyle(
+          'Value',
+          backgroundColor = styleEqual(
+            c("Yes (Haldane-Anscombe)"),
+            c('#FFF3CD')
+          )
+        )
     }
   })
   
@@ -3826,7 +6485,6 @@ server <- function(input, output, session) {
       results <- rr_results()
       
       if (!results$success) {
-        # Create error document
         ft <- flextable(data.frame(Error = results$error)) %>%
           set_caption("Risk Ratio Analysis - Error") %>%
           theme_zebra()
@@ -3834,10 +6492,8 @@ server <- function(input, output, session) {
         doc <- read_docx() %>% 
           body_add_flextable(ft)
       } else {
-        # Create comprehensive report
         doc <- read_docx()
         
-        # Title and overview
         doc <- doc %>%
           body_add_par("RISK RATIO ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$rr_outcome), style = "Normal") %>%
@@ -3845,7 +6501,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Confidence Level:", input$rr_conf * 100, "%"), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # Contingency table
         doc <- doc %>%
           body_add_par("CONTINGENCY TABLE", style = "heading 2")
         
@@ -3858,7 +6513,6 @@ server <- function(input, output, session) {
           autofit()
         doc <- doc %>% body_add_flextable(ft_contingency)
         
-        # Risk ratio results
         doc <- doc %>%
           body_add_par("RISK RATIO RESULTS", style = "heading 2")
         
@@ -3867,7 +6521,6 @@ server <- function(input, output, session) {
           autofit()
         doc <- doc %>% body_add_flextable(ft_results)
         
-        # Interpretation
         doc <- doc %>%
           body_add_par("INTERPRETATION", style = "heading 2")
         
@@ -3990,9 +6643,7 @@ server <- function(input, output, session) {
       contingency_table <- table(exposure_factor, outcome_factor)
       
       # Ensure we're working with a 2x2 table for odds ratio
-      # If more than 2 levels, use the first two levels
       if (nrow(contingency_table) > 2) {
-        # Use the two most common exposure categories
         row_sums <- rowSums(contingency_table)
         top_two <- names(sort(row_sums, decreasing = TRUE))[1:2]
         contingency_table <- contingency_table[top_two, ]
@@ -4000,7 +6651,6 @@ server <- function(input, output, session) {
       }
       
       if (ncol(contingency_table) > 2) {
-        # Use the two most common outcome categories
         col_sums <- colSums(contingency_table)
         top_two <- names(sort(col_sums, decreasing = TRUE))[1:2]
         contingency_table <- contingency_table[, top_two]
@@ -4037,16 +6687,12 @@ server <- function(input, output, session) {
         
         # Calculate odds ratio
         if (b_corr == 0 && c_corr == 0) {
-          # Both denominators are zero - OR is undefined
           return(list(or = Inf, ci_lower = Inf, ci_upper = Inf, method = "undefined"))
         } else if (b_corr == 0) {
-          # Only b is zero - OR approaches infinity
           or_value <- Inf
         } else if (c_corr == 0) {
-          # Only c is zero - OR approaches infinity
           or_value <- Inf
         } else {
-          # Normal calculation
           or_value <- (a_corr * d_corr) / (b_corr * c_corr)
         }
         
@@ -4251,7 +6897,6 @@ server <- function(input, output, session) {
     } else if (is.na(or_value)) {
       cat("• Cannot calculate odds ratio due to data issues.\n")
     } else {
-      # Normal interpretation
       if (or_value > 1) {
         cat(sprintf("• The odds of the outcome in the exposed group are %.2f times higher than in the unexposed group.\n", or_value))
       } else if (or_value < 1) {
@@ -4287,21 +6932,29 @@ server <- function(input, output, session) {
     results <- or_results()
     
     if (!results$success) {
-      # Show error in table format
       datatable(data.frame(Error = results$error), 
                 options = list(dom = 't'),
                 rownames = FALSE,
                 caption = "Odds Ratio Analysis - Error")
     } else {
-      # Show main results table
       datatable(results$table,
                 options = list(
                   pageLength = 15,
                   dom = 'Blfrtip',
-                  scrollX = TRUE
+                  scrollX = TRUE,
+                  buttons = c('copy', 'csv', 'excel')
                 ),
                 rownames = FALSE,
-                caption = "Odds Ratio Analysis Results")
+                caption = "Odds Ratio Analysis Results",
+                extensions = 'Buttons'
+      ) %>%
+        formatStyle(
+          'Value',
+          backgroundColor = styleEqual(
+            c("Infinity", "Cannot calculate", "Yes", "corrected for zero cells"),
+            c('#FFE5E5', '#FFE5E5', '#FFF3CD', '#FFF3CD')
+          )
+        )
     }
   })
   
@@ -4315,7 +6968,6 @@ server <- function(input, output, session) {
       results <- or_results()
       
       if (!results$success) {
-        # Create error document
         ft <- flextable(data.frame(Error = results$error)) %>%
           set_caption("Odds Ratio Analysis - Error") %>%
           theme_zebra()
@@ -4323,10 +6975,8 @@ server <- function(input, output, session) {
         doc <- read_docx() %>% 
           body_add_flextable(ft)
       } else {
-        # Create comprehensive report
         doc <- read_docx()
         
-        # Add main title
         doc <- doc %>%
           body_add_par("ODDS RATIO ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome:", input$or_outcome), style = "Normal") %>%
@@ -4334,7 +6984,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Confidence Level:", input$or_conf * 100, "%"), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # Add contingency table
         doc <- doc %>%
           body_add_par("CONTINGENCY TABLE", style = "heading 2")
         
@@ -4345,7 +6994,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_contingency)
         
-        # Add odds ratio results
         doc <- doc %>%
           body_add_par("ODDS RATIO RESULTS", style = "heading 2")
         
@@ -4355,7 +7003,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft_main)
         
-        # Add additional statistics
         doc <- doc %>%
           body_add_par("ADDITIONAL STATISTICS", style = "heading 2")
         
@@ -4427,7 +7074,6 @@ server <- function(input, output, session) {
       time_numeric <- tryCatch({
         as.numeric(time_data)
       }, warning = function(w) {
-        # If warning, try converting factor to numeric
         if (is.factor(time_data)) {
           as.numeric(as.character(time_data))
         } else {
@@ -4438,10 +7084,8 @@ server <- function(input, output, session) {
       })
       
       event_numeric <- tryCatch({
-        # First try direct conversion
         event_num <- as.numeric(event_data)
         if (all(is.na(event_num))) {
-          # If that fails, convert factor/character to numeric
           if (is.factor(event_data) || is.character(event_data)) {
             event_num <- as.numeric(as.factor(event_data))
           } else {
@@ -4496,7 +7140,6 @@ server <- function(input, output, session) {
       
       # Standardize event to 0/1 if needed
       if (!all(unique_events %in% c(0, 1))) {
-        # Map to 0/1: smallest value becomes 0 (censored), others become 1 (event)
         event_clean <- ifelse(event_clean == min(unique_events), 0, 1)
       }
       
@@ -4523,11 +7166,9 @@ server <- function(input, output, session) {
           ))
         }
         
-        # Convert grouping variable to factor and handle NAs
         group_var <- as.factor(group_data)
         group_var[is.na(group_var)] <- "Missing"
         
-        # Check if we have enough groups
         if (length(levels(group_var)) < 2) {
           return(list(
             fit = NULL,
@@ -4536,7 +7177,6 @@ server <- function(input, output, session) {
           ))
         }
         
-        # Create data frame for survfit
         surv_data <- data.frame(
           time = time_clean,
           event = event_clean,
@@ -4545,7 +7185,6 @@ server <- function(input, output, session) {
         
         surv_fit <- survfit(Surv(time, event) ~ group, data = surv_data)
         
-        # Store group information
         group_levels <- levels(group_var)
         n_groups <- length(group_levels)
       } else {
@@ -4555,7 +7194,7 @@ server <- function(input, output, session) {
         )
         surv_fit <- survfit(Surv(time, event) ~ 1, data = surv_data)
         group_levels <- "Overall"
-        n_groups <- 1
+        n_groups = 1
       }
       
       # Calculate summary statistics
@@ -4601,16 +7240,12 @@ server <- function(input, output, session) {
   life_table_times <- reactive({
     req(input$life_table_times)
     
-    # Parse comma-separated time points
     times <- strsplit(input$life_table_times, ",")[[1]]
-    times <- trimws(times)  # Remove whitespace
-    times <- as.numeric(times)  # Convert to numeric
-    
-    # Remove any NA values and ensure times are positive
+    times <- trimws(times)
+    times <- as.numeric(times)
     times <- times[!is.na(times) & times >= 0]
     
     if (length(times) == 0) {
-      # Default times if parsing fails
       return(c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
     }
     
@@ -4632,7 +7267,6 @@ server <- function(input, output, session) {
     }
     
     tryCatch({
-      # Parse and validate time points
       times <- strsplit(input$life_table_times, ",")[[1]]
       times <- trimws(times)
       times <- as.numeric(times)
@@ -4646,15 +7280,11 @@ server <- function(input, output, session) {
         ))
       }
       
-      # Sort time points
       times <- sort(unique(times))
       
-      # Get survival probabilities at specified times
       surv_summary <- summary(results$fit, times = times, extend = TRUE)
       
-      # Create life table data frame
       if (results$n_groups == 1) {
-        # Single group
         life_table <- data.frame(
           Time = surv_summary$time,
           Survival_Probability = round(surv_summary$surv, input$life_table_decimals),
@@ -4666,7 +7296,6 @@ server <- function(input, output, session) {
           Number_Censored = surv_summary$n.censor
         )
       } else {
-        # Multiple groups
         life_table <- data.frame(
           Group = surv_summary$strata,
           Time = surv_summary$time,
@@ -4679,11 +7308,9 @@ server <- function(input, output, session) {
           Number_Censored = surv_summary$n.censor
         )
         
-        # Clean group names
         life_table$Group <- gsub(".*=", "", life_table$Group)
       }
       
-      # Calculate additional statistics
       total_observations <- nrow(results$data)
       total_events <- sum(results$data$event)
       total_censored <- total_observations - total_events
@@ -4729,7 +7356,6 @@ server <- function(input, output, session) {
         caption = "Life Table - Error"
       )
     } else {
-      # Create a simple datatable without the problematic styling
       datatable(
         results$table,
         options = list(
@@ -4741,7 +7367,7 @@ server <- function(input, output, session) {
         rownames = FALSE,
         caption = paste("Life Table - Survival Probabilities at", length(results$times), "Specified Time Points"),
         extensions = 'Buttons'
-      ) # Removed the problematic formatStyle section
+      )
     }
   })
   
@@ -4773,20 +7399,16 @@ server <- function(input, output, session) {
       results <- life_table_results()
       
       if (!results$success) {
-        # Create error workbook
         wb <- createWorkbook()
         addWorksheet(wb, "Error")
         writeData(wb, "Error", data.frame(Error = results$table$Error))
         saveWorkbook(wb, file, overwrite = TRUE)
       } else {
-        # Create workbook with life table data
         wb <- createWorkbook()
         
-        # Main life table sheet
         addWorksheet(wb, "Life Table")
         writeData(wb, "Life Table", results$table)
         
-        # Summary sheet
         addWorksheet(wb, "Summary")
         summary_df <- data.frame(
           Parameter = c("Analysis Date", "Total Observations", "Total Events", 
@@ -4803,7 +7425,6 @@ server <- function(input, output, session) {
         )
         writeData(wb, "Summary", summary_df)
         
-        # Analysis parameters sheet
         addWorksheet(wb, "Parameters")
         params_df <- data.frame(
           Parameter = c("Time Variable", "Event Variable", "Grouping Variable", 
@@ -4818,12 +7439,10 @@ server <- function(input, output, session) {
         )
         writeData(wb, "Parameters", params_df)
         
-        # Style the main table
         style <- createStyle(halign = "center", valign = "center")
         addStyle(wb, "Life Table", style, rows = 1:(nrow(results$table) + 1), 
                  cols = 1:ncol(results$table), gridExpand = TRUE)
         
-        # Auto-adjust column widths
         setColWidths(wb, "Life Table", cols = 1:ncol(results$table), widths = "auto")
         setColWidths(wb, "Summary", cols = 1:2, widths = "auto")
         setColWidths(wb, "Parameters", cols = 1:2, widths = "auto")
@@ -4836,7 +7455,6 @@ server <- function(input, output, session) {
   # Auto-update life table when survival results change
   observeEvent(surv_results(), {
     if (!is.null(surv_results()) && surv_results()$success) {
-      # Trigger life table update when new survival results are available
       life_table_results()
     }
   })
@@ -4869,7 +7487,6 @@ server <- function(input, output, session) {
     opts <- plot_options()
     
     if (!results$success) {
-      # Create error plot
       p <- ggplot() +
         annotate("text", x = 0.5, y = 0.5, 
                  label = paste("Error:", results$error), 
@@ -4880,76 +7497,95 @@ server <- function(input, output, session) {
     }
     
     tryCatch({
-      # Create color palette based on number of groups
       if (results$n_groups == 1) {
         colors <- opts$surv_color1
       } else if (results$n_groups == 2) {
         colors <- c(opts$surv_color1, opts$surv_color2)
       } else {
         colors <- c(opts$surv_color1, opts$surv_color2, opts$surv_color3)
-        # For more than 3 groups, use color brewer
         if (results$n_groups > 3) {
           colors <- RColorBrewer::brewer.pal(results$n_groups, "Set1")
         }
       }
       
-      # Create the Kaplan-Meier plot using survminer
+      # Ensure font sizes are valid numbers
+      title_size <- ifelse(is.null(opts$surv_title_size) || opts$surv_title_size < 1, 
+                           18, opts$surv_title_size)
+      x_size <- ifelse(is.null(opts$surv_x_size) || opts$surv_x_size < 1, 
+                       14, opts$surv_x_size)
+      y_size <- ifelse(is.null(opts$surv_y_size) || opts$surv_y_size < 1, 
+                       14, opts$surv_y_size)
+      label_size <- ifelse(is.null(opts$surv_label_size) || opts$surv_label_size < 1, 
+                           5, opts$surv_label_size)
+      
+      # Ensure title and labels are not NULL
+      plot_title <- ifelse(is.null(opts$surv_title) || opts$surv_title == "", 
+                           "Kaplan-Meier Curve", opts$surv_title)
+      x_lab <- ifelse(is.null(opts$surv_xlab) || opts$surv_xlab == "", 
+                      "Time", opts$surv_xlab)
+      y_lab <- ifelse(is.null(opts$surv_ylab) || opts$surv_ylab == "", 
+                      "Survival Probability", opts$surv_ylab)
+      
+      # Create Kaplan-Meier plot with safe parameters
       p <- ggsurvplot(
         results$fit,
         data = results$data,
         conf.int = opts$surv_ci,
         risk.table = opts$surv_risktable,
         palette = colors,
-        title = opts$surv_title,
-        xlab = opts$surv_xlab,
-        ylab = opts$surv_ylab,
+        title = plot_title,
+        xlab = x_lab,
+        ylab = y_lab,
         legend.title = ifelse(input$surv_group != "none", input$surv_group, ""),
         ggtheme = theme_minimal(),
-        font.title = c(opts$surv_title_size, "bold"),
-        font.x = c(opts$surv_x_size, "plain"),
-        font.y = c(opts$surv_y_size, "plain"),
+        font.title = c(max(title_size, 1), "bold"),  # Ensure at least size 1
+        font.x = c(max(x_size, 1), "plain"),         # Ensure at least size 1
+        font.y = c(max(y_size, 1), "plain"),         # Ensure at least size 1
         font.tickslab = c(12, "plain"),
         risk.table.height = 0.25,
         surv.median.line = ifelse(opts$surv_median, "hv", "none"),
         censor = TRUE,
-        size = 1.2  # Thicker lines for better visibility
+        size = 1.2,
+        risk.table.fontsize = 4.5  # Explicitly set risk table font size
       )
       
-      # Customize the plot further with bigger and clearer elements
+      # Apply additional theme customizations
       p$plot <- p$plot +
         theme(
-          plot.title = element_text(size = opts$surv_title_size, face = "bold", hjust = 0.5),
-          axis.title.x = element_text(size = opts$surv_x_size, face = "bold"),
-          axis.title.y = element_text(size = opts$surv_y_size, face = "bold"),
-          axis.text.x = element_text(size = opts$surv_x_size - 2),
-          axis.text.y = element_text(size = opts$surv_y_size - 2),
-          legend.title = element_text(size = opts$surv_x_size, face = "bold"),
-          legend.text = element_text(size = opts$surv_x_size - 2),
+          plot.title = element_text(size = max(title_size, 1), face = "bold", hjust = 0.5),
+          axis.title.x = element_text(size = max(x_size, 1), face = "bold"),
+          axis.title.y = element_text(size = max(y_size, 1), face = "bold"),
+          axis.text.x = element_text(size = max(x_size - 2, 10)),
+          axis.text.y = element_text(size = max(y_size - 2, 10)),
+          legend.title = element_text(size = max(x_size, 12), face = "bold"),
+          legend.text = element_text(size = max(x_size - 2, 10)),
           legend.position = "right"
         )
       
-      # Add survival probability labels if requested
       if (opts$surv_labels) {
-        # Extract survival data for labeling
         surv_summary <- summary(results$fit)
         
         if (results$n_groups == 1) {
-          # For single group, add labels at key time points
-          key_times <- quantile(surv_summary$time, probs = seq(0.1, 0.9, 0.2))
+          key_times <- quantile(surv_summary$time, probs = seq(0.1, 0.9, 0.2), na.rm = TRUE)
           key_points <- surv_summary$surv[findInterval(key_times, surv_summary$time)]
           
-          p$plot <- p$plot +
-            geom_point(data = data.frame(time = key_times, surv = key_points), 
-                       aes(x = time, y = surv), size = 3, color = "darkred") +
-            geom_text(data = data.frame(time = key_times, surv = key_points),
-                      aes(x = time, y = surv, 
-                          label = paste0("S(t)=", round(surv, 2), "\nt=", round(time, 1))),
-                      size = opts$surv_label_size, vjust = -0.5, hjust = -0.1, color = "darkblue")
+          # Ensure we have valid data points
+          valid_indices <- !is.na(key_times) & !is.na(key_points)
+          if (any(valid_indices)) {
+            p$plot <- p$plot +
+              geom_point(data = data.frame(time = key_times[valid_indices], 
+                                           surv = key_points[valid_indices]), 
+                         aes(x = time, y = surv), size = 3, color = "darkred") +
+              geom_text(data = data.frame(time = key_times[valid_indices], 
+                                          surv = key_points[valid_indices]),
+                        aes(x = time, y = surv, 
+                            label = paste0("S(t)=", round(surv, 2), "\nt=", round(time, 1))),
+                        size = max(label_size, 3), vjust = -0.5, hjust = -0.1, color = "darkblue")
+          }
         } else {
-          # For multiple groups, add labels at median survival times
           if (!is.null(results$median_survival)) {
             median_data <- results$median_survival
-            median_data$surv <- 0.5  # Median survival probability
+            median_data$surv <- 0.5
             
             p$plot <- p$plot +
               geom_point(data = median_data, 
@@ -4958,7 +7594,7 @@ server <- function(input, output, session) {
               geom_text(data = median_data,
                         aes(x = median, y = surv, color = strata,
                             label = paste0("Median: ", round(median, 1))),
-                        size = opts$surv_label_size, vjust = -1, hjust = -0.1, 
+                        size = max(label_size, 3), vjust = -1, hjust = -0.1, 
                         show.legend = FALSE)
           }
         }
@@ -4967,25 +7603,24 @@ server <- function(input, output, session) {
       if (opts$surv_risktable) {
         p$table <- p$table +
           theme(
-            axis.title.x = element_text(size = max(opts$surv_x_size - 2, 10), face = "bold"),
-            axis.text.x = element_text(size = max(opts$surv_x_size - 2, 10)),
-            plot.title = element_text(size = max(opts$surv_title_size - 2, 12), face = "bold")
+            axis.title.x = element_text(size = max(x_size - 2, 10), face = "bold"),
+            axis.text.x = element_text(size = max(x_size - 2, 10)),
+            plot.title = element_text(size = max(title_size - 2, 12), face = "bold")
           )
       }
       
-      # Print the combined plot
-      p
+      return(p)
       
     }, error = function(e) {
-      # Fallback error plot if ggsurvplot fails
+      # Create a simple ggplot error plot as fallback
       ggplot() +
         annotate("text", x = 0.5, y = 0.5, 
                  label = paste("Plotting Error:", e$message), 
-                 size = 4, color = "red", hjust = 0.5, vjust = 0.5) +
+                 size = 5, color = "red", hjust = 0.5, vjust = 0.5) +
         theme_void() +
         labs(title = "Kaplan-Meier Plot - Error")
     })
-  })
+  }, height = 600)
   
   # Add summary statistics UI
   output$surv_stats <- renderUI({
@@ -5004,16 +7639,17 @@ server <- function(input, output, session) {
     }
     
     div(
-      class = "panel panel-default",
+      class = "card",
       div(
-        class = "panel-heading",
-        h4("Survival Analysis Summary", class = "panel-title")
+        class = "card-header",
+        h4("Survival Analysis Summary", class = "card-title", style = "margin: 0;")
       ),
       div(
-        class = "panel-body",
+        class = "card-body",
         fluidRow(
           column(6,
                  tags$ul(
+                   class = "list-unstyled",
                    tags$li(tags$strong("Total Observations:"), nrow(results$data)),
                    tags$li(tags$strong("Events:"), sum(results$data$event)),
                    tags$li(tags$strong("Censored:"), sum(results$data$event == 0))
@@ -5021,6 +7657,7 @@ server <- function(input, output, session) {
           ),
           column(6,
                  tags$ul(
+                   class = "list-unstyled",
                    tags$li(tags$strong("Groups:"), results$n_groups),
                    if (results$n_groups > 1 && !is.null(results$logrank_test)) {
                      tagList(
@@ -5049,7 +7686,6 @@ server <- function(input, output, session) {
     cat("Kaplan-Meier Survival Analysis Summary\n")
     cat("======================================\n\n")
     
-    # Print basic fit summary
     print(results$fit)
     
     if (!is.null(results$median_survival)) {
@@ -5063,7 +7699,6 @@ server <- function(input, output, session) {
       cat("p-value:", round(1 - pchisq(results$logrank_test$chisq, length(results$logrank_test$n) - 1), 4), "\n")
     }
     
-    # Additional summary statistics
     cat("\nSummary Statistics:\n")
     cat("- Number of observations:", nrow(results$data), "\n")
     cat("- Number of events:", sum(results$data$event), "\n")
@@ -5086,7 +7721,6 @@ server <- function(input, output, session) {
       opts <- plot_options()
       
       if (!results$success) {
-        # Create error plot
         p <- ggplot() +
           annotate("text", x = 0.5, y = 0.5, 
                    label = paste("Error:", results$error), 
@@ -5096,7 +7730,6 @@ server <- function(input, output, session) {
         
         ggsave(file, plot = p, device = "png", width = 12, height = 10, dpi = 300)
       } else {
-        # Create color palette for download
         if (results$n_groups == 1) {
           colors <- opts$surv_color1
         } else if (results$n_groups == 2) {
@@ -5108,7 +7741,6 @@ server <- function(input, output, session) {
           }
         }
         
-        # Create high-quality KM plot for download
         p_download <- ggsurvplot(
           results$fit,
           data = results$data,
@@ -5129,7 +7761,6 @@ server <- function(input, output, session) {
           size = 1.5
         )
         
-        # Add labels for download version as well
         if (opts$surv_labels) {
           surv_summary <- summary(results$fit)
           
@@ -5147,7 +7778,6 @@ server <- function(input, output, session) {
           }
         }
         
-        # Customize the download plot theme
         p_download$plot <- p_download$plot +
           theme(
             plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
@@ -5166,7 +7796,6 @@ server <- function(input, output, session) {
             )
         }
         
-        # Save the plot with high quality
         ggsave(file, plot = print(p_download), device = "png", 
                width = 14, height = 10, dpi = 300, bg = "white")
       }
@@ -5184,10 +7813,8 @@ server <- function(input, output, session) {
       results <- surv_results()
       
       if (!results$success) {
-        # Create error data frame
         write.csv(data.frame(Error = results$error), file, row.names = FALSE)
       } else {
-        # Write survival data to CSV
         surv_data <- results$data %>%
           select(Time = time, Event = event)
         
@@ -5460,10 +8087,12 @@ server <- function(input, output, session) {
       options = list(
         pageLength = 15,
         dom = 'Blfrtip',
-        scrollX = TRUE
+        scrollX = TRUE,
+        buttons = c('copy', 'csv', 'excel')
       ),
       rownames = FALSE,
-      caption = "Poisson Regression Results (Rate Ratios and 95% Confidence Intervals)"
+      caption = "Poisson Regression Results (Rate Ratios and 95% Confidence Intervals)",
+      extensions = 'Buttons'
     ) %>%
       formatRound(columns = c('estimate', 'std.error', 'statistic', 'p.value', 'conf.low', 'conf.high',
                               'log_estimate', 'log_std.error', 'log_conf.low', 'log_conf.high'), 
@@ -5480,7 +8109,6 @@ server <- function(input, output, session) {
       results <- poisson_results()
       
       if (!results$success) {
-        # Create error document
         ft <- flextable(data.frame(Error = results$error)) %>%
           set_caption("Poisson Regression Analysis - Error") %>%
           theme_zebra()
@@ -5488,20 +8116,16 @@ server <- function(input, output, session) {
         doc <- read_docx() %>% 
           body_add_flextable(ft)
       } else {
-        # Create comprehensive results table
         poisson_table <- broom::tidy(results$model, conf.int = TRUE, conf.level = input$poisson_conf, exponentiate = TRUE)
         
-        # Add log-scale estimates
         poisson_table_log <- broom::tidy(results$model, conf.int = TRUE, conf.level = input$poisson_conf, exponentiate = FALSE)
         poisson_table$log_estimate <- poisson_table_log$estimate
         poisson_table$log_std.error <- poisson_table_log$std.error
         poisson_table$log_conf.low <- poisson_table_log$conf.low
         poisson_table$log_conf.high <- poisson_table_log$conf.high
         
-        # Create report
         doc <- read_docx()
         
-        # Title and overview
         doc <- doc %>%
           body_add_par("POISSON REGRESSION ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$poisson_outcome), style = "Normal") %>%
@@ -5516,7 +8140,6 @@ server <- function(input, output, session) {
           body_add_par(paste("Observations:", nrow(results$data)), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # Model coefficients
         doc <- doc %>%
           body_add_par("REGRESSION COEFFICIENTS (RATE RATIOS)", style = "heading 2")
         
@@ -5526,7 +8149,6 @@ server <- function(input, output, session) {
         
         doc <- doc %>% body_add_flextable(ft)
         
-        # Model diagnostics
         doc <- doc %>%
           body_add_par("MODEL DIAGNOSTICS", style = "heading 2")
         
@@ -5550,6 +8172,7 @@ server <- function(input, output, session) {
       print(doc, target = file)
     }
   )
+  
   # Linear Regression reference UI
   output$linear_ref_ui <- renderUI({
     req(input$linear_vars, processed_data())
@@ -5648,7 +8271,6 @@ server <- function(input, output, session) {
     if (is.numeric(outcome_var)) {
       unique_vals <- unique(na.omit(outcome_var))
       if (length(unique_vals) == 2 && all(unique_vals %in% c(0, 1))) {
-        # Already numeric binary (0/1)
         return(
           div(
             class = "alert alert-success",
@@ -5830,7 +8452,7 @@ server <- function(input, output, session) {
       
       # Check for complete separation or other issues
       if (any(table(df$outcome_binary) < 2)) {
-        stop("Insufficient cases in one of the outcome categories")
+        stop("Insufficient data in one or more outcome categories for logistic regression")
       }
       
       # Create formula
@@ -5839,34 +8461,20 @@ server <- function(input, output, session) {
       # Fit logistic regression model
       model <- glm(formula, family = binomial(link = "logit"), data = df)
       
-      # Check for model convergence
+      # Check model convergence
       if (!model$converged) {
-        warning("Model did not converge properly")
+        warning("Logistic regression model did not converge properly")
       }
       
-      # Calculate model performance metrics
-      predictions <- predict(model, type = "response")
-      predicted_classes <- as.numeric(predictions > 0.5)
-      accuracy <- mean(predicted_classes == df$outcome_binary, na.rm = TRUE)
-      
-      # Calculate AUC if possible
-      auc_value <- tryCatch({
-        roc_obj <- pROC::roc(df$outcome_binary, predictions, quiet = TRUE)
-        as.numeric(pROC::auc(roc_obj))
-      }, error = function(e) NA)
+      # Calculate odds ratios if requested
+      conf_level <- 0.95  # Could make this user-configurable
       
       list(
         model = model,
         summary = summary(model),
         data = df,
         outcome_levels = outcome_levels,
-        performance = list(
-          accuracy = accuracy,
-          auc = auc_value,
-          n_observations = nrow(df),
-          n_events = sum(df$outcome_binary),
-          n_nonevents = sum(1 - df$outcome_binary)
-        ),
+        formula = formula,
         success = TRUE
       )
       
@@ -5878,7 +8486,6 @@ server <- function(input, output, session) {
     })
   })
   
-  # Output for logistic regression results - CORRECTED (3 decimal places)
   output$logistic_summary <- renderPrint({
     req(logistic_results())
     
@@ -5894,71 +8501,59 @@ server <- function(input, output, session) {
     cat("LOGISTIC REGRESSION ANALYSIS\n")
     cat("============================\n\n")
     
-    # Outcome variable information
-    cat("OUTCOME VARIABLE:\n")
-    cat("- Variable:", input$logistic_outcome, "\n")
-    cat("- Coding: ", paste(names(results$outcome_levels), "=", results$outcome_levels, collapse = ", "), "\n")
-    cat("\n")
-    
-    # Model performance
-    cat("MODEL PERFORMANCE:\n")
-    cat("- Observations:", results$performance$n_observations, "\n")
-    cat("- Events:", results$performance$n_events, "\n")
-    cat("- Non-events:", results$performance$n_nonevents, "\n")
-    cat("- Accuracy:", round(results$performance$accuracy, 3), "\n")
-    if (!is.na(results$performance$auc)) {
-      cat("- AUC:", round(results$performance$auc, 3), "\n")
+    # Model information
+    cat("MODEL INFORMATION:\n")
+    cat("- Outcome variable:", input$logistic_outcome, "\n")
+    cat("- Outcome levels:\n")
+    for (level in names(results$outcome_levels)) {
+      cat("  ", level, "=", results$outcome_levels[[level]], "\n")
     }
+    cat("- Predictor variables:", paste(input$logistic_vars, collapse = ", "), "\n")
+    cat("- Observations:", nrow(results$data), "\n")
+    cat("- Model formula:", deparse(results$formula), "\n")
     cat("\n")
     
-    # Model summary with formatted coefficients
+    # Model summary
     cat("MODEL SUMMARY:\n")
-    model_summary <- results$summary
-    coef_matrix <- model_summary$coefficients
+    print(results$summary)
     
-    # Format coefficients to 3 decimal places
-    formatted_coef <- matrix(
-      sapply(coef_matrix, function(x) {
-        if (is.na(x)) return("NA")
-        if (abs(x) < 0.001 & abs(x) > 0) {
-          formatC(x, format = "e", digits = 3)
-        } else {
-          format(round(x, 3), nsmall = 3, scientific = FALSE)
-        }
-      }),
-      nrow = nrow(coef_matrix),
-      ncol = ncol(coef_matrix)
-    )
-    
-    rownames(formatted_coef) <- rownames(coef_matrix)
-    colnames(formatted_coef) <- colnames(coef_matrix)
-    
-    print(formatted_coef, quote = FALSE)
-    
-    # Odds ratios if requested - formatted to 3 decimal places
-    if (input$logistic_or) {
-      cat("\nODDS RATIOS:\n")
-      coef_table <- coef(model_summary)
-      odds_ratios <- exp(coef_table[, 1])
-      or_ci_lower <- exp(coef_table[, 1] - 1.96 * coef_table[, 2])
-      or_ci_upper <- exp(coef_table[, 1] + 1.96 * coef_table[, 2])
-      
-      # Format odds ratios to 3 decimal places
-      or_table <- data.frame(
-        Variable = rownames(coef_table),
-        OddsRatio = format(round(odds_ratios, 3), nsmall = 3, scientific = FALSE),
-        LowerCI = format(round(or_ci_lower, 3), nsmall = 3, scientific = FALSE),
-        UpperCI = format(round(or_ci_upper, 3), nsmall = 3, scientific = FALSE),
-        stringsAsFactors = FALSE
-      )
-      print(or_table, row.names = FALSE)
-    }
-    
-    # Model fit statistics
-    cat("\nMODEL FIT STATISTICS:\n")
+    # Model diagnostics
+    cat("\nMODEL DIAGNOSTICS:\n")
     cat("- Null deviance:", round(results$model$null.deviance, 3), "\n")
     cat("- Residual deviance:", round(results$model$deviance, 3), "\n")
     cat("- AIC:", round(AIC(results$model), 3), "\n")
+    
+    # Pseudo R-squared
+    pseudo_r2 <- 1 - (results$model$deviance / results$model$null.deviance)
+    cat("- McFadden's R²:", round(pseudo_r2, 3), "\n")
+    
+    # Check for multicollinearity
+    if (length(input$logistic_vars) > 1) {
+      vif_values <- tryCatch({
+        car::vif(results$model)
+      }, error = function(e) NULL)
+      
+      if (!is.null(vif_values)) {
+        cat("- Variance Inflation Factors (VIF):\n")
+        if (is.matrix(vif_values)) {
+          vif_df <- as.data.frame(vif_values)
+          colnames(vif_df) <- c("GVIF", "DF", "GVIF^(1/(2*DF))")
+          print(vif_df)
+        } else {
+          print(round(vif_values, 3))
+        }
+        
+        # Check for high VIF
+        high_vif <- if (is.matrix(vif_values)) {
+          vif_values[, "GVIF^(1/(2*DF))"] > 5
+        } else {
+          vif_values > 10
+        }
+        if (any(high_vif, na.rm = TRUE)) {
+          cat("⚠ Warning: High multicollinearity detected (VIF > 10 or GVIF^(1/(2*DF)) > 5)\n")
+        }
+      }
+    }
   })
   
   output$logistic_table <- renderDT({
@@ -5970,35 +8565,51 @@ server <- function(input, output, session) {
       return(datatable(
         data.frame(Error = results$error),
         options = list(dom = 't'),
-        rownames = FALSE
+        rownames = FALSE,
+        caption = "Logistic Regression - Error"
       ))
     }
     
-    # Create comprehensive results table with 3 decimal places
+    # Create results table
     if (input$logistic_or) {
-      logistic_table <- broom::tidy(results$model, conf.int = TRUE, exponentiate = TRUE)
+      # Show odds ratios
+      logistic_table <- broom::tidy(results$model, conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE)
     } else {
-      logistic_table <- broom::tidy(results$model, conf.int = TRUE)
+      # Show coefficients
+      logistic_table <- broom::tidy(results$model, conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE)
     }
     
-    # Format all numeric columns to 3 decimal places
-    numeric_cols <- c("estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high")
-    for(col in numeric_cols) {
-      if(col %in% names(logistic_table)) {
-        logistic_table[[col]] <- format(round(logistic_table[[col]], 3), nsmall = 3, scientific = FALSE)
-      }
-    }
+    # Format for display
+    logistic_table$p.value <- ifelse(logistic_table$p.value < 0.001, "<0.001", 
+                                     round(logistic_table$p.value, 3))
+    
+    # Round all numeric columns to 3 decimal places
+    numeric_cols <- sapply(logistic_table, is.numeric)
+    logistic_table[numeric_cols] <- lapply(logistic_table[numeric_cols], function(x) {
+      ifelse(is.na(x), NA, round(x, 3))
+    })
     
     datatable(
       logistic_table,
       options = list(
         pageLength = 15,
         dom = 'Blfrtip',
-        scrollX = TRUE
+        scrollX = TRUE,
+        buttons = c('copy', 'csv', 'excel')
       ),
       rownames = FALSE,
-      caption = "Logistic Regression Coefficients (values rounded to 3 decimal places)"
-    )
+      caption = ifelse(input$logistic_or,
+                       "Logistic Regression Results (Odds Ratios and 95% Confidence Intervals)",
+                       "Logistic Regression Results (Coefficients and 95% Confidence Intervals)"),
+      extensions = 'Buttons'
+    ) %>%
+      formatStyle(
+        'p.value',
+        backgroundColor = styleInterval(
+          c(0.001, 0.01, 0.05, 0.1),
+          c('#D4EDDA', '#D1ECF1', '#FFF3CD', '#F8D7DA', '#FFFFFF')
+        )
+      )
   })
   
   output$download_logistic <- downloadHandler(
@@ -6011,7 +8622,6 @@ server <- function(input, output, session) {
       results <- logistic_results()
       
       if (!results$success) {
-        # Create error document
         ft <- flextable(data.frame(Error = results$error)) %>%
           set_caption("Logistic Regression Analysis - Error") %>%
           theme_zebra()
@@ -6019,94 +8629,86 @@ server <- function(input, output, session) {
         doc <- read_docx() %>% 
           body_add_flextable(ft)
       } else {
-        # Create comprehensive report
+        # Create both coefficient tables
+        coeff_table <- broom::tidy(results$model, conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE)
+        or_table <- broom::tidy(results$model, conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE)
+        
+        # Round to 3 decimal places
+        numeric_cols <- sapply(coeff_table, is.numeric)
+        coeff_table[numeric_cols] <- lapply(coeff_table[numeric_cols], function(x) round(x, 3))
+        or_table[numeric_cols] <- lapply(or_table[numeric_cols], function(x) round(x, 3))
+        
         doc <- read_docx()
         
-        # Title and overview
         doc <- doc %>%
           body_add_par("LOGISTIC REGRESSION ANALYSIS REPORT", style = "heading 1") %>%
           body_add_par(paste("Outcome Variable:", input$logistic_outcome), style = "Normal") %>%
+          body_add_par("Outcome Variable Coding:", style = "Normal")
+        
+        # Add outcome level information
+        for (level in names(results$outcome_levels)) {
+          doc <- doc %>% body_add_par(paste("  ", level, "=", results$outcome_levels[[level]]), style = "Normal")
+        }
+        
+        doc <- doc %>%
           body_add_par(paste("Predictor Variables:", paste(input$logistic_vars, collapse = ", ")), style = "Normal") %>%
+          body_add_par(paste("Observations:", nrow(results$data)), style = "Normal") %>%
+          body_add_par(paste("Model formula:", deparse(results$formula)), style = "Normal") %>%
           body_add_par("", style = "Normal")
         
-        # Outcome coding information
-        doc <- doc %>%
-          body_add_par("OUTCOME VARIABLE CODING", style = "heading 2")
-        
-        outcome_coding <- data.frame(
-          Code = names(results$outcome_levels),
-          Meaning = results$outcome_levels
-        )
-        ft_outcome <- flextable(outcome_coding) %>%
-          theme_zebra() %>%
-          autofit()
-        doc <- doc %>% body_add_flextable(ft_outcome)
-        
-        # Model performance
-        doc <- doc %>%
-          body_add_par("MODEL PERFORMANCE", style = "heading 2")
-        
-        performance_df <- data.frame(
-          Metric = c("Observations", "Events", "Non-events", "Accuracy", "AUC"),
-          Value = c(
-            results$performance$n_observations,
-            results$performance$n_events,
-            results$performance$n_nonevents,
-            format(round(results$performance$accuracy, 3), nsmall = 3),
-            ifelse(!is.na(results$performance$auc), format(round(results$performance$auc, 3), nsmall = 3), "N/A")
-          )
-        )
-        ft_performance <- flextable(performance_df) %>%
-          theme_zebra() %>%
-          autofit()
-        doc <- doc %>% body_add_flextable(ft_performance)
-        
-        # Coefficients table
         doc <- doc %>%
           body_add_par("REGRESSION COEFFICIENTS", style = "heading 2")
         
-        if (input$logistic_or) {
-          coef_table <- broom::tidy(results$model, conf.int = TRUE, exponentiate = TRUE)
-        } else {
-          coef_table <- broom::tidy(results$model, conf.int = TRUE)
-        }
-        
-        # Format coefficients to 3 decimal places
-        numeric_cols <- c("estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high")
-        for(col in numeric_cols) {
-          if(col %in% names(coef_table)) {
-            coef_table[[col]] <- format(round(coef_table[[col]], 3), nsmall = 3, scientific = FALSE)
-          }
-        }
-        
-        ft_coef <- flextable(coef_table) %>%
+        ft_coeff <- flextable(coeff_table) %>%
           theme_zebra() %>%
           autofit()
-        doc <- doc %>% body_add_flextable(ft_coef)
         
-        # Model fit statistics
+        doc <- doc %>% body_add_flextable(ft_coeff)
+        
         doc <- doc %>%
-          body_add_par("MODEL FIT STATISTICS", style = "heading 2")
+          body_add_par("ODDS RATIOS", style = "heading 2")
         
-        fit_stats <- data.frame(
-          Statistic = c("Null Deviance", "Residual Deviance", "AIC"),
+        ft_or <- flextable(or_table) %>%
+          theme_zebra() %>%
+          autofit()
+        
+        doc <- doc %>% body_add_flextable(ft_or)
+        
+        doc <- doc %>%
+          body_add_par("MODEL DIAGNOSTICS", style = "heading 2")
+        
+        pseudo_r2 <- 1 - (results$model$deviance / results$model$null.deviance)
+        
+        diagnostics <- data.frame(
+          Statistic = c("Null Deviance", "Residual Deviance", "AIC", "McFadden's R²"),
           Value = c(
-            format(round(results$model$null.deviance, 3), nsmall = 3),
-            format(round(results$model$deviance, 3), nsmall = 3),
-            format(round(AIC(results$model), 3), nsmall = 3)
+            round(results$model$null.deviance, 3),
+            round(results$model$deviance, 3),
+            round(AIC(results$model), 3),
+            round(pseudo_r2, 3)
           )
         )
-        ft_fit <- flextable(fit_stats) %>%
+        
+        ft_diag <- flextable(diagnostics) %>%
           theme_zebra() %>%
           autofit()
-        doc <- doc %>% body_add_flextable(ft_fit)
+        
+        doc <- doc %>% body_add_flextable(ft_diag)
+        
+        doc <- doc %>%
+          body_add_par("INTERPRETATION GUIDE", style = "heading 2") %>%
+          body_add_par("• Odds Ratio > 1: Increased odds of outcome", style = "Normal") %>%
+          body_add_par("• Odds Ratio < 1: Decreased odds of outcome", style = "Normal") %>%
+          body_add_par("• Odds Ratio = 1: No effect", style = "Normal") %>%
+          body_add_par("• Confidence Interval that includes 1: Not statistically significant", style = "Normal") %>%
+          body_add_par("• P-value < 0.05: Statistically significant", style = "Normal")
       }
       
       print(doc, target = file)
     }
   )
   
-  # Chi-square test with action button
+  # Chi-square Test with action button
   chisq_results <- eventReactive(input$run_chisq, {
     req(input$chisq_var1, input$chisq_var2, processed_data())
     df <- processed_data()
@@ -6117,322 +8719,831 @@ server <- function(input, output, session) {
     # Perform chi-square test
     chisq_test <- chisq.test(tab)
     
-    # Additional tests if requested
-    fisher_test <- NULL
-    rr_test <- NULL
-    
-    if(input$chisq_fisher) {
-      fisher_test <- fisher.test(tab)
-    }
-    
-    if(input$chisq_rr) {
-      rr_test <- riskratio(tab)
-    }
-    
-    # Create cross-tabulation with percentages
-    cross_tab <- tab %>%
-      as.data.frame.matrix() %>%
-      rownames_to_column("Category") %>%
-      mutate(Total = rowSums(across(where(is.numeric))))
-    
     list(
-      test = chisq_test,
       table = tab,
-      cross_tab = cross_tab,
-      fisher = fisher_test,
-      rr = rr_test
+      test = chisq_test,
+      expected = if(input$chisq_expected) chisq_test$expected else NULL,
+      residuals = if(input$chisq_residuals) chisq_test$residuals else NULL
     )
   })
   
   output$chisq_results <- renderPrint({
     req(chisq_results())
     
-    cat("Chi-square Test Results:\n")
+    cat("Chi-Square Test Results\n")
+    cat("=======================\n\n")
+    
     print(chisq_results()$test)
     
-    if(input$chisq_expected) {
-      cat("\nExpected Counts:\n")
-      print(chisq_results()$test$expected)
-    }
-    
-    if(input$chisq_residuals) {
-      cat("\nPearson Residuals:\n")
-      print(chisq_results()$test$residuals)
-    }
-    
-    if(input$chisq_fisher && !is.null(chisq_results()$fisher)) {
+    if(input$chisq_fisher) {
       cat("\nFisher's Exact Test:\n")
-      print(chisq_results()$fisher)
+      fisher_test <- fisher.test(chisq_results()$table)
+      print(fisher_test)
     }
     
-    if(input$chisq_rr && !is.null(chisq_results()$rr)) {
-      cat("\nRelative Risk:\n")
-      print(chisq_results()$rr)
+    if(input$chisq_rr) {
+      cat("\nRelative Risk (RR) Calculation:\n")
+      # Simple RR calculation
+      tab <- chisq_results()$table
+      if(nrow(tab) == 2 && ncol(tab) == 2) {
+        rr <- (tab[2,2] / sum(tab[2,])) / (tab[1,2] / sum(tab[1,]))
+        cat("Relative Risk:", round(rr, 3), "\n")
+      }
     }
   })
   
   output$chisq_table <- renderDT({
     req(chisq_results())
-    datatable(chisq_results()$cross_tab, 
-              caption = "Cross-tabulation",
-              options = list(pageLength = 10))
+    
+    tab <- as.data.frame.matrix(chisq_results()$table)
+    
+    if(input$chisq_expected && !is.null(chisq_results()$expected)) {
+      expected <- as.data.frame.matrix(chisq_results()$expected)
+      colnames(expected) <- paste("Expected", colnames(expected))
+      tab <- cbind(tab, expected)
+    }
+    
+    if(input$chisq_residuals && !is.null(chisq_results()$residuals)) {
+      residuals <- as.data.frame.matrix(chisq_results()$residuals)
+      colnames(residuals) <- paste("Residual", colnames(residuals))
+      tab <- cbind(tab, residuals)
+    }
+    
+    datatable(tab, 
+              options = list(pageLength = 10, scrollX = TRUE),
+              caption = "Contingency Table")
   })
   
   output$chisq_plot <- renderPlot({
-    req(chisq_results(), input$chisq_var1, input$chisq_var2)
-    df <- processed_data()
+    req(chisq_results())
     
-    # Create stacked bar plot
-    p <- ggplot(df, aes(x = !!sym(input$chisq_var1), fill = !!sym(input$chisq_var2))) +
-      geom_bar(position = "fill") +
-      labs(title = paste("Stacked Bar Plot:", input$chisq_var1, "vs", input$chisq_var2),
-           x = input$chisq_var1,
-           y = "Proportion",
-           fill = input$chisq_var2) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    tab <- chisq_results()$table
     
-    print(p)
+    # Create mosaic plot
+    mosaicplot(tab, 
+               main = "Mosaic Plot",
+               xlab = input$chisq_var1,
+               ylab = input$chisq_var2,
+               color = TRUE,
+               shade = TRUE)
   })
   
-  # CORRECTED Chi-square Test Download Handler
   output$download_chisq <- downloadHandler(
-    filename = function() {
-      paste("chi_square_test_", Sys.Date(), ".docx", sep = "")
-    },
+    filename = "chi_square_test.docx",
     content = function(file) {
-      req(chisq_results())
+      ft <- flextable(as.data.frame.matrix(chisq_results()$table)) %>%
+        set_caption("Contingency Table") %>%
+        theme_zebra()
       
-      results <- chisq_results()
+      doc <- read_docx() %>% 
+        body_add_flextable(ft)
+      print(doc, target = file)
+    }
+  )
+  
+  output$download_chisq_plot <- downloadHandler(
+    filename = "chi_square_plot.png",
+    content = function(file) {
+      png(file, width = 800, height = 600)
+      mosaicplot(chisq_results()$table,
+                 main = "Mosaic Plot",
+                 xlab = input$chisq_var1,
+                 ylab = input$chisq_var2,
+                 color = TRUE,
+                 shade = TRUE)
+      dev.off()
+    }
+  )
+  
+  # ANOVA Analysis with action button
+  anova_results <- eventReactive(input$run_anova, {
+    req(input$anova_outcome, input$anova_group, processed_data())
+    df <- processed_data()
+    
+    # Create formula
+    formula <- as.formula(paste(input$anova_outcome, "~", input$anova_group))
+    
+    # Fit ANOVA model
+    model <- aov(formula, data = df)
+    
+    # Post-hoc tests if requested
+    posthoc <- NULL
+    if(input$anova_posthoc) {
+      if(input$anova_posthoc_method == "tukey") {
+        posthoc <- TukeyHSD(model)
+      } else if(input$anova_posthoc_method == "bonferroni") {
+        posthoc <- pairwise.t.test(df[[input$anova_outcome]], 
+                                   df[[input$anova_group]], 
+                                   p.adjust.method = "bonferroni")
+      }
+    }
+    
+    # Assumptions check if requested
+    assumptions <- NULL
+    if(input$anova_assumptions) {
+      # Normality test
+      normality <- shapiro.test(residuals(model))
       
-      # Create comprehensive report
-      doc <- read_docx()
+      # Homogeneity of variance
+      homogeneity <- car::leveneTest(formula, data = df)
       
-      # Title and basic information
-      doc <- doc %>%
-        body_add_par("CHI-SQUARE TEST ANALYSIS REPORT", style = "heading 1") %>%
-        body_add_par(paste("Variable 1:", input$chisq_var1), style = "Normal") %>%
-        body_add_par(paste("Variable 2:", input$chisq_var2), style = "Normal") %>%
-        body_add_par("", style = "Normal")
+      assumptions <- list(
+        normality = normality,
+        homogeneity = homogeneity
+      )
+    }
+    
+    list(
+      model = model,
+      summary = summary(model),
+      posthoc = posthoc,
+      assumptions = assumptions
+    )
+  })
+  
+  output$anova_results <- renderPrint({
+    req(anova_results())
+    
+    cat("One-Way ANOVA Results\n")
+    cat("=====================\n\n")
+    
+    print(anova_results()$summary)
+    
+    if(!is.null(anova_results()$posthoc)) {
+      cat("\nPost-hoc Comparisons:\n")
+      print(anova_results()$posthoc)
+    }
+  })
+  
+  output$anova_table <- renderDT({
+    req(anova_results())
+    
+    anova_table <- broom::tidy(anova_results()$model)
+    datatable(anova_table, options = list(pageLength = 10))
+  })
+  
+  output$anova_assumptions_results <- renderPrint({
+    req(anova_results())
+    
+    if(!is.null(anova_results()$assumptions)) {
+      cat("ANOVA Assumptions Check\n")
+      cat("=======================\n\n")
       
-      # Contingency table
-      doc <- doc %>%
-        body_add_par("CONTINGENCY TABLE", style = "heading 2")
+      cat("1. Normality of Residuals (Shapiro-Wilk test):\n")
+      print(anova_results()$assumptions$normality)
       
-      # Convert table to data frame with proper formatting
-      contingency_df <- as.data.frame.matrix(results$table)
-      contingency_df <- cbind(Variable = rownames(contingency_df), contingency_df)
+      cat("\n2. Homogeneity of Variance (Levene's test):\n")
+      print(anova_results()$assumptions$homogeneity)
+    }
+  })
+  
+  output$anova_assumptions_plots <- renderPlot({
+    req(anova_results())
+    
+    par(mfrow = c(2, 2))
+    plot(anova_results()$model)
+  })
+  
+  output$anova_posthoc_table <- renderDT({
+    req(anova_results())
+    
+    if(!is.null(anova_results()$posthoc)) {
+      if(input$anova_posthoc_method == "tukey") {
+        posthoc_table <- as.data.frame(anova_results()$posthoc[[1]])
+        datatable(posthoc_table, options = list(pageLength = 10))
+      }
+    }
+  })
+  
+  output$anova_posthoc_plot <- renderPlot({
+    req(anova_results())
+    
+    if(!is.null(anova_results()$posthoc) && input$anova_posthoc_method == "tukey") {
+      plot(anova_results()$posthoc)
+    }
+  })
+  
+  # Two-Way ANOVA
+  anova_2way_results <- eventReactive(input$run_anova_2way, {
+    req(input$anova_outcome_2way, input$anova_factor1, input$anova_factor2, processed_data())
+    df <- processed_data()
+    
+    # Create formula
+    if(input$anova_interaction) {
+      formula <- as.formula(paste(input$anova_outcome_2way, "~", 
+                                  input$anova_factor1, "*", input$anova_factor2))
+    } else {
+      formula <- as.formula(paste(input$anova_outcome_2way, "~", 
+                                  input$anova_factor1, "+", input$anova_factor2))
+    }
+    
+    # Fit ANOVA model
+    model <- aov(formula, data = df)
+    
+    # Simple effects analysis if requested
+    simple_effects <- NULL
+    if(input$anova_2way_posthoc && input$anova_interaction) {
+      simple_effects <- emmeans(model, pairwise ~ input$anova_factor1 | input$anova_factor2)
+    }
+    
+    list(
+      model = model,
+      summary = summary(model),
+      simple_effects = simple_effects
+    )
+  })
+  
+  output$anova_2way_results <- renderPrint({
+    req(anova_2way_results())
+    
+    cat("Two-Way ANOVA Results\n")
+    cat("=====================\n\n")
+    
+    print(anova_2way_results()$summary)
+  })
+  
+  output$anova_2way_table <- renderDT({
+    req(anova_2way_results())
+    
+    anova_table <- broom::tidy(anova_2way_results()$model)
+    datatable(anova_table, options = list(pageLength = 10))
+  })
+  
+  output$anova_2way_posthoc <- renderPrint({
+    req(anova_2way_results())
+    
+    if(!is.null(anova_2way_results()$simple_effects)) {
+      cat("Simple Effects Analysis\n")
+      cat("=======================\n\n")
+      print(anova_2way_results()$simple_effects)
+    }
+  })
+  
+  # Welch ANOVA - CORRECTED VERSION
+  welch_anova_results <- eventReactive(input$run_welch_anova, {
+    req(input$welch_outcome, input$welch_group, processed_data())
+    
+    tryCatch({
+      df <- processed_data()
       
-      ft_contingency <- flextable(contingency_df) %>%
-        theme_zebra() %>%
-        autofit()
+      # Validate variables exist
+      if (!input$welch_outcome %in% names(df)) {
+        return(list(
+          error = "Outcome variable not found in dataset",
+          success = FALSE
+        ))
+      }
       
-      doc <- doc %>% body_add_flextable(ft_contingency)
+      if (!input$welch_group %in% names(df)) {
+        return(list(
+          error = "Grouping variable not found in dataset",
+          success = FALSE
+        ))
+      }
       
-      # Chi-square test results
-      doc <- doc %>%
-        body_add_par("CHI-SQUARE TEST RESULTS", style = "heading 2")
+      # Get the variables
+      outcome_var <- df[[input$welch_outcome]]
+      group_var <- df[[input$welch_group]]
       
-      chi_summary <- data.frame(
-        Statistic = c("Chi-square Statistic", "Degrees of Freedom", "P-value", "Significance"),
-        Value = c(
-          round(results$test$statistic, 4),
-          results$test$parameter,
-          round(results$test$p.value, 4),
-          ifelse(results$test$p.value < 0.05, "Statistically Significant", "Not Statistically Significant")
-        )
+      # Remove missing values
+      complete_cases <- !is.na(outcome_var) & !is.na(group_var)
+      outcome_clean <- outcome_var[complete_cases]
+      group_clean <- group_var[complete_cases]
+      
+      if (length(outcome_clean) == 0) {
+        return(list(
+          error = "No complete cases after removing missing values",
+          success = FALSE
+        ))
+      }
+      
+      # Convert to factor for grouping
+      group_factor <- as.factor(group_clean)
+      n_groups <- length(levels(group_factor))
+      
+      # Check for sufficient data
+      group_counts <- table(group_factor)
+      
+      if (n_groups < 2) {
+        return(list(
+          error = "Grouping variable must have at least 2 categories",
+          success = FALSE
+        ))
+      }
+      
+      # Check minimum group size (at least 2 observations per group for Welch ANOVA)
+      if (any(group_counts < 2)) {
+        small_groups <- names(group_counts)[group_counts < 2]
+        return(list(
+          error = paste("Groups with insufficient data (need at least 2 observations):", 
+                        paste(small_groups, collapse = ", ")),
+          success = FALSE
+        ))
+      }
+      
+      # Check variance within groups (avoid division by zero in Welch formula)
+      group_variances <- tapply(outcome_clean, group_factor, var, na.rm = TRUE)
+      if (any(group_variances == 0, na.rm = TRUE)) {
+        zero_var_groups <- names(group_variances)[group_variances == 0]
+        return(list(
+          error = paste("Groups with zero variance (all values identical):", 
+                        paste(zero_var_groups, collapse = ", ")),
+          success = FALSE
+        ))
+      }
+      
+      # Perform Welch ANOVA
+      welch_test <- oneway.test(outcome_clean ~ group_factor, 
+                                data = data.frame(outcome_clean, group_factor),
+                                var.equal = FALSE)
+      
+      # Check for NaN results
+      if (is.nan(welch_test$statistic) || is.na(welch_test$p.value)) {
+        return(list(
+          error = "Welch ANOVA calculation failed (NaN/NA results). Possible causes: insufficient data, extreme outliers, or computational issues.",
+          success = FALSE
+        ))
+      }
+      
+      # Games-Howell post-hoc test (if more than 2 groups)
+      posthoc <- NULL
+      if (n_groups > 2 && !is.nan(welch_test$statistic) && welch_test$p.value < 1) {
+        posthoc <- tryCatch({
+          # Using pairwise.t.test with Holm correction as alternative to Games-Howell
+          pairwise.t.test(outcome_clean, group_factor, 
+                          pool.sd = FALSE,
+                          p.adjust.method = "holm")
+        }, error = function(e) {
+          NULL
+        })
+      }
+      
+      # Calculate descriptive statistics
+      group_stats <- data.frame(
+        Group = levels(group_factor),
+        N = as.numeric(group_counts),
+        Mean = tapply(outcome_clean, group_factor, mean, na.rm = TRUE),
+        SD = tapply(outcome_clean, group_factor, sd, na.rm = TRUE),
+        SE = tapply(outcome_clean, group_factor, function(x) sd(x, na.rm = TRUE)/sqrt(length(x))),
+        Variance = group_variances
       )
       
-      ft_chi <- flextable(chi_summary) %>%
-        theme_zebra() %>%
-        autofit()
+      list(
+        welch_test = welch_test,
+        posthoc = posthoc,
+        group_stats = group_stats,
+        n_groups = n_groups,
+        total_n = length(outcome_clean),
+        success = TRUE
+      )
       
-      doc <- doc %>% body_add_flextable(ft_chi)
+    }, error = function(e) {
+      return(list(
+        error = paste("Error in Welch ANOVA:", e$message),
+        success = FALSE
+      ))
+    })
+  })
+  
+  output$welch_anova_results <- renderPrint({
+    req(welch_anova_results())
+    
+    results <- welch_anova_results()
+    
+    if (!results$success) {
+      cat("WELCH ANOVA - ERROR\n")
+      cat("===================\n\n")
+      cat(results$error, "\n\n")
+      cat("Troubleshooting suggestions:\n")
+      cat("1. Check that your grouping variable has at least 2 categories\n")
+      cat("2. Ensure each group has at least 2 observations\n")
+      cat("3. Remove groups with zero variance (all identical values)\n")
+      cat("4. Check for extreme outliers\n")
+      cat("5. Try using Kruskal-Wallis test for non-normal data\n")
+      return()
+    }
+    
+    cat("WELCH ANOVA RESULTS\n")
+    cat("===================\n\n")
+    
+    cat("Data Summary:\n")
+    cat("- Outcome variable:", input$welch_outcome, "\n")
+    cat("- Grouping variable:", input$welch_group, "\n")
+    cat("- Number of groups:", results$n_groups, "\n")
+    cat("- Total observations:", results$total_n, "\n")
+    cat("\n")
+    
+    print(results$welch_test)
+    
+    cat("\n")
+    
+    # Add effect size (omega squared)
+    if (!is.nan(results$welch_test$statistic)) {
+      F_val <- results$welch_test$statistic
+      df1 <- results$welch_test$parameter[1]
+      df2 <- results$welch_test$parameter[2]
       
-      # Expected counts if requested
-      if(input$chisq_expected && !is.null(results$test$expected)) {
-        doc <- doc %>%
-          body_add_par("EXPECTED COUNTS", style = "heading 2")
-        
-        expected_df <- as.data.frame.matrix(results$test$expected)
-        expected_df <- cbind(Variable = rownames(expected_df), expected_df)
-        
-        ft_expected <- flextable(expected_df) %>%
-          theme_zebra() %>%
-          autofit()
-        
-        doc <- doc %>% body_add_flextable(ft_expected)
-      }
+      # Calculate omega squared for Welch ANOVA (approximation)
+      omega_sq <- (F_val - 1) / (F_val + (df2 + 1)/df1)
+      eta_sq <- F_val * df1 / (F_val * df1 + df2)
       
-      # Residuals if requested
-      if(input$chisq_residuals && !is.null(results$test$residuals)) {
-        doc <- doc %>%
-          body_add_par("PEARSON RESIDUALS", style = "heading 2")
-        
-        residuals_df <- as.data.frame.matrix(results$test$residuals)
-        residuals_df <- cbind(Variable = rownames(residuals_df), residuals_df)
-        
-        ft_residuals <- flextable(residuals_df) %>%
-          theme_zebra() %>%
-          autofit()
-        
-        doc <- doc %>% body_add_flextable(ft_residuals)
-      }
+      cat("Effect Sizes:\n")
+      cat("- Omega squared (ω²):", round(omega_sq, 3), "\n")
+      cat("- Eta squared (η²):", round(eta_sq, 3), "\n")
+      cat("\n")
       
-      # Fisher's exact test if requested
-      if(input$chisq_fisher && !is.null(results$fisher)) {
-        doc <- doc %>%
-          body_add_par("FISHER'S EXACT TEST", style = "heading 2")
-        
-        fisher_summary <- data.frame(
-          Statistic = c("Odds Ratio", "P-value", "Confidence Interval", "Significance"),
-          Value = c(
-            ifelse(!is.null(results$fisher$estimate), round(results$fisher$estimate, 4), "N/A"),
-            round(results$fisher$p.value, 4),
-            ifelse(!is.null(results$fisher$conf.int), 
-                   paste(round(results$fisher$conf.int[1], 4), "to", round(results$fisher$conf.int[2], 4)), 
-                   "N/A"),
-            ifelse(results$fisher$p.value < 0.05, "Statistically Significant", "Not Statistically Significant")
-          )
-        )
-        
-        ft_fisher <- flextable(fisher_summary) %>%
-          theme_zebra() %>%
-          autofit()
-        
-        doc <- doc %>% body_add_flextable(ft_fisher)
-      }
-      
-      # Relative risk if requested
-      if(input$chisq_rr && !is.null(results$rr)) {
-        doc <- doc %>%
-          body_add_par("RELATIVE RISK ANALYSIS", style = "heading 2")
-        
-        # Extract relative risk information
-        rr_data <- results$rr$data
-        rr_estimate <- results$rr$measure
-        rr_pvalue <- results$rr$p.value
-        
-        # Create RR summary table
-        rr_summary <- data.frame(
-          Statistic = c("Relative Risk", "P-value", "Significance"),
-          Value = c(
-            ifelse(!is.null(rr_estimate), round(rr_estimate[2, 1], 4), "N/A"),
-            ifelse(!is.null(rr_pvalue), round(rr_pvalue[2, 1], 4), "N/A"),
-            ifelse(!is.null(rr_pvalue) && rr_pvalue[2, 1] < 0.05, 
-                   "Statistically Significant", "Not Statistically Significant")
-          )
-        )
-        
-        ft_rr <- flextable(rr_summary) %>%
-          theme_zebra() %>%
-          autofit()
-        
-        doc <- doc %>% body_add_flextable(ft_rr)
-      }
-      
-      # Interpretation section
-      doc <- doc %>%
-        body_add_par("INTERPRETATION", style = "heading 2")
-      
-      interpretation_text <- if (results$test$p.value < 0.05) {
-        paste("The chi-square test reveals a statistically significant association between", 
-              input$chisq_var1, "and", input$chisq_var2, 
-              "(χ² =", round(results$test$statistic, 3), 
-              ", df =", results$test$parameter, 
-              ", p =", round(results$test$p.value, 4), ").",
-              "This suggests that the two variables are not independent.")
+      # Interpretation
+      cat("Effect Size Interpretation:\n")
+      if (omega_sq >= 0.01 && omega_sq < 0.06) {
+        cat("- Small effect\n")
+      } else if (omega_sq >= 0.06 && omega_sq < 0.14) {
+        cat("- Medium effect\n")
+      } else if (omega_sq >= 0.14) {
+        cat("- Large effect\n")
       } else {
-        paste("The chi-square test does not show a statistically significant association between", 
-              input$chisq_var1, "and", input$chisq_var2, 
-              "(χ² =", round(results$test$statistic, 3), 
-              ", df =", results$test$parameter, 
-              ", p =", round(results$test$p.value, 4), ").",
-              "This suggests that any observed relationship could be due to chance.")
+        cat("- Negligible effect\n")
       }
+    }
+  })
+  
+  output$welch_anova_table <- renderDT({
+    req(welch_anova_results())
+    
+    results <- welch_anova_results()
+    
+    if (!results$success) {
+      return(datatable(
+        data.frame(Error = results$error),
+        options = list(dom = 't'),
+        rownames = FALSE,
+        caption = "Welch ANOVA - Error"
+      ))
+    }
+    
+    welch_df <- data.frame(
+      Statistic = c("F value", "Numerator DF", "Denominator DF", "P-value", 
+                    "Total Observations", "Number of Groups", "Method"),
+      Value = c(
+        round(results$welch_test$statistic, 4),
+        round(results$welch_test$parameter[1], 2),
+        round(results$welch_test$parameter[2], 2),
+        round(results$welch_test$p.value, 4),
+        results$total_n,
+        results$n_groups,
+        "Welch ANOVA (unequal variances)"
+      )
+    )
+    
+    datatable(
+      welch_df,
+      options = list(
+        dom = 't',
+        pageLength = 10
+      ),
+      rownames = FALSE,
+      caption = "Welch ANOVA Results"
+    ) %>%
+      formatStyle(
+        'Value',
+        backgroundColor = styleInterval(
+          c(0.001, 0.01, 0.05),
+          c('#D4EDDA', '#D1ECF1', '#FFF3CD', '#FFFFFF')
+        ),
+        target = 'row',
+        columns = 'Value'
+      )
+  })
+  
+  output$welch_posthoc_results <- renderPrint({
+    req(welch_anova_results())
+    
+    results <- welch_anova_results()
+    
+    if (!results$success) {
+      cat("Cannot perform post-hoc tests due to ANOVA error\n")
+      return()
+    }
+    
+    if (results$n_groups <= 2) {
+      cat("Post-hoc tests are only performed when there are more than 2 groups.\n")
+      return()
+    }
+    
+    if (is.null(results$posthoc)) {
+      cat("Post-hoc tests could not be calculated.\n")
+      cat("Alternative: Try using pairwise Wilcoxon tests with Bonferroni correction.\n")
+      return()
+    }
+    
+    cat("POST-HOC COMPARISONS (Holm correction for unequal variances)\n")
+    cat("============================================================\n\n")
+    
+    print(results$posthoc)
+    
+    # Add interpretation
+    cat("\nInterpretation:\n")
+    cat("- P-value < 0.05 indicates statistically significant difference between groups\n")
+    cat("- Holm correction controls for multiple comparisons\n")
+    cat("- This method is robust to unequal variances and non-normality\n")
+  })
+  
+  # Additional output for group statistics
+  output$welch_group_stats <- renderDT({
+    req(welch_anova_results())
+    
+    results <- welch_anova_results()
+    
+    if (!results$success) {
+      return(NULL)
+    }
+    
+    datatable(
+      results$group_stats,
+      options = list(
+        pageLength = 10,
+        dom = 'Blfrtip',
+        scrollX = TRUE,
+        buttons = c('copy', 'csv', 'excel')
+      ),
+      rownames = FALSE,
+      caption = "Group Descriptive Statistics",
+      extensions = 'Buttons'
+    ) %>%
+      formatRound(columns = c('Mean', 'SD', 'SE', 'Variance'), digits = 3)
+  })
+  
+  # Download handler for Welch ANOVA
+  output$download_welch_anova <- downloadHandler(
+    filename = function() {
+      paste("welch_anova_", Sys.Date(), ".docx", sep = "")
+    },
+    content = function(file) {
+      req(welch_anova_results())
+      results <- welch_anova_results()
       
-      doc <- doc %>% 
-        body_add_par(interpretation_text, style = "Normal") %>%
-        body_add_par("", style = "Normal")
+      doc <- read_docx()
       
-      # Data quality notes
-      doc <- doc %>%
-        body_add_par("DATA QUALITY NOTES", style = "heading 2")
-      
-      # Check for small expected counts
-      if (!is.null(results$test$expected)) {
-        small_expected <- sum(results$test$expected < 5)
-        total_cells <- length(results$test$expected)
+      if (!results$success) {
+        doc <- doc %>%
+          body_add_par("WELCH ANOVA ANALYSIS - ERROR", style = "heading 1") %>%
+          body_add_par(results$error, style = "Normal")
+      } else {
+        doc <- doc %>%
+          body_add_par("WELCH ANOVA ANALYSIS REPORT", style = "heading 1") %>%
+          body_add_par(paste("Outcome Variable:", input$welch_outcome), style = "Normal") %>%
+          body_add_par(paste("Grouping Variable:", input$welch_group), style = "Normal") %>%
+          body_add_par("Method: Welch ANOVA (robust to unequal variances)", style = "Normal") %>%
+          body_add_par(paste("Number of Groups:", results$n_groups), style = "Normal") %>%
+          body_add_par(paste("Total Observations:", results$total_n), style = "Normal") %>%
+          body_add_par("", style = "Normal")
         
-        quality_note <- if (small_expected > 0) {
-          paste("Warning:", small_expected, "out of", total_cells, 
-                "cells have expected counts less than 5. Consider using Fisher's exact test for more reliable results.")
-        } else {
-          "All expected cell counts are ≥5, meeting the assumptions for chi-square test."
+        doc <- doc %>%
+          body_add_par("GROUP DESCRIPTIVE STATISTICS", style = "heading 2")
+        
+        ft_stats <- flextable(results$group_stats) %>%
+          theme_zebra() %>%
+          autofit()
+        
+        doc <- doc %>% body_add_flextable(ft_stats)
+        
+        doc <- doc %>%
+          body_add_par("WELCH ANOVA RESULTS", style = "heading 2")
+        
+        welch_df <- data.frame(
+          Statistic = c("F value", "Numerator DF", "Denominator DF", "P-value"),
+          Value = c(
+            round(results$welch_test$statistic, 4),
+            round(results$welch_test$parameter[1], 2),
+            round(results$welch_test$parameter[2], 2),
+            round(results$welch_test$p.value, 4)
+          )
+        )
+        
+        ft_welch <- flextable(welch_df) %>%
+          theme_zebra() %>%
+          autofit()
+        
+        doc <- doc %>% body_add_flextable(ft_welch)
+        
+        # Calculate and add effect sizes
+        if (!is.nan(results$welch_test$statistic)) {
+          F_val <- results$welch_test$statistic
+          df1 <- results$welch_test$parameter[1]
+          df2 <- results$welch_test$parameter[2]
+          
+          omega_sq <- (F_val - 1) / (F_val + (df2 + 1)/df1)
+          eta_sq <- F_val * df1 / (F_val * df1 + df2)
+          
+          effect_sizes <- data.frame(
+            Effect_Size = c("Omega squared (ω²)", "Eta squared (η²)"),
+            Value = c(round(omega_sq, 3), round(eta_sq, 3))
+          )
+          
+          doc <- doc %>%
+            body_add_par("EFFECT SIZES", style = "heading 2")
+          
+          ft_effects <- flextable(effect_sizes) %>%
+            theme_zebra() %>%
+            autofit()
+          
+          doc <- doc %>% body_add_flextable(ft_effects)
         }
         
-        doc <- doc %>% body_add_par(quality_note, style = "Normal")
+        if (!is.null(results$posthoc)) {
+          doc <- doc %>%
+            body_add_par("POST-HOC COMPARISONS", style = "heading 2")
+          
+          posthoc_matrix <- as.data.frame(results$posthoc$p.value)
+          posthoc_df <- cbind(Comparison = rownames(posthoc_matrix), posthoc_matrix)
+          rownames(posthoc_df) <- NULL
+          
+          ft_posthoc <- flextable(posthoc_df) %>%
+            theme_zebra() %>%
+            autofit()
+          
+          doc <- doc %>% body_add_flextable(ft_posthoc)
+        }
+        
+        doc <- doc %>%
+          body_add_par("INTERPRETATION", style = "heading 2")
+        
+        p_value <- results$welch_test$p.value
+        f_value <- results$welch_test$statistic
+        
+        interpretation <- if (p_value < 0.05) {
+          paste("The Welch ANOVA revealed a statistically significant difference between groups ",
+                "(F =", round(f_value, 3), ", p =", round(p_value, 4), "). ",
+                "This robust test confirms significant differences while accounting for potential unequal variances.")
+        } else {
+          paste("The Welch ANOVA did not reveal a statistically significant difference between groups ",
+                "(F =", round(f_value, 3), ", p =", round(p_value, 4), ").")
+        }
+        
+        doc <- doc %>% body_add_par(interpretation, style = "Normal")
+        
+        doc <- doc %>%
+          body_add_par("RECOMMENDATIONS", style = "heading 2") %>%
+          body_add_par("• Use Welch ANOVA when group variances are unequal", style = "Normal") %>%
+          body_add_par("• Consider Kruskal-Wallis test for non-normal data", style = "Normal") %>%
+          body_add_par("• For post-hoc comparisons, use Games-Howell or pairwise t-tests with Holm correction", style = "Normal")
       }
       
       print(doc, target = file)
     }
   )
-  
-  
-  output$download_chisq_plot <- downloadHandler(
-    filename = "chi_square_plot.png",
-    content = function(file) {
-      df <- processed_data()
-      
-      p <- ggplot(df, aes(x = !!sym(input$chisq_var1), fill = !!sym(input$chisq_var2))) +
-        geom_bar(position = "fill") +
-        labs(title = paste("Stacked Bar Plot:", input$chisq_var1, "vs", input$chisq_var2),
-             x = input$chisq_var1,
-             y = "Proportion",
-             fill = input$chisq_var2) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      
-      ggsave(file, plot = p, device = "png", width = 10, height = 6, dpi = 300)
+  # ANOVA Assumptions
+  assumptions_results <- eventReactive(input$run_assumptions, {
+    req(input$assumptions_outcome, input$assumptions_group, processed_data())
+    df <- processed_data()
+    
+    # Fit ANOVA model
+    model <- aov(as.formula(paste(input$assumptions_outcome, "~", input$assumptions_group)), data = df)
+    
+    results <- list()
+    
+    if(input$levene_test) {
+      results$levene <- car::leveneTest(model)
     }
-  )
+    
+    if(input$normality_test) {
+      results$shapiro <- shapiro.test(residuals(model))
+      results$ks <- ks.test(residuals(model), "pnorm")
+    }
+    
+    if(input$outlier_test) {
+      residuals_std <- rstandard(model)
+      results$outliers <- which(abs(residuals_std) > 2.5)
+    }
+    
+    results
+  })
   
+  output$levene_results <- renderPrint({
+    req(assumptions_results()$levene)
+    
+    cat("Levene's Test for Homogeneity of Variance\n")
+    cat("=========================================\n\n")
+    print(assumptions_results()$levene)
+  })
   
-  # Add to your data loading observer (around line 1070 in your original code)
-  observeEvent(processed_data(), {
-    req(processed_data())
-    df_processed <- processed_data()
+  output$normality_results <- renderPrint({
+    req(assumptions_results()$shapiro)
     
-    # Update Poisson regression inputs
-    updateSelectInput(session, "poisson_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "poisson_vars", choices = names(df_processed))
-    updateSelectInput(session, "poisson_offset_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+    cat("Normality Tests\n")
+    cat("===============\n\n")
     
-    # Update central tendency inputs
-    updateSelectInput(session, "central_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "central_stratify", choices = c("None" = "none", names(df_processed)))
+    cat("Shapiro-Wilk Test:\n")
+    print(assumptions_results()$shapiro)
     
-    # Update ANOVA inputs - MOVED HERE to ensure df_processed exists
-    updateSelectInput(session, "anova_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "anova_group", choices = names(df_processed))
-    updateSelectInput(session, "anova_outcome_2way", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "anova_factor1", choices = names(df_processed))
-    updateSelectInput(session, "anova_factor2", choices = names(df_processed))
-    updateSelectInput(session, "welch_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "welch_group", choices = names(df_processed))
-    updateSelectInput(session, "assumptions_outcome", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "assumptions_group", choices = names(df_processed))
+    if(!is.null(assumptions_results()$ks)) {
+      cat("\nKolmogorov-Smirnov Test:\n")
+      print(assumptions_results()$ks)
+    }
+  })
+  
+  output$outlier_results <- renderPrint({
+    req(assumptions_results()$outliers)
     
-    # Update T-test inputs
-    updateSelectInput(session, "ttest_onesample_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "ttest_independent_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "ttest_independent_group", choices = names(df_processed))
-    updateSelectInput(session, "ttest_paired_var1", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "ttest_paired_var2", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "mannwhitney_var", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "mannwhitney_group", choices = names(df_processed))
-    updateSelectInput(session, "wilcoxon_var1", choices = names(df_processed)[sapply(df_processed, is.numeric)])
-    updateSelectInput(session, "wilcoxon_var2", choices = names(df_processed)[sapply(df_processed, is.numeric)])
+    cat("Outlier Detection\n")
+    cat("=================\n\n")
+    
+    if(length(assumptions_results()$outliers) > 0) {
+      cat("Outliers detected at observations:", assumptions_results()$outliers, "\n")
+    } else {
+      cat("No significant outliers detected (standardized residuals < |2.5|)\n")
+    }
+  })
+  
+  output$assumptions_plots <- renderPlot({
+    req(input$assumptions_outcome, input$assumptions_group, processed_data())
+    
+    df <- processed_data()
+    model <- aov(as.formula(paste(input$assumptions_outcome, "~", input$assumptions_group)), data = df)
+    
+    par(mfrow = c(2, 2))
+    plot(model)
+  })
+  
+  # One-Sample T-Test
+  ttest_onesample_results <- eventReactive(input$run_ttest_onesample, {
+    req(input$ttest_onesample_var, processed_data())
+    df <- processed_data()
+    
+    var_data <- df[[input$ttest_onesample_var]]
+    var_data <- var_data[!is.na(var_data)]
+    
+    # Perform t-test
+    t_test <- t.test(var_data, 
+                     mu = input$ttest_onesample_mu,
+                     alternative = input$ttest_onesample_alternative,
+                     conf.level = input$ttest_onesample_conf)
+    
+    list(
+      ttest = t_test,
+      data = var_data,
+      descriptives = data.frame(
+        N = length(var_data),
+        Mean = mean(var_data),
+        SD = sd(var_data),
+        SE = sd(var_data) / sqrt(length(var_data))
+      )
+    )
+  })
+  
+  output$ttest_onesample_results <- renderPrint({
+    req(ttest_onesample_results())
+    
+    cat("One-Sample T-Test Results\n")
+    cat("=========================\n\n")
+    
+    print(ttest_onesample_results()$ttest)
+  })
+  
+  output$ttest_onesample_table <- renderDT({
+    req(ttest_onesample_results())
+    
+    ttest_df <- data.frame(
+      Statistic = c("t", "DF", "P-value", "Confidence Level", "Alternative"),
+      Value = c(
+        round(ttest_onesample_results()$ttest$statistic, 3),
+        round(ttest_onesample_results()$ttest$parameter, 2),
+        round(ttest_onesample_results()$ttest$p.value, 4),
+        paste0(input$ttest_onesample_conf * 100, "%"),
+        ttest_onesample_results()$ttest$alternative
+      )
+    )
+    
+    datatable(ttest_df, options = list(dom = 't'))
+  })
+  
+  output$ttest_onesample_descriptives <- renderPrint({
+    req(ttest_onesample_results())
+    
+    cat("Descriptive Statistics\n")
+    cat("=====================\n\n")
+    
+    print(ttest_onesample_results()$descriptives)
+  })
+  
+  output$ttest_onesample_plot <- renderPlot({
+    req(ttest_onesample_results())
+    
+    data <- ttest_onesample_results()$data
+    mu <- input$ttest_onesample_mu
+    
+    ggplot(data.frame(value = data), aes(x = value)) +
+      geom_histogram(aes(y = ..density..), bins = 30, fill = "#0C5EA8", alpha = 0.7) +
+      geom_density(color = "#CD2026", size = 1.5) +
+      geom_vline(xintercept = mu, color = "#5CB85C", size = 1.5, linetype = "dashed") +
+      labs(title = "Distribution with Test Value",
+           x = input$ttest_onesample_var,
+           y = "Density") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 12)
+      )
   })
   
   # UI for independent t-test group levels
@@ -6442,12 +9553,7 @@ server <- function(input, output, session) {
     
     if (!input$ttest_independent_group %in% names(df)) return(NULL)
     
-    var_data <- df[[input$ttest_independent_group]]
-    levels <- if (is.factor(var_data)) levels(var_data) else unique(na.omit(var_data))
-    
-    if (length(levels) != 2) {
-      return(helpText("Grouping variable must have exactly 2 categories for independent t-test."))
-    }
+    levels <- unique(na.omit(df[[input$ttest_independent_group]]))
     
     tagList(
       selectInput("ttest_group1", "Group 1:", choices = levels, selected = levels[1]),
@@ -6455,331 +9561,33 @@ server <- function(input, output, session) {
     )
   })
   
-  # One-Way ANOVA
-  anova_results <- eventReactive(input$run_anova, {
-    req(input$anova_outcome, input$anova_group, processed_data())
-    
-    tryCatch({
-      df <- processed_data()
-      
-      # Validate variables
-      if (!input$anova_outcome %in% names(df) || !input$anova_group %in% names(df)) {
-        return(list(error = "Selected variables not found", success = FALSE))
-      }
-      
-      outcome <- df[[input$anova_outcome]]
-      group <- as.factor(df[[input$anova_group]])
-      
-      # Remove missing values
-      complete_cases <- !is.na(outcome) & !is.na(group)
-      outcome_clean <- outcome[complete_cases]
-      group_clean <- group[complete_cases]
-      
-      if (length(unique(group_clean)) < 2) {
-        return(list(error = "Grouping variable must have at least 2 levels", success = FALSE))
-      }
-      
-      # Fit ANOVA model
-      model <- aov(outcome_clean ~ group_clean)
-      anova_summary <- summary(model)
-      
-      # Post-hoc tests if requested
-      posthoc_results <- NULL
-      if (input$anova_posthoc) {
-        if (input$anova_posthoc_method == "tukey") {
-          posthoc_results <- TukeyHSD(model)
-        } else if (input$anova_posthoc_method == "bonferroni") {
-          posthoc_results <- pairwise.t.test(outcome_clean, group_clean, p.adjust.method = "bonferroni")
-        }
-      }
-      
-      # Assumptions check if requested
-      assumptions_results <- NULL
-      if (input$anova_assumptions) {
-        # Normality test
-        normality <- shapiro.test(residuals(model))
-        
-        # Homogeneity of variance
-        levene <- car::leveneTest(outcome_clean ~ group_clean)
-        
-        assumptions_results <- list(
-          normality = normality,
-          homogeneity = levene
-        )
-      }
-      
-      list(
-        model = model,
-        summary = anova_summary,
-        posthoc = posthoc_results,
-        assumptions = assumptions_results,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("ANOVA error:", e$message), success = FALSE))
-    })
-  })
-  
-  output$anova_results <- renderPrint({
-    req(anova_results())
-    results <- anova_results()
-    
-    if (!results$success) {
-      cat("ANOVA ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("ONE-WAY ANOVA RESULTS\n")
-    cat("=====================\n\n")
-    print(results$summary)
-  })
-  
-  output$anova_assumptions_results <- renderPrint({
-    req(anova_results())
-    results <- anova_results()
-    
-    if (!results$success || is.null(results$assumptions)) return()
-    
-    cat("NORMALITY TEST (Shapiro-Wilk):\n")
-    print(results$assumptions$normality)
-    cat("\nHOMOGENEITY OF VARIANCE (Levene's Test):\n")
-    print(results$assumptions$homogeneity)
-  })
-  
-  output$anova_posthoc_results <- renderPrint({
-    req(anova_results())
-    results <- anova_results()
-    
-    if (!results$success || is.null(results$posthoc)) return()
-    
-    cat("POST-HOC COMPARISONS:\n")
-    print(results$posthoc)
-  })
-  
-  # Two-Way ANOVA
-  anova_2way_results <- eventReactive(input$run_anova_2way, {
-    req(input$anova_outcome_2way, input$anova_factor1, input$anova_factor2, processed_data())
-    
-    tryCatch({
-      df <- processed_data()
-      
-      # Create formula
-      if (input$anova_interaction) {
-        formula <- as.formula(paste(input$anova_outcome_2way, "~", input$anova_factor1, "*", input$anova_factor2))
-      } else {
-        formula <- as.formula(paste(input$anova_outcome_2way, "~", input$anova_factor1, "+", input$anova_factor2))
-      }
-      
-      model <- aov(formula, data = df)
-      summary_result <- summary(model)
-      
-      # Simple effects analysis if requested
-      simple_effects <- NULL
-      if (input$anova_2way_posthoc && input$anova_interaction) {
-        simple_effects <- emmeans(model, as.formula(paste("~", input$anova_factor1, "|", input$anova_factor2)))
-      }
-      
-      list(
-        model = model,
-        summary = summary_result,
-        simple_effects = simple_effects,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Two-way ANOVA error:", e$message), success = FALSE))
-    })
-  })
-  
-  output$anova_2way_results <- renderPrint({
-    req(anova_2way_results())
-    results <- anova_2way_results()
-    
-    if (!results$success) {
-      cat("TWO-WAY ANOVA ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("TWO-WAY ANOVA RESULTS\n")
-    cat("=====================\n\n")
-    print(results$summary)
-  })
-  
-  output$anova_2way_posthoc <- renderPrint({
-    req(anova_2way_results())
-    results <- anova_2way_results()
-    
-    if (!results$success || is.null(results$simple_effects)) return()
-    
-    cat("SIMPLE EFFECTS ANALYSIS:\n")
-    print(results$simple_effects)
-  })
-  
-  # Welch ANOVA
-  welch_anova_results <- eventReactive(input$run_welch_anova, {
-    req(input$welch_outcome, input$welch_group, processed_data())
-    
-    tryCatch({
-      df <- processed_data()
-      
-      outcome <- df[[input$welch_outcome]]
-      group <- as.factor(df[[input$welch_group]])
-      
-      # Remove missing values
-      complete_cases <- !is.na(outcome) & !is.na(group)
-      outcome_clean <- outcome[complete_cases]
-      group_clean <- group[complete_cases]
-      
-      # Welch ANOVA
-      welch_result <- oneway.test(outcome_clean ~ group_clean, var.equal = FALSE)
-      
-      # Games-Howell post-hoc
-      posthoc <- tryCatch({
-        PMCMRplus::gamesHowellTest(outcome_clean, group_clean)
-      }, error = function(e) {
-        NULL
-      })
-      
-      list(
-        welch_test = welch_result,
-        posthoc = posthoc,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Welch ANOVA error:", e$message), success = FALSE))
-    })
-  })
-  
-  output$welch_anova_results <- renderPrint({
-    req(welch_anova_results())
-    results <- welch_anova_results()
-    
-    if (!results$success) {
-      cat("WELCH ANOVA ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("WELCH ANOVA RESULTS\n")
-    cat("===================\n\n")
-    print(results$welch_test)
-  })
-  
-  output$welch_posthoc_results <- renderPrint({
-    req(welch_anova_results())
-    results <- welch_anova_results()
-    
-    if (!results$success || is.null(results$posthoc)) {
-      cat("Games-Howell post-hoc test not available.\n")
-      return()
-    }
-    
-    cat("GAMES-HOWELL POST-HOC TEST:\n")
-    print(results$posthoc)
-  })
-  
-  # One-Sample T-Test
-  ttest_onesample_results <- eventReactive(input$run_ttest_onesample, {
-    req(input$ttest_onesample_var, processed_data())
-    
-    tryCatch({
-      df <- processed_data()
-      var_data <- df[[input$ttest_onesample_var]]
-      
-      # Remove missing values
-      var_clean <- var_data[!is.na(var_data)]
-      
-      if (length(var_clean) < 2) {
-        return(list(error = "Insufficient data for t-test", success = FALSE))
-      }
-      
-      # Perform t-test
-      ttest <- t.test(var_clean, 
-                      mu = input$ttest_onesample_mu,
-                      alternative = input$ttest_onesample_alternative,
-                      conf.level = input$ttest_onesample_conf)
-      
-      # Descriptive statistics
-      descriptives <- data.frame(
-        N = length(var_clean),
-        Mean = mean(var_clean),
-        SD = sd(var_clean),
-        SE = sd(var_clean)/sqrt(length(var_clean)),
-        Test_Value = input$ttest_onesample_mu
-      )
-      
-      list(
-        ttest = ttest,
-        descriptives = descriptives,
-        data = var_clean,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("One-sample t-test error:", e$message), success = FALSE))
-    })
-  })
-  
-  output$ttest_onesample_results <- renderPrint({
-    req(ttest_onesample_results())
-    results <- ttest_onesample_results()
-    
-    if (!results$success) {
-      cat("ONE-SAMPLE T-TEST ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("ONE-SAMPLE T-TEST RESULTS\n")
-    cat("=========================\n\n")
-    print(results$ttest)
-  })
-  
-  output$ttest_onesample_descriptives <- renderPrint({
-    req(ttest_onesample_results())
-    results <- ttest_onesample_results()
-    
-    if (!results$success) return()
-    
-    cat("DESCRIPTIVE STATISTICS:\n")
-    print(results$descriptives)
-  })
-  
   # Independent T-Test
   ttest_independent_results <- eventReactive(input$run_ttest_independent, {
     req(input$ttest_independent_var, input$ttest_independent_group, 
         input$ttest_group1, input$ttest_group2, processed_data())
     
-    tryCatch({
-      df <- processed_data()
-      
-      # Filter data for selected groups
-      group_data <- df[[input$ttest_independent_group]]
-      outcome_data <- df[[input$ttest_independent_var]]
-      
-      # Create subset for the two groups
-      group1_data <- outcome_data[group_data == input$ttest_group1 & !is.na(outcome_data)]
-      group2_data <- outcome_data[group_data == input$ttest_group2 & !is.na(outcome_data)]
-      
-      if (length(group1_data) < 2 || length(group2_data) < 2) {
-        return(list(error = "Insufficient data in one or both groups", success = FALSE))
-      }
-      
-      # Perform t-test
-      ttest <- t.test(group1_data, group2_data,
-                      var.equal = input$ttest_var_equal,
-                      alternative = input$ttest_alternative,
-                      conf.level = input$ttest_conf)
-      
-      # Variance check
-      var_test <- var.test(group1_data, group2_data)
-      
-      # Group descriptives
-      descriptives <- data.frame(
+    df <- processed_data()
+    
+    # Filter data for the two selected groups
+    group1_data <- df[[input$ttest_independent_var]][df[[input$ttest_independent_group]] == input$ttest_group1]
+    group2_data <- df[[input$ttest_independent_var]][df[[input$ttest_independent_group]] == input$ttest_group2]
+    
+    group1_data <- group1_data[!is.na(group1_data)]
+    group2_data <- group2_data[!is.na(group2_data)]
+    
+    # Perform t-test
+    t_test <- t.test(group1_data, group2_data,
+                     var.equal = input$ttest_var_equal,
+                     alternative = input$ttest_alternative,
+                     conf.level = input$ttest_conf)
+    
+    # Variance test
+    var_test <- var.test(group1_data, group2_data)
+    
+    list(
+      ttest = t_test,
+      var_test = var_test,
+      descriptives = data.frame(
         Group = c(input$ttest_group1, input$ttest_group2),
         N = c(length(group1_data), length(group2_data)),
         Mean = c(mean(group1_data), mean(group2_data)),
@@ -6787,238 +9595,248 @@ server <- function(input, output, session) {
         SE = c(sd(group1_data)/sqrt(length(group1_data)), 
                sd(group2_data)/sqrt(length(group2_data)))
       )
-      
-      list(
-        ttest = ttest,
-        var_test = var_test,
-        descriptives = descriptives,
-        group1_data = group1_data,
-        group2_data = group2_data,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Independent t-test error:", e$message), success = FALSE))
-    })
+    )
   })
   
   output$ttest_independent_results <- renderPrint({
     req(ttest_independent_results())
-    results <- ttest_independent_results()
     
-    if (!results$success) {
-      cat("INDEPENDENT T-TEST ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("INDEPENDENT T-TEST RESULTS\n")
+    cat("Independent T-Test Results\n")
     cat("==========================\n\n")
-    print(results$ttest)
+    
+    print(ttest_independent_results()$ttest)
+  })
+  
+  output$ttest_independent_table <- renderDT({
+    req(ttest_independent_results())
+    
+    ttest_df <- data.frame(
+      Statistic = c("t", "DF", "P-value", "Confidence Level", "Alternative", "Equal Variances"),
+      Value = c(
+        round(ttest_independent_results()$ttest$statistic, 3),
+        round(ttest_independent_results()$ttest$parameter, 2),
+        round(ttest_independent_results()$ttest$p.value, 4),
+        paste0(input$ttest_conf * 100, "%"),
+        ttest_independent_results()$ttest$alternative,
+        ifelse(input$ttest_var_equal, "Yes", "No")
+      )
+    )
+    
+    datatable(ttest_df, options = list(dom = 't'))
   })
   
   output$ttest_independent_descriptives <- renderPrint({
     req(ttest_independent_results())
-    results <- ttest_independent_results()
     
-    if (!results$success) return()
+    cat("Group Descriptive Statistics\n")
+    cat("===========================\n\n")
     
-    cat("GROUP DESCRIPTIVES:\n")
-    print(results$descriptives)
+    print(ttest_independent_results()$descriptives)
   })
   
   output$ttest_variance_check <- renderPrint({
     req(ttest_independent_results())
-    results <- ttest_independent_results()
     
-    if (!results$success) return()
+    cat("Variance Equality Test (F-test)\n")
+    cat("===============================\n\n")
     
-    cat("VARIANCE EQUALITY TEST (F-test):\n")
-    print(results$var_test)
-    cat("\nInterpretation: ", ifelse(results$var_test$p.value < 0.05, 
-                                     "Variances are significantly different (use Welch test)",
-                                     "Variances are not significantly different"))
+    print(ttest_independent_results()$var_test)
+  })
+  
+  output$ttest_independent_plot <- renderPlot({
+    req(ttest_independent_results())
+    
+    desc <- ttest_independent_results()$descriptives
+    
+    ggplot(desc, aes(x = Group, y = Mean, fill = Group)) +
+      geom_bar(stat = "identity", alpha = 0.7) +
+      geom_errorbar(aes(ymin = Mean - 1.96*SE, ymax = Mean + 1.96*SE), 
+                    width = 0.2) +
+      scale_fill_brewer(palette = "Set1") +
+      labs(title = "Group Means with 95% Confidence Intervals",
+           x = input$ttest_independent_group,
+           y = input$ttest_independent_var) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 12),
+        legend.position = "none"
+      )
   })
   
   # Paired T-Test
   ttest_paired_results <- eventReactive(input$run_ttest_paired, {
     req(input$ttest_paired_var1, input$ttest_paired_var2, processed_data())
+    df <- processed_data()
     
-    tryCatch({
-      df <- processed_data()
-      
-      var1_data <- df[[input$ttest_paired_var1]]
-      var2_data <- df[[input$ttest_paired_var2]]
-      
-      # Remove pairs with missing values
-      complete_pairs <- !is.na(var1_data) & !is.na(var2_data)
-      var1_clean <- var1_data[complete_pairs]
-      var2_clean <- var2_data[complete_pairs]
-      
-      if (length(var1_clean) < 2) {
-        return(list(error = "Insufficient paired data", success = FALSE))
-      }
-      
-      # Perform paired t-test
-      ttest <- t.test(var1_clean, var2_clean,
-                      paired = TRUE,
-                      alternative = input$ttest_paired_alternative,
-                      conf.level = input$ttest_paired_conf)
-      
-      # Difference analysis
-      differences <- var1_clean - var2_clean
-      
-      descriptives <- data.frame(
-        Variable = c(input$ttest_paired_var1, input$ttest_paired_var2, "Difference"),
-        N = c(length(var1_clean), length(var2_clean), length(differences)),
-        Mean = c(mean(var1_clean), mean(var2_clean), mean(differences)),
-        SD = c(sd(var1_clean), sd(var2_clean), sd(differences))
+    var1_data <- df[[input$ttest_paired_var1]]
+    var2_data <- df[[input$ttest_paired_var2]]
+    
+    # Remove pairs with missing values
+    complete_cases <- !is.na(var1_data) & !is.na(var2_data)
+    var1_clean <- var1_data[complete_cases]
+    var2_clean <- var2_data[complete_cases]
+    
+    # Perform paired t-test
+    t_test <- t.test(var1_clean, var2_clean,
+                     paired = TRUE,
+                     alternative = input$ttest_paired_alternative,
+                     conf.level = input$ttest_paired_conf)
+    
+    list(
+      ttest = t_test,
+      var1_data = var1_clean,
+      var2_data = var2_clean,
+      differences = var1_clean - var2_clean,
+      descriptives = data.frame(
+        Variable = c(input$ttest_paired_var1, input$ttest_paired_var2),
+        N = c(length(var1_clean), length(var2_clean)),
+        Mean = c(mean(var1_clean), mean(var2_clean)),
+        SD = c(sd(var1_clean), sd(var2_clean)),
+        SE = c(sd(var1_clean)/sqrt(length(var1_clean)), 
+               sd(var2_clean)/sqrt(length(var2_clean)))
       )
-      
-      list(
-        ttest = ttest,
-        descriptives = descriptives,
-        differences = differences,
-        var1_data = var1_clean,
-        var2_data = var2_clean,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Paired t-test error:", e$message), success = FALSE))
-    })
+    )
   })
   
   output$ttest_paired_results <- renderPrint({
     req(ttest_paired_results())
-    results <- ttest_paired_results()
     
-    if (!results$success) {
-      cat("PAIRED T-TEST ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
+    cat("Paired T-Test Results\n")
+    cat("====================\n\n")
     
-    cat("PAIRED T-TEST RESULTS\n")
-    cat("=====================\n\n")
-    print(results$ttest)
+    print(ttest_paired_results()$ttest)
+  })
+  
+  output$ttest_paired_table <- renderDT({
+    req(ttest_paired_results())
+    
+    ttest_df <- data.frame(
+      Statistic = c("t", "DF", "P-value", "Confidence Level", "Alternative"),
+      Value = c(
+        round(ttest_paired_results()$ttest$statistic, 3),
+        round(ttest_paired_results()$ttest$parameter, 2),
+        round(ttest_paired_results()$ttest$p.value, 4),
+        paste0(input$ttest_paired_conf * 100, "%"),
+        ttest_paired_results()$ttest$alternative
+      )
+    )
+    
+    datatable(ttest_df, options = list(dom = 't'))
   })
   
   output$ttest_paired_descriptives <- renderPrint({
     req(ttest_paired_results())
-    results <- ttest_paired_results()
     
-    if (!results$success) return()
+    cat("Descriptive Statistics for Paired Variables\n")
+    cat("==========================================\n\n")
     
-    cat("PAIRED DESCRIPTIVES:\n")
-    print(results$descriptives)
+    print(ttest_paired_results()$descriptives)
   })
   
   output$ttest_paired_differences <- renderPrint({
     req(ttest_paired_results())
-    results <- ttest_paired_results()
     
-    if (!results$success) return()
+    diff_data <- ttest_paired_results()$differences
     
-    cat("DIFFERENCE ANALYSIS:\n")
-    cat("Correlation between pairs:", cor(results$var1_data, results$var2_data), "\n")
-    cat("Mean difference:", mean(results$differences), "\n")
-    cat("SD of differences:", sd(results$differences), "\n")
+    cat("Difference Analysis (Var1 - Var2)\n")
+    cat("=================================\n\n")
+    
+    cat("Mean difference:", round(mean(diff_data), 3), "\n")
+    cat("SD of differences:", round(sd(diff_data), 3), "\n")
+    cat("95% CI for mean difference: [", 
+        round(mean(diff_data) - 1.96*sd(diff_data)/sqrt(length(diff_data)), 3),
+        ", ",
+        round(mean(diff_data) + 1.96*sd(diff_data)/sqrt(length(diff_data)), 3),
+        "]\n")
   })
   
-  # Non-parametric Tests
+  output$ttest_paired_plot <- renderPlot({
+    req(ttest_paired_results())
+    
+    desc <- ttest_paired_results()$descriptives
+    diff_data <- ttest_paired_results()$differences
+    
+    plot_data <- data.frame(
+      Type = rep(c("Individual", "Difference"), each = length(diff_data)),
+      Value = c(ttest_paired_results()$var1_data, 
+                ttest_paired_results()$var2_data,
+                diff_data)
+    )
+    
+    ggplot(plot_data, aes(x = Type, y = Value, fill = Type)) +
+      geom_boxplot(alpha = 0.7) +
+      scale_fill_brewer(palette = "Set2") +
+      labs(title = "Boxplot of Paired Variables and Their Differences",
+           x = "",
+           y = "Value") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 12),
+        legend.position = "none"
+      )
+  })
+  
+  # Mann-Whitney U Test
   mannwhitney_results <- eventReactive(input$run_mannwhitney, {
     req(input$mannwhitney_var, input$mannwhitney_group, processed_data())
+    df <- processed_data()
     
-    tryCatch({
-      df <- processed_data()
-      
-      outcome <- df[[input$mannwhitney_var]]
-      group <- as.factor(df[[input$mannwhitney_group]])
-      
-      # Remove missing values
-      complete_cases <- !is.na(outcome) & !is.na(group)
-      outcome_clean <- outcome[complete_cases]
-      group_clean <- group[complete_cases]
-      
-      if (length(unique(group_clean)) != 2) {
-        return(list(error = "Mann-Whitney test requires exactly 2 groups", success = FALSE))
-      }
-      
-      test_result <- wilcox.test(outcome_clean ~ group_clean, exact = FALSE)
-      
-      list(
-        test = test_result,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Mann-Whitney test error:", e$message), success = FALSE))
-    })
+    var_data <- df[[input$mannwhitney_var]]
+    group_data <- df[[input$mannwhitney_group]]
+    
+    # Remove missing values
+    complete_cases <- !is.na(var_data) & !is.na(group_data)
+    var_clean <- var_data[complete_cases]
+    group_clean <- group_data[complete_cases]
+    
+    # Perform Mann-Whitney U test
+    test <- wilcox.test(var_clean ~ group_clean)
+    
+    list(test = test)
   })
   
   output$mannwhitney_results <- renderPrint({
     req(mannwhitney_results())
-    results <- mannwhitney_results()
     
-    if (!results$success) {
-      cat("MANN-WHITNEY TEST ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("MANN-WHITNEY U TEST RESULTS\n")
+    cat("Mann-Whitney U Test Results\n")
     cat("===========================\n\n")
-    print(results$test)
+    
+    print(mannwhitney_results()$test)
   })
   
+  # Wilcoxon Signed-Rank Test
   wilcoxon_results <- eventReactive(input$run_wilcoxon, {
     req(input$wilcoxon_var1, input$wilcoxon_var2, processed_data())
+    df <- processed_data()
     
-    tryCatch({
-      df <- processed_data()
-      
-      var1 <- df[[input$wilcoxon_var1]]
-      var2 <- df[[input$wilcoxon_var2]]
-      
-      # Remove pairs with missing values
-      complete_pairs <- !is.na(var1) & !is.na(var2)
-      var1_clean <- var1[complete_pairs]
-      var2_clean <- var2[complete_pairs]
-      
-      if (length(var1_clean) < 2) {
-        return(list(error = "Insufficient paired data", success = FALSE))
-      }
-      
-      test_result <- wilcox.test(var1_clean, var2_clean, paired = TRUE, exact = FALSE)
-      
-      list(
-        test = test_result,
-        success = TRUE
-      )
-      
-    }, error = function(e) {
-      return(list(error = paste("Wilcoxon test error:", e$message), success = FALSE))
-    })
+    var1_data <- df[[input$wilcoxon_var1]]
+    var2_data <- df[[input$wilcoxon_var2]]
+    
+    # Remove missing values
+    complete_cases <- !is.na(var1_data) & !is.na(var2_data)
+    var1_clean <- var1_data[complete_cases]
+    var2_clean <- var2_data[complete_cases]
+    
+    # Perform Wilcoxon signed-rank test
+    test <- wilcox.test(var1_clean, var2_clean, paired = TRUE)
+    
+    list(test = test)
   })
   
   output$wilcoxon_results <- renderPrint({
     req(wilcoxon_results())
-    results <- wilcoxon_results()
     
-    if (!results$success) {
-      cat("WILCOXON TEST ERROR:\n")
-      cat(results$error, "\n")
-      return()
-    }
-    
-    cat("WILCOXON SIGNED-RANK TEST RESULTS\n")
+    cat("Wilcoxon Signed-Rank Test Results\n")
     cat("=================================\n\n")
-    print(results$test)
+    
+    print(wilcoxon_results()$test)
   })
   
-  
-  # Navigation buttons
+  # Navigation button handlers
   observeEvent(input$goto_data, {
     updateNavbarPage(session, "nav", selected = "Data Upload")
   })
@@ -7034,8 +9852,19 @@ server <- function(input, output, session) {
   observeEvent(input$goto_statistics, {
     updateNavbarPage(session, "nav", selected = "Statistical Associations")
   })
+  
+  # Helper function to format p-values
+  format_p_value <- function(p) {
+    if (is.na(p)) return("NA")
+    if (p < 0.001) return("<0.001")
+    return(sprintf("%.3f", p))
+  }
+  
+  # Session info
+  output$session_info <- renderPrint({
+    sessionInfo()
+  })
 }
-
 
 # Run the application
 shinyApp(ui = ui, server = server)
