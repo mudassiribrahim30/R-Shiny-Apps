@@ -1,0 +1,1878 @@
+library(shiny)
+library(shinythemes)
+library(readxl)
+library(readr)
+library(haven)
+library(foreign)
+library(rio)
+library(DT)
+library(dplyr)
+library(labelled)
+library(purrr)
+
+# Enhanced function to handle various file formats with better error handling
+load_data_file <- function(file_path, file_type) {
+  tryCatch({
+    data <- switch(file_type,
+                   "csv" = read_csv(file_path, show_col_types = FALSE),
+                   "xlsx" = read_excel(file_path),
+                   "xls" = read_excel(file_path),
+                   "dta" = read_stata(file_path),  # This preserves Stata labels
+                   "sav" = read_sav(file_path),
+                   "sas7bdat" = read_sas(file_path),
+                   "rdata" = {
+                     env <- new.env()
+                     load(file_path, envir = env)
+                     obj_names <- ls(env)
+                     if (length(obj_names) == 0) {
+                       stop("No objects found in RData file")
+                     }
+                     get(obj_names[1], envir = env)
+                   },
+                   "tsv" = read_tsv(file_path, show_col_types = FALSE),
+                   "txt" = read_delim(file_path, delim = "\t", show_col_types = FALSE),
+                   # Use rio as fallback for other formats
+                   rio::import(file_path)
+    )
+    
+    # Ensure we return a data frame
+    if (!is.data.frame(data)) {
+      data <- as.data.frame(data)
+    }
+    
+    # Convert all character columns to UTF-8 encoding
+    data <- data %>%
+      mutate(across(where(is.character), ~iconv(., to = "UTF-8")))
+    
+    return(data)
+  }, error = function(e) {
+    # Try rio as fallback if specific method fails
+    tryCatch({
+      data <- rio::import(file_path)
+      if (!is.data.frame(data)) {
+        data <- as.data.frame(data)
+      }
+      return(data)
+    }, error = function(e2) {
+      stop(paste("Error loading file:", e$message, "| Fallback error:", e2$message))
+    })
+  })
+}
+
+# Robust function to clean variable names for SPSS
+clean_variable_names <- function(names) {
+  cleaned_names <- sapply(names, function(name) {
+    if (is.na(name) || name == "") {
+      return("Variable")
+    }
+    
+    # Remove special characters and keep only alphanumeric and underscores
+    clean_name <- gsub("[^a-zA-Z0-9_]", "", name)
+    
+    # Ensure name starts with a letter
+    if (!grepl("^[a-zA-Z]", clean_name)) {
+      clean_name <- paste0("V", clean_name)
+    }
+    
+    # Truncate to SPSS limit (64 characters)
+    clean_name <- substr(clean_name, 1, 64)
+    
+    if (clean_name == "") {
+      clean_name <- "Variable"
+    }
+    
+    return(clean_name)
+  })
+  
+  # Ensure unique names
+  cleaned_names <- make.unique(cleaned_names, sep = "_")
+  
+  return(cleaned_names)
+}
+
+# CRITICAL FIX: Enhanced function to detect if variable is truly categorical vs continuous
+is_truly_categorical <- function(x) {
+  # If it's labelled from Stata, it's categorical
+  if (inherits(x, "haven_labelled")) return(TRUE)
+  
+  # If it has value labels attribute from Stata, it's categorical
+  if (!is.null(attr(x, "labels"))) return(TRUE)
+  
+  # If it's a factor, it's categorical
+  if (is.factor(x)) return(TRUE)
+  
+  # If it's character with limited unique values, it's categorical
+  if (is.character(x)) {
+    unique_vals <- unique(na.omit(x))
+    if (length(unique_vals) <= 100) {  # Increased threshold for character variables
+      return(TRUE)
+    }
+    return(FALSE)
+  }
+  
+  # If it's not numeric, it's categorical
+  if (!is.numeric(x)) return(TRUE)
+  
+  # Get unique values (excluding NAs)
+  unique_vals <- unique(na.omit(x))
+  
+  # If it has few unique values, it might be categorical
+  if (length(unique_vals) <= 50) {  # Increased threshold
+    return(TRUE)
+  }
+  
+  # If it has many unique values or decimal values, it's continuous
+  return(FALSE)
+}
+
+# Function to detect continuous numeric variables (0 to infinity)
+is_continuous_numeric <- function(x) {
+  if (!is.numeric(x)) return(FALSE)
+  
+  unique_vals <- unique(na.omit(x))
+  
+  # If it has many unique values, it's continuous
+  if (length(unique_vals) > 50) {
+    return(TRUE)
+  }
+  
+  # If it has decimal values, it's continuous
+  if (any(unique_vals %% 1 != 0)) {
+    return(TRUE)
+  }
+  
+  # If values range widely (like measurements), it's continuous
+  if (length(unique_vals) > 1) {
+    range_val <- max(unique_vals) - min(unique_vals)
+    if (range_val > 1000) {
+      return(TRUE)
+    }
+  }
+  
+  return(FALSE)
+}
+
+# Function to determine SPSS measure type
+get_spss_measure_type <- function(x) {
+  if (is_continuous_numeric(x)) {
+    return("scale")
+  } else if (is_truly_categorical(x)) {
+    return("nominal")
+  } else {
+    return("scale")
+  }
+}
+
+# Function to set SPSS measure type attribute
+set_spss_measure <- function(x, measure_type) {
+  attr(x, "measure") <- measure_type
+  attr(x, "SPSS.measure") <- measure_type
+  return(x)
+}
+
+# CRITICAL FIX: Convert factors to numeric with proper value labels
+convert_factor_to_spss <- function(x, variable_name) {
+  if (!is.factor(x)) return(x)
+  
+  levels_vec <- levels(x)
+  numeric_values <- 1:length(levels_vec)
+  value_labels <- setNames(numeric_values, levels_vec)
+  numeric_data <- as.numeric(x)
+  
+  labelled_data <- labelled(numeric_data, labels = value_labels)
+  var_label(labelled_data) <- variable_name
+  labelled_data <- set_spss_measure(labelled_data, "nominal")
+  
+  return(labelled_data)
+}
+
+# CRITICAL FIX: ALWAYS convert character variables to numeric with value labels
+convert_character_to_spss <- function(x, variable_name) {
+  if (!is.character(x)) return(x)
+  
+  unique_vals <- unique(na.omit(x))
+  unique_vals <- unique_vals[!is.na(unique_vals) & unique_vals != ""]
+  
+  # If no unique values, return as is
+  if (length(unique_vals) == 0) {
+    var_label(x) <- variable_name
+    x <- set_spss_measure(x, "nominal")
+    return(x)
+  }
+  
+  # ALWAYS convert to numeric with value labels, regardless of length
+  numeric_values <- 1:length(unique_vals)
+  value_labels <- setNames(numeric_values, unique_vals)
+  
+  # Create mapping from character to numeric
+  char_to_num <- setNames(numeric_values, unique_vals)
+  numeric_data <- char_to_num[as.character(x)]
+  
+  # Handle NAs
+  numeric_data[is.na(x)] <- NA
+  
+  labelled_data <- labelled(numeric_data, labels = value_labels)
+  var_label(labelled_data) <- variable_name
+  labelled_data <- set_spss_measure(labelled_data, "nominal")
+  
+  return(labelled_data)
+}
+
+# CRITICAL FIX: Handle Stata labelled variables - PRESERVE ORIGINAL NUMERIC VALUES
+convert_numeric_to_spss <- function(x, variable_name) {
+  if (!is.numeric(x)) return(x)
+  
+  # Check if it's a Stata labelled variable
+  if (inherits(x, "haven_labelled")) {
+    # PRESERVE original numeric values and labels from Stata
+    value_labels <- attr(x, "labels")
+    numeric_values <- as.numeric(x)  # Get the underlying numeric values
+    
+    if (!is.null(value_labels)) {
+      # Use the original numeric values with Stata's value labels
+      labelled_data <- labelled(numeric_values, labels = value_labels)
+      var_label(labelled_data) <- variable_name
+      labelled_data <- set_spss_measure(labelled_data, "nominal")
+      return(labelled_data)
+    }
+  }
+  
+  # Check for regular value labels attribute
+  value_labels <- attr(x, "labels")
+  if (!is.null(value_labels)) {
+    labelled_data <- labelled(as.numeric(x), labels = value_labels)
+    var_label(labelled_data) <- variable_name
+    labelled_data <- set_spss_measure(labelled_data, "nominal")
+    return(labelled_data)
+  }
+  
+  # Check if it's continuous numeric
+  if (is_continuous_numeric(x)) {
+    var_label(x) <- variable_name
+    x <- set_spss_measure(x, "scale")
+    return(x)
+  } else {
+    # CATEGORICAL NUMERIC: Use original numeric values as labels
+    unique_vals <- unique(na.omit(x))
+    value_labels <- setNames(unique_vals, as.character(unique_vals))
+    
+    labelled_data <- labelled(x, labels = value_labels)
+    var_label(labelled_data) <- variable_name
+    labelled_data <- set_spss_measure(labelled_data, "nominal")
+    return(labelled_data)
+  }
+}
+
+# Function to handle logical variables
+convert_logical_to_spss <- function(x, variable_name) {
+  if (!is.logical(x)) return(x)
+  
+  value_labels <- c(`FALSE` = 0, `TRUE` = 1)
+  numeric_data <- as.numeric(x)
+  labelled_data <- labelled(numeric_data, labels = value_labels)
+  var_label(labelled_data) <- variable_name
+  labelled_data <- set_spss_measure(labelled_data, "nominal")
+  
+  return(labelled_data)
+}
+
+# CRITICAL FIX: Main function to ensure ALL categorical variables become numeric
+convert_to_spss_format <- function(x, variable_name) {
+  tryCatch({
+    current_label <- attr(x, "label", exact = TRUE)
+    var_lbl <- if (is.null(current_label) || current_label == "") variable_name else current_label
+    
+    # Handle haven_labelled variables from Stata FIRST - PRESERVE NUMERIC VALUES
+    if (inherits(x, "haven_labelled")) {
+      value_labels <- attr(x, "labels")
+      numeric_values <- as.numeric(x)  # Get underlying numeric values
+      
+      if (!is.null(value_labels)) {
+        labelled_data <- labelled(numeric_values, labels = value_labels)
+        var_label(labelled_data) <- var_lbl
+        labelled_data <- set_spss_measure(labelled_data, "nominal")
+        return(labelled_data)
+      }
+    }
+    
+    # Handle character variables - ALWAYS convert to numeric
+    if (is.character(x)) {
+      return(convert_character_to_spss(x, var_lbl))
+    }
+    
+    if (is.factor(x)) {
+      return(convert_factor_to_spss(x, var_lbl))
+    } else if (is.logical(x)) {
+      return(convert_logical_to_spss(x, var_lbl))
+    } else if (is.numeric(x)) {
+      return(convert_numeric_to_spss(x, var_lbl))
+    } else {
+      # For any other type, try to convert to character then to numeric
+      tryCatch({
+        char_x <- as.character(x)
+        return(convert_character_to_spss(char_x, var_lbl))
+      }, error = function(e) {
+        # Fallback: keep as is but add label
+        var_label(x) <- var_lbl
+        x <- set_spss_measure(x, "nominal")
+        return(x)
+      })
+    }
+    
+  }, error = function(e) {
+    warning(paste("Error processing variable", variable_name, ":", e$message))
+    # Fallback: try to convert to character then numeric
+    tryCatch({
+      return(convert_character_to_spss(as.character(x), variable_name))
+    }, error = function(e2) {
+      result <- x
+      var_label(result) <- variable_name
+      return(result)
+    })
+  })
+}
+
+# Robust function to convert to SPSS format
+convert_to_spss <- function(data) {
+  tryCatch({
+    spss_data <- as.data.frame(data)
+    original_names <- names(spss_data)
+    cleaned_names <- clean_variable_names(original_names)
+    names(spss_data) <- cleaned_names
+    
+    # First pass: convert all variables
+    for (i in 1:ncol(spss_data)) {
+      col_name <- names(spss_data)[i]
+      original_col_name <- original_names[i]
+      col_data <- spss_data[[col_name]]
+      
+      spss_data[[col_name]] <- convert_to_spss_format(col_data, original_col_name)
+    }
+    
+    # Second pass: ensure all variables are properly labelled
+    for (col_name in names(spss_data)) {
+      var <- spss_data[[col_name]]
+      
+      # Ensure variable label is set
+      if (is.null(var_label(var))) {
+        var_label(spss_data[[col_name]]) <- col_name
+      }
+      
+      # Ensure measure type is set
+      if (is.null(attr(var, "SPSS.measure"))) {
+        if (is.numeric(var) && is_continuous_numeric(var)) {
+          spss_data[[col_name]] <- set_spss_measure(var, "scale")
+        } else {
+          spss_data[[col_name]] <- set_spss_measure(var, "nominal")
+        }
+      }
+    }
+    
+    return(spss_data)
+    
+  }, error = function(e) {
+    stop(paste("Error converting to SPSS format:", e$message))
+  })
+}
+
+# CRITICAL FIX: Proper SPSS export ensuring numeric variables
+write_spss_with_attributes <- function(data, file_path) {
+  tryCatch({
+    spss_export <- as.data.frame(data)
+    
+    # Apply proper measure types to each variable
+    for (col_name in names(spss_export)) {
+      var <- spss_export[[col_name]]
+      
+      # Ensure variable name is valid for SPSS
+      valid_name <- clean_variable_names(col_name)[1]
+      if (valid_name != col_name) {
+        names(spss_export)[names(spss_export) == col_name] <- valid_name
+        col_name <- valid_name
+        var <- spss_export[[col_name]]
+      }
+      
+      # Set measure type
+      if (!is.null(attr(var, "SPSS.measure"))) {
+        measure_type <- attr(var, "SPSS.measure")
+        attr(spss_export[[col_name]], "measure") <- measure_type
+      } else {
+        if (!is.null(val_labels(var))) {
+          attr(spss_export[[col_name]], "measure") <- "nominal"
+        } else if (is.numeric(var) && is_continuous_numeric(var)) {
+          attr(spss_export[[col_name]], "measure") <- "scale"
+        } else {
+          attr(spss_export[[col_name]], "measure") <- "nominal"
+        }
+      }
+      
+      # Set SPSS format
+      if (is.numeric(spss_export[[col_name]])) {
+        attr(spss_export[[col_name]], "format.spss") <- "F8.2"
+      }
+    }
+    
+    # Final validation
+    final_names <- names(spss_export)
+    if (any(!grepl("^[a-zA-Z][a-zA-Z0-9_]*$", final_names))) {
+      stop("Invalid variable names detected after cleaning")
+    }
+    
+    # Export to SPSS
+    haven::write_sav(spss_export, file_path)
+    
+    return(TRUE)
+    
+  }, error = function(e) {
+    tryCatch({
+      write_sav(data, file_path)
+      return(TRUE)
+    }, error = function(e2) {
+      stop(paste("Export failed:", e$message, "| Fallback error:", e2$message))
+    })
+  })
+}
+
+# Enhanced data summary function
+get_data_summary <- function(data) {
+  if (is.null(data)) return(NULL)
+  
+  summary_df <- data.frame(
+    Variable = names(data),
+    Type = sapply(data, function(x) {
+      if (inherits(x, "haven_labelled")) "Labelled Numeric"
+      else paste(class(x), collapse = ", ")
+    }),
+    Missing = sapply(data, function(x) sum(is.na(x))),
+    Unique = sapply(data, function(x) length(unique(na.omit(x)))),
+    Is_Continuous = sapply(data, is_continuous_numeric),
+    SPSS_Measure = sapply(data, get_spss_measure_type),
+    Will_Be_Numeric = sapply(data, function(x) {
+      if (is_continuous_numeric(x)) "YES (Scale)"
+      else if (is_truly_categorical(x)) "YES (Nominal)"
+      else "YES (Nominal)"
+    }),
+    stringsAsFactors = FALSE
+  )
+  return(summary_df)
+}
+
+# Enhanced SPSS metadata function
+get_spss_metadata <- function(spss_data) {
+  if (is.null(spss_data)) return(NULL)
+  
+  metadata <- data.frame(
+    Variable = names(spss_data),
+    Type = sapply(spss_data, function(x) {
+      if (inherits(x, "haven_labelled")) "Labelled Numeric"
+      else if (is.numeric(x)) "Numeric" 
+      else if (is.character(x)) "String" 
+      else class(x)[1]
+    }),
+    Label = sapply(spss_data, function(x) {
+      lbl <- var_label(x)
+      if (is.null(lbl) || lbl == "") "No label" else as.character(lbl)
+    }),
+    SPSS_Measure = sapply(spss_data, function(x) {
+      measure <- attr(x, "SPSS.measure")
+      if (is.null(measure)) "nominal" else measure
+    }),
+    Has_Value_Labels = sapply(spss_data, function(x) {
+      lbls <- val_labels(x)
+      if (is.null(lbls) || length(lbls) == 0) "NO" else "YES"
+    }),
+    Label_Count = sapply(spss_data, function(x) {
+      lbls <- val_labels(x)
+      if (is.null(lbls)) 0 else length(lbls)
+    }),
+    Sample_Labels = sapply(spss_data, function(x) {
+      lbls <- val_labels(x)
+      if (is.null(lbls) || length(lbls) == 0) {
+        "No value labels"
+      } else {
+        sample_lbls <- head(lbls, 3)
+        paste(paste0(names(sample_lbls), "=", sample_lbls), collapse = "; ")
+      }
+    }),
+    stringsAsFactors = FALSE
+  )
+  return(metadata)
+}
+
+# UI Definition with improved font sizes and colors
+ui <- fluidPage(
+  theme = shinytheme("flatly"),
+  
+  # Viewport meta tag for proper scaling on laptop screens
+  tags$head(
+    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
+    tags$style(HTML("
+      /* Johns Hopkins-inspired color scheme with improved contrast */
+      :root {
+        --hopkins-blue: #002D72;
+        --hopkins-dark-blue: #001A4D;
+        --hopkins-light-blue: #E6F0F8;
+        --hopkins-gold: #CFB87C;
+        --hopkins-gray: #F8F9FA;
+        --hopkins-dark-gray: #2C3E50;
+        --hopkins-accent: #68ACE5;
+        --text-primary: #333333;
+        --text-secondary: #555555;
+        --text-light: #777777;
+      }
+      
+      /* Improved font sizes and clarity */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 11.8px; /* Base font size increased */
+        line-height: 1.6;
+        color: var(--text-primary);
+      }
+      
+      .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      
+      body {
+        background-color: var(--hopkins-gray);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Blog-inspired header with improved typography */
+      .blog-header {
+        background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
+        color: white;
+        padding: 3rem 0 2rem 0;
+        margin-bottom: 0;
+        border-bottom: 4px solid var(--hopkins-gold);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      
+      .blog-header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        text-align: left;
+      }
+      
+      .app-title-main {
+        font-size: 3.5rem; /* Increased from 3.2rem */
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        color: white;
+      }
+      
+      .app-subtitle-main {
+        font-size: 1.6rem; /* Increased from 1.4rem */
+        font-weight: 300;
+        opacity: 0.95;
+        margin: 0.5rem 0 0 0;
+        letter-spacing: 0.5px;
+        color: white;
+      }
+      
+      .app-tagline {
+        font-size: 1.3rem; /* Increased from 1.1rem */
+        font-weight: 400;
+        margin: 1rem 0 0 0;
+        color: var(--hopkins-light-blue);
+        max-width: 600px;
+        line-height: 1.5;
+      }
+      
+      /* Improved navigation with better font sizes */
+      .navbar {
+        background-color: white !important;
+        border: none;
+        border-radius: 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        min-height: 60px;
+      }
+      
+      .navbar-brand {
+        color: var(--hopkins-blue) !important;
+        font-weight: 600;
+        font-size: 1.2rem; /* Increased */
+        padding: 15px;
+      }
+      
+      .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 0;
+        background: white;
+        padding: 0 2rem;
+      }
+      
+      .nav-tabs > li > a {
+        color: var(--hopkins-dark-gray);
+        font-weight: 500;
+        border-radius: 4px 4px 0 0;
+        margin-right: 1px;
+        padding: 15px 25px;
+        border: 1px solid transparent;
+        font-size: 1.1rem; /* Increased */
+        transition: all 0.3s ease;
+      }
+      
+      .nav-tabs > li.active > a {
+        background-color: white !important;
+        color: var(--hopkins-blue) !important;
+        border: 1px solid #dee2e6;
+        border-bottom-color: transparent;
+        font-weight: 600;
+        border-top: 3px solid var(--hopkins-blue);
+        font-size: 1.1rem;
+      }
+      
+      .nav-tabs > li > a:hover {
+        background-color: var(--hopkins-light-blue);
+        border-color: var(--hopkins-light-blue);
+        color: var(--hopkins-dark-blue);
+      }
+      
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem 2rem 2rem;
+        width: 100%;
+        font-size: 1rem;
+      }
+      
+      /* Improved card typography */
+      .blog-card {
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin: 1.5rem 0;
+        border-left: none;
+        border-top: 1px solid #e9ecef;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .blog-card h2 {
+        font-size: 2.2rem; /* Increased */
+        color: var(--hopkins-blue);
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+      
+      .blog-card h3 {
+        font-size: 1.8rem; /* Increased */
+        color: var(--hopkins-dark-blue);
+        margin: 1.5rem 0 1rem 0;
+        font-weight: 600;
+      }
+      
+      .blog-card h4 {
+        font-size: 1.4rem; /* Increased */
+        color: var(--hopkins-dark-gray);
+        margin: 1.2rem 0 0.8rem 0;
+        font-weight: 600;
+      }
+      
+      .blog-card p {
+        font-size: 1.1rem; /* Increased */
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1rem;
+      }
+      
+      .blog-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+      }
+      
+      .info-box {
+        background-color: white;
+        padding: 1.8rem; /* Increased */
+        border-radius: 8px;
+        border-left: 4px solid var(--hopkins-accent);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      .info-box p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.8rem;
+      }
+      
+      .step-box {
+        background-color: var(--hopkins-light-blue);
+        padding: 1.8rem; /* Increased */
+        border-radius: 8px;
+        margin: 1rem 0;
+        border-left: 4px solid var(--hopkins-blue);
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      .step-box h4 {
+        font-size: 1.3rem;
+        color: var(--hopkins-blue);
+        margin-bottom: 0.8rem;
+      }
+      
+      .step-box ul {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+      }
+      
+      .step-box li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+      }
+      
+      /* Improved buttons with better text */
+      .btn-hopkins-primary {
+        background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        padding: 14px 30px; /* Increased */
+        font-size: 1.1rem; /* Increased */
+        box-shadow: 0 2px 8px rgba(0,45,114,0.3);
+      }
+      
+      .btn-hopkins-primary:hover {
+        background: linear-gradient(135deg, var(--hopkins-dark-blue) 0%, var(--hopkins-blue) 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,45,114,0.4);
+      }
+      
+      .btn-hopkins-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        padding: 14px 30px; /* Increased */
+        font-weight: 600;
+        font-size: 1.1rem; /* Increased */
+        box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+      }
+      
+      .btn-hopkins-success:hover {
+        background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40,167,69,0.4);
+      }
+      
+      .loading-spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--hopkins-blue);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+        margin: 20px auto;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .feature-icon {
+        font-size: 32px; /* Increased */
+        color: var(--hopkins-blue);
+        margin-right: 12px;
+      }
+      
+      .process-steps {
+        counter-reset: step-counter;
+        margin: 2rem 0;
+      }
+      
+      .process-step {
+        position: relative;
+        padding: 1.8rem 1.8rem 1.8rem 90px; /* Increased */
+        margin-bottom: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid var(--hopkins-gold);
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      .process-step h4 {
+        font-size: 1.3rem; /* Increased */
+        color: var(--hopkins-blue);
+        margin-bottom: 0.5rem;
+      }
+      
+      .process-step p {
+        font-size: 1.1rem; /* Increased */
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      
+      .process-step:before {
+        counter-increment: step-counter;
+        content: counter(step-counter);
+        position: absolute;
+        left: 1.8rem; /* Increased */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 55px; /* Increased */
+        height: 55px; /* Increased */
+        background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 22px; /* Increased */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      }
+      
+      .developer-card {
+        background: linear-gradient(135deg, var(--hopkins-blue) 0%, var(--hopkins-dark-blue) 100%);
+        color: white;
+        padding: 3rem;
+        border-radius: 12px;
+        text-align: center;
+        margin: 2rem 0;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      }
+      
+      .developer-card h2 {
+        font-size: 2.2rem; /* Increased */
+        color: white;
+        margin-bottom: 0.5rem;
+      }
+      
+      .developer-card h4 {
+        font-size: 1.4rem; /* Increased */
+        color: var(--hopkins-gold);
+        margin-bottom: 1rem;
+      }
+      
+      .developer-card p {
+        font-size: 1.2rem; /* Increased */
+        color: rgba(255,255,255,0.9);
+        line-height: 1.6;
+      }
+      
+      .developer-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background-color: white;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid var(--hopkins-gold);
+        overflow: hidden;
+      }
+      
+      .contact-links {
+        margin-top: 2rem;
+      }
+      
+      .contact-link {
+        display: inline-block;
+        background-color: rgba(255,255,255,0.15);
+        color: white;
+        padding: 14px 28px; /* Increased */
+        margin: 8px;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1.1rem; /* Increased */
+        border: 1px solid rgba(255,255,255,0.3);
+      }
+      
+      .contact-link:hover {
+        background-color: rgba(255,255,255,0.25);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      }
+      
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin: 3rem 0;
+      }
+      
+      .feature-item {
+        background-color: white;
+        padding: 2.2rem; /* Increased */
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        border: 1px solid #e9ecef;
+        height: 100%;
+      }
+      
+      .feature-item h4 {
+        font-size: 1.3rem; /* Increased */
+        color: var(--hopkins-blue);
+        margin-bottom: 1rem;
+      }
+      
+      .feature-item p {
+        font-size: 1.1rem; /* Increased */
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      
+      .feature-item:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      }
+      
+      .feature-icon-large {
+        font-size: 52px; /* Increased */
+        color: var(--hopkins-blue);
+        margin-bottom: 1.5rem;
+      }
+      
+      .conversion-section {
+        background-color: white;
+        padding: 2.2rem; /* Increased */
+        border-radius: 10px;
+        margin: 2rem 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-top: 4px solid var(--hopkins-accent);
+        font-size: 1rem;
+      }
+      
+      .data-preview-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        font-size: 1rem;
+      }
+      
+      .status-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        padding: 1.2rem; /* Increased */
+        border-radius: 6px;
+        border-left: 4px solid #28a745;
+        margin: 1rem 0;
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      .status-error {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        padding: 1.2rem; /* Increased */
+        border-radius: 6px;
+        border-left: 4px solid #dc3545;
+        margin: 1rem 0;
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      .status-waiting {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        padding: 1.2rem; /* Increased */
+        border-radius: 6px;
+        border-left: 4px solid #ffc107;
+        margin: 1rem 0;
+        font-size: 1.1rem; /* Increased */
+      }
+      
+      /* Ensure proper table display with improved fonts */
+      .dataTables_wrapper {
+        width: 100% !important;
+        margin: 0 auto;
+        font-size: 1rem;
+      }
+      
+      .dataTables_wrapper table {
+        font-size: 1rem;
+      }
+      
+      .shiny-output-error {
+        color: #dc3545;
+        padding: 1.2rem;
+        border-radius: 6px;
+        background-color: #f8d7da;
+        margin: 1rem 0;
+        font-size: 1.1rem;
+      }
+      
+      /* Improved heading hierarchy */
+      h1, h2, h3, h4, h5, h6 {
+        color: var(--hopkins-dark-gray);
+        font-weight: 600;
+      }
+      
+      h2 {
+        border-bottom: 2px solid var(--hopkins-light-blue);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+      }
+      
+      /* Form controls with better font sizes */
+      .form-control {
+        font-size: 1.1rem;
+        padding: 10px 12px;
+      }
+      
+      .form-group label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+      
+      /* File input styling */
+      .shiny-input-container {
+        font-size: 1.1rem;
+      }
+      
+      /* Copyright footer */
+      .copyright-footer {
+        text-align: center;
+        padding: 2rem;
+        margin-top: 3rem;
+        background-color: var(--hopkins-dark-gray);
+        color: white;
+        font-size: 1rem;
+        border-top: 4px solid var(--hopkins-gold);
+      }
+      
+      .copyright-footer a {
+        color: var(--hopkins-gold);
+        text-decoration: none;
+      }
+      
+      .copyright-footer a:hover {
+        text-decoration: underline;
+      }
+      
+      /* Welcome section specific styles */
+      .welcome-section {
+        background: linear-gradient(135deg, var(--hopkins-light-blue) 0%, #ffffff 100%);
+        padding: 3rem;
+        border-radius: 12px;
+        margin: 2rem 0;
+        box-shadow: 0 8px 25px rgba(0,45,114,0.1);
+        border-left: 6px solid var(--hopkins-blue);
+      }
+      
+      .welcome-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+      
+      .welcome-icon {
+        font-size: 4rem;
+        color: var(--hopkins-blue);
+        margin-bottom: 1rem;
+      }
+      
+      .guide-section {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        border: 1px solid #e9ecef;
+      }
+      
+      .guide-step {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background-color: var(--hopkins-gray);
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+      
+      .guide-step:hover {
+        background-color: #e9ecef;
+        transform: translateX(5px);
+      }
+      
+      .step-number {
+        background-color: var(--hopkins-blue);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+      }
+      
+      .step-content {
+        flex: 1;
+      }
+      
+      .important-note {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1.5rem;
+        border-radius: 6px;
+        margin: 1.5rem 0;
+      }
+      
+      /* Responsive design with font adjustments */
+      @media (max-width: 768px) {
+        .blog-header {
+          padding: 2rem 0 1.5rem 0;
+        }
+        
+        .app-title-main {
+          font-size: 2.5rem; /* Adjusted for mobile */
+        }
+        
+        .app-subtitle-main {
+          font-size: 1.3rem; /* Adjusted for mobile */
+        }
+        
+        .app-tagline {
+          font-size: 1.1rem;
+        }
+        
+        .blog-card {
+          padding: 1.8rem;
+        }
+        
+        .blog-card h2 {
+          font-size: 1.8rem;
+        }
+        
+        .blog-card h3 {
+          font-size: 1.5rem;
+        }
+        
+        .blog-card p {
+          font-size: 1rem;
+        }
+        
+        .feature-grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        
+        .nav-tabs > li > a {
+          padding: 12px 15px;
+          font-size: 1rem;
+        }
+        
+        .btn-hopkins-primary, .btn-hopkins-success {
+          font-size: 1rem;
+          padding: 12px 20px;
+        }
+        
+        .welcome-section {
+          padding: 1.5rem;
+        }
+        
+        .guide-step {
+          flex-direction: column;
+        }
+        
+        .step-number {
+          margin-right: 0;
+          margin-bottom: 1rem;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        html, body {
+          font-size: 15px;
+        }
+        
+        .app-title-main {
+          font-size: 2rem;
+        }
+        
+        .app-subtitle-main {
+          font-size: 1.1rem;
+        }
+      }
+    "))
+  ),
+  
+  # Blog-inspired header (similar to Johns Hopkins)
+  div(class = "blog-header",
+      div(class = "blog-header-content",
+          h1(class = "app-title-main", "Data2SPSS"),
+          p(class = "app-tagline", 
+            "Transform your research data into SPSS-ready format with intelligent variable detection and proper labeling")
+      )
+  ),
+  
+  # Navigation and main content
+  div(class = "container-fluid",
+      # Tabset with horizontal tabs at the top
+      tabsetPanel(
+        id = "main_tabs",
+        type = "tabs",
+        
+        # Tab 1: Home - ENHANCED WITH WELCOME SECTION
+        tabPanel(
+          "Home",
+          icon = icon("home"),
+          div(class = "main-content",
+              
+              # NEW: Welcome and Getting Started Section
+              div(class = "welcome-section",
+                  div(class = "welcome-header",
+                      div(class = "welcome-icon", icon("hand-wave")),
+                      h2("Welcome to Data2SPSS!"),
+                      p("Thank you for using this tool. Before you start converting your data, please take a moment to read this home page to understand how the conversion process works.")
+                  ),
+                  
+                  div(class = "guide-section",
+                      h3("📋 How to Use This Tool Effectively"),
+                      
+                      div(class = "guide-step",
+                          div(class = "step-number", "1"),
+                          div(class = "step-content",
+                              h4("Understand the Conversion Process"),
+                              p("This tool automatically detects your variable types and converts them to SPSS-compatible format:"),
+                              tags$ul(
+                                tags$li("Continuous variables → Scale variables in SPSS"),
+                                tags$li("Categorical variables → Nominal variables with value labels"),
+                                tags$li("All variable names are cleaned for SPSS compatibility")
+                              )
+                          )
+                      ),
+                      
+                      div(class = "guide-step",
+                          div(class = "step-number", "2"),
+                          div(class = "step-content",
+                              h4("Prepare Your Data"),
+                              p("For best results:"),
+                              tags$ul(
+                                tags$li("Ensure your data is clean and well-structured"),
+                                tags$li("Remove any special characters from variable names"),
+                                tags$li("Check that categorical variables have consistent values")
+                              )
+                          )
+                      ),
+                      
+                      div(class = "guide-step",
+                          div(class = "step-number", "3"),
+                          div(class = "step-content",
+                              h4("Use the Preview Features"),
+                              p("Before converting, use the tabs in the Data Converter to:"),
+                              tags$ul(
+                                tags$li("Preview your original data"),
+                                tags$li("Check variable classification"),
+                                tags$li("Review SPSS metadata before download")
+                              )
+                          )
+                      ),
+                      
+                      div(class = "important-note",
+                          h4("💡 Important Note About Scale Variables"),
+                          p("Numerical variables converted to 'Scale' type in SPSS will have values and labels, but these are for reference only. You can safely use these variables for inferential analysis as they will produce valid statistical results.")
+                      )
+                  ),
+                  
+                  div(style = "text-align: center; margin-top: 2rem;",
+                      actionButton("go_to_converter", "🚀 Start Converting Your Data", 
+                                   class = "btn-hopkins-primary btn-lg",
+                                   icon = icon("arrow-right"))
+                  )
+              ),
+              
+              div(class = "blog-card",
+                  h2("About Data2SPSS"),
+                  p("This professional tool helps researchers and analysts convert their data files from multiple formats including CSV, Excel, Stata, SPSS, SAS, and R files into SPSS format with proper variable types and value labels. Designed with academic research in mind, the tool ensures your data is analysis-ready."),
+                  
+                  h3("Key Features"),
+                  div(class = "feature-grid",
+                      div(class = "feature-item",
+                          div(class = "feature-icon-large", icon("file-import")),
+                          h4("Multi-Format Support"),
+                          p("Import from CSV, Excel, Stata, SAS, SPSS, and more with seamless compatibility")
+                      ),
+                      div(class = "feature-item",
+                          div(class = "feature-icon-large", icon("magic")),
+                          h4("Smart Conversion"),
+                          p("Automatic detection of variable types and intelligent value label generation")
+                      ),
+                      div(class = "feature-item",
+                          div(class = "feature-icon-large", icon("download")),
+                          h4("SPSS Ready"),
+                          p("Export to SPSS with proper measure types, formatting, and metadata")
+                      ),
+                      div(class = "feature-item",
+                          div(class = "feature-icon-large", icon("chart-bar")),
+                          h4("Data Analysis"),
+                          p("Comprehensive variable analysis and metadata preview before export")
+                      )
+                  ),
+                  
+                  h3("Quick Conversion Steps"),
+                  div(class = "process-steps",
+                      div(class = "process-step",
+                          h4("Import Your Data"),
+                          p("Start by importing your data file in the 'Data Converter' tab. Supported formats include: CSV, Excel, Stata, SAS, and more.")
+                      ),
+                      
+                      div(class = "process-step",
+                          h4("Convert to SPSS Format"),
+                          p("Click the 'Convert to SPSS Format' button to automatically convert your data with proper variable types and value labels.")
+                      ),
+                      
+                      div(class = "process-step",
+                          h4("Download SPSS File"),
+                          p("Download the converted data as an SPSS (.sav) file ready for statistical analysis.")
+                      ),
+                      
+                      div(class = "process-step",
+                          h4("Finalize in SPSS"),
+                          p("Open the downloaded file in SPSS Statistics, go to Variable View, change categorical variables Measure to Nominal/Ordinal where appropriate, and save.")
+                      ),
+                      
+                      div(class = "process-step",
+                          h4("Analyze Your Data"),
+                          p("Your data is now ready for analysis with proper variable types and value labels.")
+                      )
+                  ),
+                  
+                  div(class = "info-box",
+                      h4("Technical Note"),
+                      p("The tool automatically handles variable name cleaning, value label generation, and measure type assignment. All categorical variables are converted to numeric with value labels, while continuous variables remain as scale variables.")
+                  )
+              )
+          )
+        ),
+        
+        # Tab 2: Data Converter (main functionality)
+        tabPanel(
+          "Data Converter",
+          icon = icon("file-export"),
+          div(class = "main-content",
+              fluidRow(
+                column(
+                  width = 3,
+                  div(class = "blog-card",
+                      h4("📁 Data Import"),
+                      fileInput("file_input", "Choose Data File",
+                                accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".sas7bdat", 
+                                           ".rdata", ".tsv", ".txt", ".jmp"),
+                                multiple = FALSE),
+                      
+                      conditionalPanel(
+                        condition = "output.file_loaded",
+                        hr(),
+                        h4("📊 Data Information"),
+                        uiOutput("data_info_box"),
+                        
+                        hr(),
+                        h4("🔄 SPSS Conversion"),
+                        textInput("export_filename", "Export Filename", 
+                                  value = "converted_data.sav"),
+                        
+                        actionButton("convert_btn", "🔧 Convert to SPSS Format", 
+                                     class = "btn-hopkins-primary", style = "width: 100%; margin-bottom: 15px;"),
+                        
+                        conditionalPanel(
+                          condition = "output.conversion_complete",
+                          div(class = "status-success",
+                              h5("✅ Conversion Successful!", style = "margin: 0;"),
+                              p("Data is ready for download.", style = "margin: 5px 0 0 0; font-size: 14px;")
+                          ),
+                          downloadButton("download_btn", "📥 Download SPSS File", 
+                                         class = "btn-hopkins-success", style = "width: 100%; margin-top: 15px;")
+                        ),
+                        
+                        conditionalPanel(
+                          condition = "output.conversion_status == 'error'",
+                          div(class = "status-error",
+                              h5("❌ Conversion Failed"),
+                              textOutput("conversion_error")
+                          )
+                        )
+                      )
+                  )
+                ),
+                
+                column(
+                  width = 9,
+                  conditionalPanel(
+                    condition = "!output.file_loaded",
+                    div(class = "blog-card",
+                        h3("Ready to Convert Your Data"),
+                        p("Upload your data file to begin the conversion process. The tool supports multiple file formats and will automatically detect variable types."),
+                        div(class = "step-box",
+                            h4("Supported Formats:"),
+                            tags$ul(
+                              tags$li("CSV, TSV, TXT files"),
+                              tags$li("Excel files (.xlsx, .xls)"),
+                              tags$li("Stata files (.dta)"),
+                              tags$li("SPSS files (.sav)"),
+                              tags$li("SAS files (.sas7bdat)"),
+                              tags$li("R Data files (.rdata)")
+                            )
+                        ),
+                        div(class = "info-box",
+                            h4("💡 Remember:"),
+                            p("Review the 'Quick Conversion Steps' section on the Home tab before starting your conversion for best results.")
+                        )
+                    )
+                  ),
+                  
+                  conditionalPanel(
+                    condition = "output.file_loaded",
+                    div(class = "conversion-section",
+                        tabsetPanel(
+                          id = "converter_tabs",
+                          tabPanel("Data Preview", 
+                                   div(class = "data-preview-container",
+                                       DTOutput("data_preview")
+                                   )),
+                          tabPanel("Data Structure", 
+                                   DTOutput("data_structure_table")),
+                          tabPanel("Variable Analysis", 
+                                   h4("Variable Classification"),
+                                   p("This shows how each variable will be handled:"),
+                                   DTOutput("variable_analysis_table")),
+                          tabPanel("SPSS Metadata", 
+                                   conditionalPanel(
+                                     condition = "output.conversion_complete",
+                                     h4("SPSS Export Information"),
+                                     p("This shows exactly what will be exported to SPSS:"),
+                                     DTOutput("spss_metadata_table")
+                                   ),
+                                   conditionalPanel(
+                                     condition = "!output.conversion_complete",
+                                     div(class = "status-waiting",
+                                         h4("Conversion Required"),
+                                         p("Click the 'Convert to SPSS Format' button first.")
+                                     )
+                                   ))
+                        )
+                    )
+                  )
+                )
+              )
+          )
+        ),
+        
+        # Tab 3: Developer Information
+        tabPanel(
+          "Developer",
+          icon = icon("user-tie"),
+          div(class = "main-content",
+              div(class = "developer-card",
+                  div(class = "developer-avatar", 
+                      img(src = "https://avatars.githubusercontent.com/u/123456789?v=4", 
+                          alt = "Developer Photo",
+                          onerror="this.src='https://via.placeholder.com/140x140/002D72/ffffff?text=MMI'")
+                  ),
+                  h2("Mudasir Mohammed Ibrahim"),
+                  h4("Registered Nurse"),
+                  p("Passionate about creating tools that bridge the gap between healthcare data and statistical analysis."),
+                  
+                  div(class = "contact-links",
+                      a(href = "mailto:mudassiribrahim30@gmail.com", 
+                        class = "contact-link",
+                        icon("envelope"), " mudassiribrahim30@gmail.com"),
+                      br(),
+                      a(href = "https://github.com/mudassiribrahim30", 
+                        target = "_blank",
+                        class = "contact-link",
+                        icon("github"), " GitHub Profile")
+                  )
+              ),
+              
+              div(class = "blog-card",
+                  h3("About This Application"),
+                  p("This Data2SPSS web application was developed to address the common challenges researchers face when preparing data for statistical analysis in SPSS. The tool automates the tedious process of variable type detection, value labeling, and measure type setting."),
+                  
+                  h4("Professional Background"),
+                  p("As a Registered Nurse with expertise in health research and data analysis, I understand the importance of proper data preparation for reliable statistical analysis. This tool combines healthcare domain knowledge with technical expertise to create a solution that serves both researchers and analysts."),
+                  
+                  h4("Technical Features"),
+                  div(class = "step-box",
+                      tags$ul(
+                        tags$li("Smart variable type detection (continuous vs categorical)"),
+                        tags$li("Automatic value label generation for variables"),
+                        tags$li("Proper SPSS measure type assignment"),
+                        tags$li("Support for multiple input formats"),
+                        tags$li("Interactive data preview and analysis"),
+                        tags$li("Professional academic-inspired interface design")
+                      )
+                  ),
+                  
+                  h4("Contact"),
+                  p("I am passionate about creating apps that streamline research processes and enhance data analysis workflows. Feel free to reach out with any questions or suggestions"),
+                  
+                  div(style = "text-align: center; margin-top: 2rem;",
+                      actionButton("contact_btn", "Contact Me", 
+                                   class = "btn-hopkins-primary",
+                                   icon = icon("envelope"),
+                                   onclick = "window.open('mailto:mudassiribrahim30@gmail.com')")
+                  )
+              )
+          )
+        )
+      )
+  ),
+  
+  # Copyright footer
+  div(class = "copyright-footer",
+      p("© 2025 Data2SPSS | Developed by Mudasir Mohammed Ibrahim"),
+      p(a(href = "mailto:mudassiribrahim30@gmail.com")),
+      p("No rights reserved. This app is free to use and distribute.")
+  )
+)
+
+# Server Logic with enhanced error handling
+server <- function(input, output, session) {
+  
+  # Reactive values
+  data_loaded <- reactiveVal(NULL)
+  data_summary <- reactiveVal(NULL)
+  spss_data <- reactiveVal(NULL)
+  conversion_status <- reactiveVal("not_started")
+  conversion_error <- reactiveVal("")
+  original_names <- reactiveVal(NULL)
+  cleaned_names <- reactiveVal(NULL)
+  
+  # Navigate to Data Converter tab when Get Started is clicked
+  observeEvent(input$get_started, {
+    updateTabsetPanel(session, "main_tabs", selected = "Data Converter")
+  })
+  
+  # NEW: Navigate to Data Converter when "Start Converting" is clicked
+  observeEvent(input$go_to_converter, {
+    updateTabsetPanel(session, "main_tabs", selected = "Data Converter")
+  })
+  
+  # Enhanced data loading with better error handling
+  observeEvent(input$file_input, {
+    req(input$file_input)
+    
+    tryCatch({
+      showModal(modalDialog(
+        div(
+          style = "text-align: center;",
+          h4("Loading Data..."),
+          div(class = "loading-spinner"),
+          p("Processing file format...")
+        ), 
+        footer = NULL
+      ))
+      
+      conversion_status("not_started")
+      spss_data(NULL)
+      
+      file_ext <- tolower(tools::file_ext(input$file_input$name))
+      data <- load_data_file(input$file_input$datapath, file_ext)
+      
+      # Validate data was loaded correctly
+      if (is.null(data) || nrow(data) == 0 || ncol(data) == 0) {
+        stop("The file appears to be empty or could not be read properly")
+      }
+      
+      original_names(names(data))
+      cleaned_names(clean_variable_names(names(data)))
+      
+      data_loaded(data)
+      data_summary(get_data_summary(data))
+      
+      removeModal()
+      
+      # Show variable classification summary
+      continuous_count <- sum(sapply(data, is_continuous_numeric))
+      categorical_count <- ncol(data) - continuous_count
+      
+      showNotification(
+        paste("Successfully loaded data with", nrow(data), "rows and", ncol(data), "columns"),
+        type = "message", duration = 6
+      )
+      
+      showNotification(
+        paste("Detected:", continuous_count, "continuous,", categorical_count, "categorical variables"),
+        type = "message", duration = 6
+      )
+      
+    }, error = function(e) {
+      removeModal()
+      conversion_status("error")
+      conversion_error(e$message)
+      showNotification(paste("Error loading file:", e$message), type = "error")
+    })
+  })
+  
+  # Convert to SPSS format with enhanced validation
+  observeEvent(input$convert_btn, {
+    req(data_loaded())
+    
+    tryCatch({
+      showModal(modalDialog(
+        div(
+          style = "text-align: center;",
+          h4("Converting to SPSS Format..."),
+          div(class = "loading-spinner"),
+          p("Setting proper measure types (nominal for categorical, scale for continuous)...")
+        ), 
+        footer = NULL
+      ))
+      
+      converted_data <- convert_to_spss(data_loaded())
+      
+      # Validate conversion
+      if (is.null(converted_data) || ncol(converted_data) == 0) {
+        stop("Conversion resulted in empty dataset")
+      }
+      
+      # Validate variable names
+      final_names <- names(converted_data)
+      if (any(!grepl("^[a-zA-Z][a-zA-Z0-9_]*$", final_names))) {
+        warning("Some variable names may not be SPSS-compatible after conversion")
+      }
+      
+      spss_data(converted_data)
+      conversion_status("complete")
+      conversion_error("")
+      
+      removeModal()
+      
+      # Count final results from ACTUAL converted data
+      spss_data_val <- spss_data()
+      nominal_count <- sum(sapply(spss_data_val, function(x) {
+        measure <- attr(x, "SPSS.measure")
+        !is.null(measure) && measure == "nominal"
+      }))
+      scale_count <- ncol(spss_data_val) - nominal_count
+      
+      showNotification(
+        paste("✅ Conversion successful! All variable names validated for SPSS."),
+        type = "message", duration = 8
+      )
+      
+      showNotification(
+        paste(nominal_count, "variables set as NOMINAL (with labels),", scale_count, "as SCALE (without labels)"),
+        type = "message", duration = 6
+      )
+      
+    }, error = function(e) {
+      removeModal()
+      conversion_status("error")
+      conversion_error(e$message)
+      showNotification(paste("❌ Conversion failed:", e$message), type = "error")
+    })
+  })
+  
+  # Output controls
+  output$file_loaded <- reactive({ !is.null(data_loaded()) })
+  output$conversion_complete <- reactive({ conversion_status() == "complete" })
+  output$conversion_status <- reactive({ conversion_status() })
+  output$conversion_error <- renderText({ conversion_error() })
+  
+  outputOptions(output, "file_loaded", suspendWhenHidden = FALSE)
+  outputOptions(output, "conversion_complete", suspendWhenHidden = FALSE)
+  outputOptions(output, "conversion_status", suspendWhenHidden = FALSE)
+  
+  # Data information box
+  output$data_info_box <- renderUI({
+    req(data_loaded())
+    data <- data_loaded()
+    
+    # Get accurate counts from actual data
+    continuous_count <- sum(sapply(data, is_continuous_numeric))
+    categorical_count <- ncol(data) - continuous_count
+    
+    # Get accurate conversion status from actual converted data
+    if (conversion_status() == "complete") {
+      spss_data_val <- spss_data()
+      nominal_count <- sum(sapply(spss_data_val, function(x) {
+        measure <- attr(x, "SPSS.measure")
+        !is.null(measure) && measure == "nominal"
+      }))
+      scale_count <- ncol(spss_data_val) - nominal_count
+      
+      status_html <- paste0(
+        "<p><strong>Status:</strong> <span style='color: green;'>✓ Converted to SPSS</span></p>",
+        "<p><strong>Nominal Variables:</strong> ", nominal_count, " (with labels)</p>",
+        "<p><strong>Scale Variables:</strong> ", scale_count, " (without labels)</p>"
+      )
+    } else if (conversion_status() == "error") {
+      status_html <- "<p><strong>Status:</strong> <span style='color: red;'>✗ Conversion Failed</span></p>"
+    } else {
+      status_html <- "<p><strong>Status:</strong> <span style='color: orange;'>⏳ Ready for Conversion</span></p>"
+    }
+    
+    div(
+      class = "info-box",
+      HTML(paste0(
+        "<p><strong>Dataset:</strong> ", input$file_input$name, "</p>",
+        "<p><strong>Rows:</strong> ", format(nrow(data), big.mark = ","), "</p>",
+        "<p><strong>Columns:</strong> ", ncol(data), "</p>",
+        "<p><strong>Continuous Variables:</strong> ", continuous_count, " (will be SCALE - no labels)</p>",
+        "<p><strong>Categorical Variables:</strong> ", categorical_count, " (will be NOMINAL - with labels)</p>",
+        status_html
+      ))
+    )
+  })
+  
+  # Data preview - FIXED VERSION
+  output$data_preview <- renderDT({
+    req(data_loaded())
+    
+    # Convert haven_labelled variables to simple vectors for display
+    data_display <- as.data.frame(lapply(data_loaded(), function(x) {
+      if (inherits(x, "haven_labelled")) {
+        # For labelled variables, show the underlying values
+        return(as.vector(x))
+      } else {
+        return(x)
+      }
+    }))
+    
+    datatable(
+      data_display,
+      options = list(
+        scrollX = TRUE, 
+        pageLength = 10, 
+        dom = 'tip',
+        # Additional error handling
+        language = list(
+          emptyTable = "No data available",
+          zeroRecords = "No matching records found"
+        )
+      ),
+      rownames = FALSE,
+      # Error handling for DataTables
+      escape = FALSE,
+      selection = 'none'
+    )
+  })
+  
+  # Data structure table
+  output$data_structure_table <- renderDT({
+    req(data_summary())
+    datatable(data_summary(), 
+              options = list(scrollX = TRUE, pageLength = 25, dom = 'tip'))
+  })
+  
+  # Variable analysis table
+  output$variable_analysis_table <- renderDT({
+    req(data_loaded())
+    data <- data_loaded()
+    
+    analysis_df <- data.frame(
+      Variable = names(data),
+      Type = sapply(data, function(x) paste(class(x), collapse = ", ")),
+      Unique_Values = sapply(data, function(x) length(unique(na.omit(x)))),
+      Min = sapply(data, function(x) if(is.numeric(x)) min(x, na.rm = TRUE) else NA),
+      Max = sapply(data, function(x) if(is.numeric(x)) max(x, na.rm = TRUE) else NA),
+      Is_Continuous = sapply(data, is_continuous_numeric),
+      SPSS_Measure = sapply(data, get_spss_measure_type),
+      Will_Get_Labels = sapply(data, function(x) if(is_continuous_numeric(x)) "NO" else "YES"),
+      stringsAsFactors = FALSE
+    )
+    
+    datatable(analysis_df, 
+              options = list(scrollX = TRUE, pageLength = 25, dom = 'tip')) %>%
+      formatStyle(
+        'Will_Get_Labels',
+        backgroundColor = styleEqual(c('YES', 'NO'), c('#d4edda', '#f8d7da'))
+      )
+  })
+  
+  # SPSS Metadata table
+  output$spss_metadata_table <- renderDT({
+    req(spss_data())
+    metadata <- get_spss_metadata(spss_data())
+    datatable(metadata, 
+              options = list(scrollX = TRUE, pageLength = 25, dom = 'tip')) %>%
+      formatStyle(
+        'Has_Value_Labels',
+        backgroundColor = styleEqual(c('YES', 'NO'), c('#d4edda', '#f8d7da'))
+      ) %>%
+      formatStyle(
+        'SPSS_Measure',
+        backgroundColor = styleEqual(c('nominal', 'scale'), c('#d4edda', '#d1ecf1'))
+      )
+  })
+  
+  # Enhanced download handler with robust validation
+  output$download_btn <- downloadHandler(
+    filename = function() { 
+      # Ensure .sav extension
+      name <- input$export_filename
+      if (!grepl("\\.sav$", name)) {
+        name <- paste0(name, ".sav")
+      }
+      name
+    },
+    content = function(file) {
+      req(spss_data())
+      
+      tryCatch({
+        showModal(modalDialog(
+          div(
+            style = "text-align: center;",
+            h4("Saving SPSS File..."),
+            p("Validating variable names and setting proper measure types...")
+          ), 
+          footer = NULL
+        ))
+        
+        # Final validation before export
+        final_data <- spss_data()
+        final_names <- names(final_data)
+        
+        # Ensure all names are valid for SPSS
+        valid_names <- clean_variable_names(final_names)
+        if (!identical(final_names, valid_names)) {
+          names(final_data) <- valid_names
+          showNotification("Some variable names were adjusted for SPSS compatibility", 
+                           type = "warning", duration = 4)
+        }
+        
+        write_spss_with_attributes(final_data, file)
+        removeModal()
+        
+        showNotification("✅ SPSS file downloaded successfully! All variables validated.", 
+                         type = "message", duration = 5)
+        
+      }, error = function(e) {
+        removeModal()
+        showNotification(paste("❌ Download failed:", e$message), type = "error")
+      })
+    }
+  )
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
