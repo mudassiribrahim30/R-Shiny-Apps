@@ -6,7 +6,6 @@ library(robustbase)
 library(DT)
 library(tidyverse)
 library(officer)
-library(flextable)
 library(lm.beta)
 library(readxl)
 library(haven)
@@ -146,9 +145,9 @@ ui <- fluidPage(
                  icon = icon("database"),
                  h4("Data Preview"),
                  DTOutput("datatable")),
-        tabPanel("Download APA Table", 
+        tabPanel("Download Full Results", 
                  icon = icon("file-download"),
-                 downloadButton("download_apa", "Download APA Table",
+                 downloadButton("download_full", "Download Full Results (Word)",
                                 class = "btn btn-success")),
         tabPanel("About",
                  icon = icon("info-circle"),
@@ -546,82 +545,165 @@ server <- function(input, output, session) {
     )
   })
   
-  output$download_apa <- downloadHandler(
+  output$download_full <- downloadHandler(
     filename = function() { 
-      paste("APA_Estimates_Table_", Sys.Date(), ".docx", sep = "") 
+      paste("Robust_Regression_Full_Results_", Sys.Date(), ".docx", sep = "") 
     },
     content = function(file) {
       req(model_result())
       
       model <- model_result()
-      coef_df <- get_model_coefficients(model)
       
-      # Get standardized coefficients
+      # Get the main results
+      coef_df <- get_model_coefficients(model)
       std_coefs <- get_standardized_coefs(model)
       
-      df <- coef_df %>%
+      # Create formatted results table
+      results_df <- coef_df %>%
         mutate(
           Std_Estimate = std_coefs[match(Term, names(std_coefs))],
           Lower_CI = Estimate - 1.96 * Std.Error,
           Upper_CI = Estimate + 1.96 * Std.Error,
-          Significance = if (input$package == "robustbase") {
-            ifelse(p_value < 0.05, 
-                   paste0("p = ", format.pval(p_value, digits = 3)), 
-                   paste0("p = ", format.pval(p_value, digits = 3)))
+          CI = paste0("[", round(Lower_CI, input$decimal_places), ", ", 
+                     round(Upper_CI, input$decimal_places), "]"),
+          p_value_formatted = if (input$package == "robustbase") {
+            format.pval(p_value, digits = 3, eps = 0.001)
           } else {
-            ifelse(abs(Statistic) > 2, 
-                   paste0("|t| = ", round(abs(Statistic), 2)), 
-                   paste0("|t| = ", round(abs(Statistic), 2)))
-          },
-          across(where(is.numeric), ~round(.x, input$decimal_places))
+            paste0("t = ", round(Statistic, 2))
+          }
         ) %>%
-        select(Term, Estimate, Std_Estimate, Std.Error, Lower_CI, Upper_CI, Significance)
+        select(Term, Estimate, Std.Error, Std_Estimate, CI, p_value_formatted)
       
-      # Create a flextable for better Word formatting
-      ft <- flextable(apa_table) %>%
-        set_header_labels(
-          Predictor = "Predictor",
-          b = "b",
-          SE = "SE",
-          CI = "95% CI",
-          β = "β",
-          p = "p-value"
-        ) %>%
-        add_header_row(
-          values = c("", "Unstandardized", "", "Standardized", ""),
-          colwidths = c(1, 2, 1, 1, 1)
-        ) %>%
-        theme_apa() %>%
-        align(align = "center", part = "all") %>%
-        align(j = 1, align = "left", part = "body") %>%
-        fontsize(size = 11, part = "all") %>%
-        autofit()
-      
-      # Create a Word document
+      # Create a new Word document
       doc <- read_docx() %>%
-        body_add_par("Robust Regression Results", style = "heading 1") %>%
-        body_add_par("", style = "Normal") %>%  # Add empty line
+        body_add_par("ROBUST REGRESSION ANALYSIS REPORT", style = "heading 1") %>%
+        body_add_par("") %>%
+        
+        # Add key information section
+        body_add_par("KEY INFORMATION", style = "heading 2") %>%
+        body_add_par("") %>%
+        body_add_par(paste("Date of Analysis:", Sys.Date()), style = "Normal") %>%
         body_add_par(paste("Dependent Variable:", input$depvar), style = "Normal") %>%
+        body_add_par(paste("Independent Variables:", paste(input$indepvars, collapse = ", ")), style = "Normal") %>%
+        body_add_par(paste("Package Used:", input$package), style = "Normal") %>%
         body_add_par(paste("Method:", 
-                           ifelse(input$package == "robustbase", 
-                                  paste("robustbase -", input$method_robustbase),
-                                  paste("MASS -", input$method_mass))), 
-                     style = "Normal") %>%
-        body_add_par("", style = "Normal") %>%  # Add empty line
-        body_add_flextable(ft) %>%
-        body_add_par("", style = "Normal") %>%  # Add empty line
-        body_add_par(paste("Note. b = unstandardized coefficient; β = standardized coefficient;",
-                           "CI = confidence interval; SE = standard error."), 
-                     style = "Normal") %>%
-        body_add_par(paste("Analysis performed on", Sys.Date()), 
-                     style = "Normal")
+                          ifelse(input$package == "robustbase", 
+                                 input$method_robustbase, 
+                                 input$method_mass)), style = "Normal") %>%
+        body_add_par(paste("Sample Size (after removing missing):", nrow(model_data())), style = "Normal") %>%
+        body_add_par("") %>%
+        
+        # Add categorical variable reference levels
+        body_add_par("REFERENCE CATEGORIES FOR CATEGORICAL VARIABLES", style = "heading 2") %>%
+        body_add_par("")
       
-      # Save the document to a temporary file
-      temp_doc <- tempfile(fileext = ".docx")
-      print(doc, target = temp_doc)
+      # Add reference category information
+      cat_vars_list <- cat_vars()
+      if (length(cat_vars_list) > 0) {
+        for (var in cat_vars_list) {
+          ref_level <- input[[paste0("ref_", var)]]
+          if (!is.null(ref_level)) {
+            doc <- doc %>% 
+              body_add_par(paste(var, "-> Reference Category:", ref_level), style = "Normal")
+          }
+        }
+      } else {
+        doc <- doc %>% 
+          body_add_par("No categorical variables selected or all variables are continuous.", style = "Normal")
+      }
       
-      # Copy the file to the download location
-      file.copy(temp_doc, file)
+      doc <- doc %>%
+        body_add_par("") %>%
+        
+        # Add model summary
+        body_add_par("MODEL SUMMARY", style = "heading 2") %>%
+        body_add_par("")
+      
+      # Capture model summary as text
+      model_summary_text <- capture.output(summary(model))
+      for (line in model_summary_text) {
+        doc <- doc %>% body_add_par(line, style = "Normal")
+      }
+      
+      doc <- doc %>%
+        body_add_par("") %>%
+        
+        # Add detailed results table
+        body_add_par("DETAILED COEFFICIENTS TABLE", style = "heading 2") %>%
+        body_add_par("")
+      
+      # Create a simple table using body_add_table (not flextable)
+      # First, format the table nicely
+      formatted_table <- results_df %>%
+        mutate(
+          Estimate = round(Estimate, input$decimal_places),
+          Std.Error = round(Std.Error, input$decimal_places),
+          Std_Estimate = round(Std_Estimate, input$decimal_places)
+        ) %>%
+        rename(
+          Predictor = Term,
+          b = Estimate,
+          SE = Std.Error,
+          β = Std_Estimate,
+          `95% CI` = CI,
+          `Significance Test` = p_value_formatted
+        )
+      
+      # Add the table to the document
+      doc <- doc %>% 
+        body_add_table(
+          formatted_table,
+          header = TRUE,
+          style = "table_template"
+        ) %>%
+        body_add_par("") %>%
+        body_add_par("Note: b = unstandardized coefficient, β = standardized coefficient, SE = standard error, CI = confidence interval.", style = "Normal") %>%
+        body_add_par("") %>%
+        
+        # Add interpretation section
+        body_add_par("INTERPRETATION GUIDELINES", style = "heading 2") %>%
+        body_add_par("")
+      
+      # Add interpretation based on package used
+      if (input$package == "robustbase") {
+        doc <- doc %>%
+          body_add_par("For robustbase (lmrob) models:", style = "Normal") %>%
+          body_add_par("• Variables with p < 0.05 are statistically significant", style = "Normal") %>%
+          body_add_par("• The estimates are robust to outliers and influential points", style = "Normal") %>%
+          body_add_par("• Examine both unstandardized (b) and standardized (β) coefficients", style = "Normal") %>%
+          body_add_par("")
+      } else {
+        doc <- doc %>%
+          body_add_par("For MASS (rlm) models:", style = "Normal") %>%
+          body_add_par("• Variables with |t| > 2 are likely significant", style = "Normal") %>%
+          body_add_par("• The estimates are resistant to outliers in the response", style = "Normal") %>%
+          body_add_par("• Examine both unstandardized (b) and standardized (β) coefficients", style = "Normal") %>%
+          body_add_par("")
+      }
+      
+      # Add general interpretation
+      doc <- doc %>%
+        body_add_par("General Interpretation:", style = "Normal") %>%
+        body_add_par("1. Unstandardized coefficients (b) show the change in the dependent variable for a one-unit change in the predictor", style = "Normal") %>%
+        body_add_par("2. Standardized coefficients (β) allow comparison of effect sizes across different variables", style = "Normal") %>%
+        body_add_par("3. Confidence intervals show the precision of the estimates", style = "Normal") %>%
+        body_add_par("4. Smaller standard errors indicate more precise estimates", style = "Normal") %>%
+        body_add_par("") %>%
+        
+        # Add model diagnostics
+        body_add_par("MODEL DIAGNOSTICS", style = "heading 2") %>%
+        body_add_par("") %>%
+        body_add_par(paste("Residual degrees of freedom:", model$df.residual), style = "Normal") %>%
+        body_add_par(paste("Number of observations:", nrow(model_data())), style = "Normal")
+      
+      # Check model convergence for robustbase
+      if (inherits(model, "lmrob")) {
+        doc <- doc %>%
+          body_add_par(paste("Model converged:", model$converged), style = "Normal")
+      }
+      
+      # Save the document
+      print(doc, target = file)
     }
   )
 }
