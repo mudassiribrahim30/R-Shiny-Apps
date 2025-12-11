@@ -436,7 +436,7 @@ server <- function(input, output, session) {
     })
   }
   
-  # Function to safely read data with proper encoding
+  # Function to safely read data with proper encoding - FIXED locale issue
   safe_read_data <- function(path, ext, header_option, sep = ",", decimal = ".", header_row = NULL) {
     tryCatch({
       if (ext %in% c("sav", "dta", "zsav", "por")) {
@@ -452,15 +452,22 @@ server <- function(input, output, session) {
       } else if (ext %in% c("csv", "xlsx", "xls")) {
         # For CSV and Excel files
         if (ext == "csv") {
+          # Create locale based on decimal separator
+          if (decimal == ",") {
+            read_locale <- locale(decimal_mark = ",", grouping_mark = ".")
+          } else {
+            read_locale <- locale(decimal_mark = ".", grouping_mark = ",")
+          }
+          
           if (header_option == "first_row") {
             df <- read_csv(path, 
                            col_names = TRUE,
-                           locale = locale(decimal_mark = decimal, grouping_mark = ifelse(decimal == ",", ".", ",")))
+                           locale = read_locale)
           } else if (header_option == "specific_row" && !is.null(header_row)) {
             # Read without headers first
             temp_df <- read_csv(path, 
                                 col_names = FALSE,
-                                locale = locale(decimal_mark = decimal, grouping_mark = ifelse(decimal == ",", ".", ",")))
+                                locale = read_locale)
             # Set column names from specified row
             if (header_row <= nrow(temp_df)) {
               col_names <- as.character(temp_df[header_row, ])
@@ -477,7 +484,7 @@ server <- function(input, output, session) {
           } else {
             df <- read_csv(path, 
                            col_names = FALSE,
-                           locale = locale(decimal_mark = decimal, grouping_mark = ifelse(decimal == ",", ".", ",")))
+                           locale = read_locale)
           }
         } else {
           # Excel files
