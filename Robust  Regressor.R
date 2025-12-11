@@ -199,45 +199,107 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  # Function to safely read data with proper encoding
+  safe_read_data <- function(path, ext) {
+    tryCatch({
+      df <- switch(ext,
+                   csv = read_csv(path, show_col_types = FALSE, 
+                                  locale = locale(encoding = "UTF-8")),
+                   xlsx = read_excel(path),
+                   xls = read_excel(path),
+                   dta = read_dta(path),
+                   sav = read_sav(path),
+                   zsav = read_sav(path),
+                   por = read_por(path),
+                   stop("Unsupported file type")
+      )
+      
+      # Clean column names - replace spaces with underscores and remove special characters
+      names(df) <- gsub("[^[:alnum:]_\\.]", "_", names(df))
+      names(df) <- gsub("_{2,}", "_", names(df))  # Remove multiple underscores
+      names(df) <- gsub("^_|_$", "", names(df))   # Remove leading/trailing underscores
+      
+      return(df)
+    }, error = function(e) {
+      showNotification(paste("Error reading file:", e$message), type = "error")
+      return(NULL)
+    })
+  }
+  
   dataset <- reactive({
     req(input$datafile)
     ext <- tools::file_ext(input$datafile$name)
     
-    df <- switch(ext,
-                 csv = read_csv(input$datafile$datapath, show_col_types = FALSE),
-                 xlsx = read_excel(input$datafile$datapath),
-                 xls = read_excel(input$datafile$datapath),
-                 dta = read_dta(input$datafile$datapath),
-                 sav = read_sav(input$datafile$datapath),
-                 zsav = read_sav(input$datafile$datapath),
-                 por = read_por(input$datafile$datapath),
-                 validate("Unsupported file type. Please upload CSV, Excel, Stata or SPSS files.")
-    )
+    df <- safe_read_data(input$datafile$datapath, tolower(ext))
+    
+    if (is.null(df)) {
+      validate("Failed to read the file. Please check file format and encoding.")
+    }
     
     validate(
+      need(ncol(df) > 0, "File appears to be empty or has no columns."),
+      need(nrow(df) > 0, "File appears to be empty or has no rows."),
       need(ncol(df) <= 500, "File must contain 500 or fewer variables."),
       need(nrow(df) <= 10000, "File must contain 10,000 or fewer observations.")
     )
     
     # Convert character variables to factors
-    df <- df %>% mutate(across(where(is.character), as.factor))
+    df <- df %>% 
+      mutate(across(where(is.character), as.factor)) %>%
+      # Remove completely empty rows
+      filter(if_any(everything(), ~!is.na(.)))
+    
+    # Store original names for display
+    attr(df, "original_names") <- names(df)
     
     df
+  })
+  
+  # Store original variable names for display
+  original_names <- reactive({
+    req(dataset())
+    attr(dataset(), "original_names")
   })
   
   output$varselect_ui <- renderUI({
     req(dataset())
     vars <- names(dataset())
+    orig_names <- original_names()
+    
+    # Create display names with both original and cleaned names
+    display_names <- ifelse(vars == orig_names, 
+                            vars, 
+                            paste0(orig_names, " [", vars, "]"))
+    
     tagList(
       div(class = "well-panel",
           h4("Variable Selection"),
           selectInput("depvar", "Dependent Variable", 
-                      choices = vars, width = "100%"),
+                      choices = setNames(vars, display_names), 
+                      width = "100%"),
           selectInput("indepvars", "Independent Variable(s)", 
-                      choices = vars, multiple = TRUE, width = "100%")
+                      choices = setNames(vars, display_names), 
+                      multiple = TRUE, width = "100%")
       )
     )
   })
+  
+  # Function to safely create formula with backticks for non-standard names
+  create_safe_formula <- function(depvar, indepvars) {
+    # Add backticks around variable names if they contain special characters
+    safe_depvar <- ifelse(grepl("[^[:alnum:]_]", depvar), 
+                          paste0("`", depvar, "`"), 
+                          depvar)
+    
+    safe_indepvars <- sapply(indepvars, function(var) {
+      ifelse(grepl("[^[:alnum:]_]", var), 
+             paste0("`", var, "`"), 
+             var)
+    })
+    
+    formula_str <- paste(safe_depvar, "~", paste(safe_indepvars, collapse = " + "))
+    as.formula(formula_str)
+  }
   
   # Identify categorical variables from selected independent variables
   cat_vars <- reactive({
@@ -245,8 +307,8 @@ server <- function(input, output, session) {
     indepvars <- input$indepvars
     data <- dataset()
     
-    # Get categorical variables (factors)
-    cat_vars <- names(data)[sapply(data, is.factor)]
+    # Get categorical variables (factors or character)
+    cat_vars <- names(data)[sapply(data, function(x) is.factor(x) || is.character(x))]
     
     # Only return those that are in selected independent variables
     intersect(indepvars, cat_vars)
@@ -259,14 +321,21 @@ server <- function(input, output, session) {
     
     if (length(vars) > 0) {
       ref_boxes <- lapply(vars, function(var) {
-        choices <- levels(dataset()[[var]])
-        if (is.null(choices)) {
-          choices <- unique(dataset()[[var]])
+        var_data <- dataset()[[var]]
+        choices <- if (is.factor(var_data)) {
+          levels(var_data)
+        } else {
+          unique(na.omit(var_data))
         }
+        
+        # Get display name
+        orig_names <- original_names()
+        var_index <- which(names(dataset()) == var)
+        display_name <- if (length(var_index) > 0) orig_names[var_index] else var
         
         div(class = "ref-cat-box",
             selectInput(paste0("ref_", var), 
-                        label = paste("Reference Category for", var), 
+                        label = paste("Reference Category for:", display_name), 
                         choices = choices,
                         selected = choices[1],
                         width = "100%")
@@ -292,12 +361,23 @@ server <- function(input, output, session) {
     for (var in vars) {
       ref_level <- input[[paste0("ref_", var)]]
       if (!is.null(ref_level)) {
-        current_levels <- levels(data[[var]])
-        if (is.null(current_levels)) {
-          current_levels <- unique(data[[var]])
+        var_data <- data[[var]]
+        
+        # Convert to factor if not already
+        if (!is.factor(var_data)) {
+          var_data <- as.factor(var_data)
         }
-        new_levels <- c(ref_level, setdiff(current_levels, ref_level))
-        data <- data %>% mutate(across(all_of(var), ~factor(.x, levels = new_levels)))
+        
+        current_levels <- levels(var_data)
+        if (is.null(current_levels)) {
+          current_levels <- unique(na.omit(var_data))
+        }
+        
+        # Ensure ref_level exists in the data
+        if (ref_level %in% current_levels) {
+          new_levels <- c(ref_level, setdiff(current_levels, ref_level))
+          data[[var]] <- factor(var_data, levels = new_levels)
+        }
       }
     }
     
@@ -311,8 +391,26 @@ server <- function(input, output, session) {
     
     data <- processed_data()
     
+    # Check if data has enough observations
+    validate(
+      need(nrow(data) > 0, "No data available after processing."),
+      need(nrow(data) >= length(input$indepvars) + 1, 
+           paste("Not enough observations for the number of predictors.",
+                 "Need at least", length(input$indepvars) + 1, "observations."))
+    )
+    
     na_rows <- sum(!complete.cases(data))
     clean_data <- na.omit(data)
+    
+    # Check if enough observations remain
+    validate(
+      need(nrow(clean_data) > 0, 
+           "No complete cases available after removing missing values."),
+      need(nrow(clean_data) >= length(input$indepvars) + 1,
+           paste("Not enough complete cases for analysis.",
+                 "Need at least", length(input$indepvars) + 1, "complete observations."))
+    )
+    
     model_data(clean_data)
     
     if (na_rows > 0) {
@@ -328,24 +426,26 @@ server <- function(input, output, session) {
     req(model_data())
     
     data <- model_data()
-    
     depvar <- input$depvar
     indepvars <- input$indepvars
     
-    formula <- as.formula(paste(depvar, "~", paste(indepvars, collapse = "+")))
+    # Safely create formula with backticks for non-standard names
+    formula <- create_safe_formula(depvar, indepvars)
     
     if (input$package == "robustbase") {
       model <- tryCatch({
         lmrob(formula, data = data, method = input$method_robustbase)
       }, error = function(e) {
-        showNotification(paste("Error in robustbase model:", e$message), type = "error")
+        showNotification(paste("Error in robustbase model:", e$message), 
+                         type = "error", duration = 10)
         return(NULL)
       })
     } else {
       model <- tryCatch({
         rlm(formula, data = data, method = input$method_mass)
       }, error = function(e) {
-        showNotification(paste("Error in MASS model:", e$message), type = "error")
+        showNotification(paste("Error in MASS model:", e$message), 
+                         type = "error", duration = 10)
         return(NULL)
       })
     }
@@ -358,47 +458,79 @@ server <- function(input, output, session) {
   get_standardized_coefs <- function(model) {
     if (inherits(model, "lmrob")) {
       # For robustbase models, create temporary lm object
-      temp_lm <- lm(model$terms, data = model$model)
-      lm.beta(temp_lm)$standardized.coefficients
+      temp_lm <- tryCatch({
+        lm(model$terms, data = model$model)
+      }, error = function(e) {
+        return(NULL)
+      })
+      
+      if (!is.null(temp_lm)) {
+        lm.beta(temp_lm)$standardized.coefficients
+      } else {
+        rep(NA, length(coef(model)))
+      }
     } else {
       # For MASS rlm models
-      lm.beta(model)$standardized.coefficients
+      beta_result <- tryCatch({
+        lm.beta(model)$standardized.coefficients
+      }, error = function(e) {
+        return(NULL)
+      })
+      
+      if (!is.null(beta_result)) {
+        beta_result
+      } else {
+        rep(NA, length(coef(model)))
+      }
     }
   }
   
   # Function to extract coefficients and p-values from model summary
   get_model_coefficients <- function(model) {
-    summ <- summary(model)
-    coef_table <- summ$coefficients
-    
-    if (inherits(model, "lmrob")) {
-      # For robustbase models, use the p-values directly from summary
+    tryCatch({
+      summ <- summary(model)
+      coef_table <- summ$coefficients
+      
+      if (inherits(model, "lmrob")) {
+        # For robustbase models, use the p-values directly from summary
+        data.frame(
+          Term = rownames(coef_table),
+          Estimate = coef_table[, 1],
+          Std.Error = coef_table[, 2],
+          Statistic = coef_table[, 3],
+          p_value = coef_table[, 4],
+          stringsAsFactors = FALSE
+        )
+      } else {
+        # For MASS rlm models, calculate approximate p-values from t-values
+        df <- model$df.residual
+        p_value <- 2 * pt(abs(coef_table[, 3]), df = df, lower.tail = FALSE)
+        data.frame(
+          Term = rownames(coef_table),
+          Estimate = coef_table[, 1],
+          Std.Error = coef_table[, 2],
+          Statistic = coef_table[, 3],
+          p_value = p_value,
+          stringsAsFactors = FALSE
+        )
+      }
+    }, error = function(e) {
+      # Return minimal data frame if summary fails
+      coefs <- coef(model)
       data.frame(
-        Term = rownames(coef_table),
-        Estimate = coef_table[, 1],
-        Std.Error = coef_table[, 2],
-        Statistic = coef_table[, 3],
-        p_value = coef_table[, 4],
+        Term = names(coefs),
+        Estimate = coefs,
+        Std.Error = rep(NA, length(coefs)),
+        Statistic = rep(NA, length(coefs)),
+        p_value = rep(NA, length(coefs)),
         stringsAsFactors = FALSE
       )
-    } else {
-      # For MASS rlm models, calculate approximate p-values from t-values
-      df <- model$df.residual
-      p_value <- 2 * pt(abs(coef_table[, 3]), df = df, lower.tail = FALSE)
-      data.frame(
-        Term = rownames(coef_table),
-        Estimate = coef_table[, 1],
-        Std.Error = coef_table[, 2],
-        Statistic = coef_table[, 3],
-        p_value = p_value,
-        stringsAsFactors = FALSE
-      )
-    }
+    })
   }
   
   output$model_summary <- renderPrint({
     req(model_result())
-    summary(model_result())
+    print(summary(model_result()))
   })
   
   # Interpretation of model summary
@@ -458,13 +590,15 @@ server <- function(input, output, session) {
         Lower_95_CI = Estimate - 1.96 * Std.Error,
         Upper_95_CI = Estimate + 1.96 * Std.Error,
         Significance = if (input$package == "robustbase") {
-          ifelse(p_value < 0.05, 
+          ifelse(p_value < 0.05 & !is.na(p_value), 
                  paste0("Significant (p = ", format.pval(p_value, digits = 3), ")"), 
-                 paste0("Not Significant (p = ", format.pval(p_value, digits = 3), ")"))
+                 ifelse(is.na(p_value), "NA", 
+                        paste0("Not Significant (p = ", format.pval(p_value, digits = 3), ")")))
         } else {
-          ifelse(abs(Statistic) > 2, 
+          ifelse(abs(Statistic) > 2 & !is.na(Statistic), 
                  paste0("Likely Significant (|t| = ", round(abs(Statistic), 2), ")"), 
-                 paste0("Not Significant (|t| = ", round(abs(Statistic), 2), ")"))
+                 ifelse(is.na(Statistic), "NA", 
+                        paste0("Not Significant (|t| = ", round(abs(Statistic), 2), ")")))
         },
         across(where(is.numeric), ~round(.x, input$decimal_places))
       ) %>%
@@ -541,7 +675,8 @@ server <- function(input, output, session) {
     DT::datatable(
       head(dataset(), 50), 
       options = list(scrollX = TRUE, pageLength = 10),
-      class = 'cell-border stripe'
+      class = 'cell-border stripe',
+      colnames = original_names()  # Show original names in display
     )
   })
   
@@ -565,11 +700,11 @@ server <- function(input, output, session) {
           Lower_CI = Estimate - 1.96 * Std.Error,
           Upper_CI = Estimate + 1.96 * Std.Error,
           CI = paste0("[", round(Lower_CI, input$decimal_places), ", ", 
-                     round(Upper_CI, input$decimal_places), "]"),
+                      round(Upper_CI, input$decimal_places), "]"),
           p_value_formatted = if (input$package == "robustbase") {
-            format.pval(p_value, digits = 3, eps = 0.001)
+            ifelse(is.na(p_value), "NA", format.pval(p_value, digits = 3, eps = 0.001))
           } else {
-            paste0("t = ", round(Statistic, 2))
+            ifelse(is.na(Statistic), "NA", paste0("t = ", round(Statistic, 2)))
           }
         ) %>%
         select(Term, Estimate, Std.Error, Std_Estimate, CI, p_value_formatted)
@@ -587,9 +722,9 @@ server <- function(input, output, session) {
         body_add_par(paste("Independent Variables:", paste(input$indepvars, collapse = ", ")), style = "Normal") %>%
         body_add_par(paste("Package Used:", input$package), style = "Normal") %>%
         body_add_par(paste("Method:", 
-                          ifelse(input$package == "robustbase", 
-                                 input$method_robustbase, 
-                                 input$method_mass)), style = "Normal") %>%
+                           ifelse(input$package == "robustbase", 
+                                  input$method_robustbase, 
+                                  input$method_mass)), style = "Normal") %>%
         body_add_par(paste("Sample Size (after removing missing):", nrow(model_data())), style = "Normal") %>%
         body_add_par("") %>%
         
