@@ -465,7 +465,7 @@ ui <- navbarPage(
   header = tags$head(
     tags$style(HTML(who_css))
   ),
-
+  
   
   # Enhanced Home Tab with Professional Design
   tabPanel("Home",
@@ -878,7 +878,7 @@ ui <- navbarPage(
            )
   ),
   
-  # Cochran Formula Tab (unchanged)
+  # UPDATED: Cochran Formula Tab with percentage input support
   tabPanel("Cochran Formula",
            sidebarLayout(
              sidebarPanel(
@@ -893,7 +893,24 @@ ui <- navbarPage(
                        actionButton("reset_cochran", "Reset All Values", class = "btn-who",
                                     icon = icon("refresh"))
                      ),
-                     numericInput("p", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
+                     
+                     # UPDATED: Proportion input with percentage support
+                     div(
+                       style = "margin-bottom: 15px;",
+                       textInput("p_input", "Estimated Proportion (p) or Percentage (%)", 
+                                 value = "0.5",
+                                 placeholder = "Enter as proportion (0.5) or percentage (50%)"),
+                       div(
+                         class = "who-info-box",
+                         style = "margin-top: 5px; font-size: 12px;",
+                         HTML("<strong>Flexible Input Format:</strong><br>
+                              • Enter as proportion: <em>0.5</em> (for 50%)<br>
+                              • Enter as percentage: <em>50%</em> or <em>50</em><br>
+                              • Both will give same results<br>
+                              <em>Examples: 0.3, 30%, 5%, 0.05</em>")
+                       )
+                     ),
+                     
                      numericInput("z", "Z-score (Z)", value = 1.96),
                      numericInput("e_c", "Margin of Error (e)", value = 0.05, min = 0.0001, max = 1, step = 0.01),
                      numericInput("N_c", "Population Size (optional)", value = NULL, min = 1),
@@ -1148,7 +1165,7 @@ ui <- navbarPage(
                  h4("Stratification Flow Chart"),
                  grVizOutput("flowchart_other", width = "100%", height = "500px"),
                  div(id = "diagramEditor_other",
-                     style = "margin-top: 20px; border: 1px solid #ddd; padding: 10px; font-size: 14px;",
+                     style = "margin-top: 20px; border: 1px solid #ddd; padding = 10px; font-size: 14px;",
                      h4("Interactive Diagram Editor"),
                      p("Click on nodes or edges in the diagram to edit them."),
                      uiOutput("nodeEdgeEditorUI_other")
@@ -1490,7 +1507,7 @@ server <- function(input, output, session) {
       stratum_pops = c(100)
     ),
     cochran = list(
-      p = 0.5,
+      p_input = "0.5",
       z = 1.96,
       e_c = 0.05,
       N_c = NULL,
@@ -1573,7 +1590,7 @@ server <- function(input, output, session) {
       if (!is.null(input$cochran_values)) {
         cochran_vals <- jsonlite::fromJSON(input$cochran_values)
         initValues$cochran <- cochran_vals
-        updateNumericInput(session, "p", value = cochran_vals$p)
+        updateTextInput(session, "p_input", value = cochran_vals$p_input)
         updateNumericInput(session, "z", value = cochran_vals$z)
         updateNumericInput(session, "e_c", value = cochran_vals$e_c)
         updateNumericInput(session, "N_c", value = cochran_vals$N_c)
@@ -1667,7 +1684,7 @@ server <- function(input, output, session) {
     
     # Cochran
     cochran_vals <- list(
-      p = input$p,
+      p_input = input$p_input,
       z = input$z,
       e_c = input$e_c,
       N_c = input$N_c,
@@ -1752,7 +1769,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$reset_cochran, {
-    updateNumericInput(session, "p", value = initValues$cochran$p)
+    updateTextInput(session, "p_input", value = initValues$cochran$p_input)
     updateNumericInput(session, "z", value = initValues$cochran$z)
     updateNumericInput(session, "e_c", value = initValues$cochran$e_c)
     updateNumericInput(session, "N_c", value = initValues$cochran$N_c)
@@ -3135,13 +3152,72 @@ server <- function(input, output, session) {
     }), na.rm = TRUE)
   })
   
+  # UPDATED: Function to parse proportion input (handles both proportion and percentage)
+  parseProportionInput <- function(input_str) {
+    if (is.null(input_str) || input_str == "") return(0.5)
+    
+    # Remove any whitespace
+    input_str <- trimws(input_str)
+    
+    # Check if input contains percentage sign
+    if (grepl("%$", input_str)) {
+      # Remove percentage sign and convert to proportion
+      num_str <- gsub("%", "", input_str)
+      num_val <- as.numeric(num_str)
+      if (is.na(num_val)) return(0.5)
+      return(num_val / 100)
+    } else {
+      # Try to parse as number
+      num_val <- as.numeric(input_str)
+      if (is.na(num_val)) return(0.5)
+      
+      # If number is between 0 and 1, assume it's already a proportion
+      if (num_val >= 0 && num_val <= 1) {
+        return(num_val)
+      }
+      # If number is between 1 and 100, assume it's a percentage
+      else if (num_val > 1 && num_val <= 100) {
+        return(num_val / 100)
+      }
+      # Otherwise return default
+      else {
+        return(0.5)
+      }
+    }
+  }
+  
+  # Reactive version for Cochran
+  parseProportionInput_reactive <- reactive({
+    parseProportionInput(input$p_input)
+  })
+  
+  # Reactive version for Other Formulas
+  parseProportionInput_other <- reactive({
+    if (input$formula_type == "single_proportion") {
+      parseProportionInput(as.character(input$p_other))
+    } else if (input$formula_type %in% c("proportion_diff", "odds_ratio", "relative_risk", 
+                                         "case_control", "cohort", "prevalence")) {
+      # Handle different proportion inputs for various formulas
+      if (!is.null(input$p1_other) && !is.na(input$p1_other)) {
+        return(input$p1_other)
+      } else {
+        return(0.5)
+      }
+    } else {
+      return(0.5)
+    }
+  })
+  
   cochranSampleSize <- reactive({
-    p <- input$p
+    p <- parseProportionInput_reactive()
     z <- input$z
     e <- input$e_c
     N_c <- input$N_c
     
     if (is.null(p) || is.null(z) || is.null(e) || e == 0) return(0)
+    
+    # Validate p is between 0 and 1
+    if (p <= 0 || p >= 1) return(0)
     
     # Infinite population formula
     n0 <- (z^2 * p * (1 - p)) / (e^2)
@@ -3163,17 +3239,22 @@ server <- function(input, output, session) {
   })
   
   output$cochranFormulaExplanation <- renderText({
-    p <- input$p
+    p <- parseProportionInput_reactive()
     z <- input$z
     e <- input$e_c
     N_c <- input$N_c
     n0 <- (z^2 * p * (1 - p)) / (e^2)
     
+    # Get the original input string for display
+    original_input <- input$p_input
+    
     explanation <- paste(
       "Cochran's Formula Calculation:\n",
-      "1. Infinite population formula: n₀ = (Z² × p × (1-p)) / e²\n",
-      "2. Calculation: (", z, "² × ", p, " × (1-", p, ")) / ", e, "²\n",
-      "3. Step-by-step: (", z^2, " × ", p, " × ", (1-p), ") / ", e^2, "\n",
+      paste("Input provided: '", original_input, "'", sep = ""),
+      paste("Interpreted as proportion: ", round(p, 4), " (", round(p*100, 2), "%)", sep = ""),
+      "\n1. Infinite population formula: n₀ = (Z² × p × (1-p)) / e²\n",
+      "2. Calculation: (", z, "² × ", round(p, 4), " × (1-", round(p, 4), ")) / ", e, "²\n",
+      "3. Step-by-step: (", z^2, " × ", round(p, 4), " × ", round((1-p), 4), ") / ", e^2, "\n",
       "4. Result: (", z^2 * p * (1-p), ") / ", e^2, " = ", n0
     )
     
@@ -3264,7 +3345,8 @@ server <- function(input, output, session) {
                         " (population: ", alloc$Population[-nrow(alloc)],
                         ") should contribute ", alloc$Proportional_Sample[-nrow(alloc)],
                         " participants.")
-    paste0("Based on Cochran's formula with p = ", input$p, ", Z = ", input$z,
+    paste0("Based on Cochran's formula with p = ", round(parseProportionInput_reactive(), 4), " (", round(parseProportionInput_reactive()*100, 2), "%)", 
+           ", Z = ", input$z,
            ", e = ", input$e_c, ifelse(!is.null(input$N_c) && !is.na(input$N_c) && input$N_c > 0, 
                                        paste0(", N = ", input$N_c), ""),
            " and a non-response rate of ", input$non_response_c, "%",
@@ -3638,7 +3720,9 @@ $(document).ready(function() {
           incProgress(0.2, detail = "Adding input parameters")
           doc <- doc %>%
             officer::body_add_par("Input Parameters:", style = "heading 2") %>%
-            officer::body_add_par(paste("Estimated proportion (p):", input$p), style = "Normal") %>%
+            officer::body_add_par(paste("Estimated proportion input: '", input$p_input, "'"), style = "Normal") %>%
+            officer::body_add_par(paste("Interpreted proportion (p):", round(parseProportionInput_reactive(), 4), 
+                                        "(", round(parseProportionInput_reactive()*100, 2), "%)"), style = "Normal") %>%
             officer::body_add_par(paste("Z-score (Z):", input$z), style = "Normal") %>%
             officer::body_add_par(paste("Margin of error (e):", input$e_c), style = "Normal")
           
@@ -3720,7 +3804,9 @@ $(document).ready(function() {
         paste("Date:", Sys.Date()),
         "",
         "INPUT PARAMETERS:",
-        paste("Estimated proportion (p):", input$p),
+        paste("Estimated proportion input: '", input$p_input, "'"),
+        paste("Interpreted as proportion (p):", round(parseProportionInput_reactive(), 4), 
+              "(", round(parseProportionInput_reactive()*100, 2), "%)"),
         paste("Z-score (Z):", input$z),
         paste("Margin of error (e):", input$e_c)
       )
@@ -3737,24 +3823,28 @@ $(document).ready(function() {
                  "",
                  "CALCULATION:",
                  paste("Z² = ", input$z, "² = ", input$z^2),
-                 paste("p × (1-p) = ", input$p, " × (1-", input$p, ") = ", input$p * (1-input$p)),
-                 paste("Z² × p × (1-p) = ", input$z^2, " × ", input$p * (1-input$p), " = ", input$z^2 * input$p * (1-input$p)),
+                 paste("p × (1-p) = ", round(parseProportionInput_reactive(), 4), " × (1-", round(parseProportionInput_reactive(), 4), 
+                       ") = ", round(parseProportionInput_reactive() * (1-parseProportionInput_reactive()), 4)),
+                 paste("Z² × p × (1-p) = ", input$z^2, " × ", 
+                       round(parseProportionInput_reactive() * (1-parseProportionInput_reactive()), 4), 
+                       " = ", round(input$z^2 * parseProportionInput_reactive() * (1-parseProportionInput_reactive()), 4)),
                  paste("e² = ", input$e_c, "² = ", input$e_c^2),
-                 paste("n₀ = ", input$z^2 * input$p * (1-input$p), " / ", input$e_c^2, " = ", 
-                       (input$z^2 * input$p * (1-input$p)) / (input$e_c^2))
+                 paste("n₀ = ", round(input$z^2 * parseProportionInput_reactive() * (1-parseProportionInput_reactive()), 4), 
+                       " / ", input$e_c^2, " = ", 
+                       round((input$z^2 * parseProportionInput_reactive() * (1-parseProportionInput_reactive())) / (input$e_c^2), 4))
       )
       
       if (!is.null(input$N_c) && !is.na(input$N_c) && input$N_c > 0) {
-        n0 <- (input$z^2 * input$p * (1-input$p)) / (input$e_c^2)
+        n0 <- (input$z^2 * parseProportionInput_reactive() * (1-parseProportionInput_reactive())) / (input$e_c^2)
         steps <- c(steps,
                    "",
                    "FINITE POPULATION CORRECTION:",
                    "n = n₀ / (1 + (n₀ - 1)/N)",
-                   paste("Calculation: ", n0, " / (1 + (", n0, " - 1)/", input$N_c, ")"),
-                   paste("Step-by-step: ", n0, " / (1 + ", (n0 - 1), "/", input$N_c, ") = ", 
-                         n0, " / (1 + ", (n0 - 1)/input$N_c, ")"),
-                   paste("Result: ", n0, " / ", (1 + (n0 - 1)/input$N_c), " = ", 
-                         n0 / (1 + (n0 - 1)/input$N_c))
+                   paste("Calculation: ", round(n0, 4), " / (1 + (", round(n0, 4), " - 1)/", input$N_c, ")"),
+                   paste("Step-by-step: ", round(n0, 4), " / (1 + ", round(n0 - 1, 4), "/", input$N_c, ") = ", 
+                         round(n0, 4), " / (1 + ", round((n0 - 1)/input$N_c, 4), ")"),
+                   paste("Result: ", round(n0, 4), " / ", round((1 + (n0 - 1)/input$N_c), 4), " = ", 
+                         round(n0 / (1 + (n0 - 1)/input$N_c), 4))
         )
       }
       
@@ -3862,14 +3952,26 @@ $(document).ready(function() {
     sum(sapply(1:rv_other$stratumCount, function(i) input[[paste0("pop_other", i)]]), na.rm = TRUE)
   })
   
-  # UPDATED: Formula parameters with Single Population Proportion
+  # UPDATED: Formula parameters with Single Population Proportion percentage support
   output$formula_params <- renderUI({
     formula_type <- input$formula_type
     
     params <- switch(formula_type,
                      "single_proportion" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
-                       numericInput("p_other", "Estimated Proportion (p)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p_other", "Estimated Proportion (p) or Percentage (%)", 
+                                 value = "0.5",
+                                 placeholder = "Enter as proportion (0.5) or percentage (50%)"),
+                       div(
+                         class = "who-info-box",
+                         style = "margin-top: 5px; font-size: 12px;",
+                         HTML("<strong>Flexible Input Format:</strong><br>
+                              • Enter as proportion: <em>0.5</em> (for 50%)<br>
+                              • Enter as percentage: <em>50%</em> or <em>50</em><br>
+                              • Both will give same results<br>
+                              <em>Examples: 0.3, 30%, 5%, 0.05</em>")
+                       ),
                        numericInput("d_other", "Margin of Error (d)", value = 0.05, min = 0.01, step = 0.01)
                      ),
                      "mean_known_var" = tagList(
@@ -3885,8 +3987,22 @@ $(document).ready(function() {
                      "proportion_diff" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("power_other", "Power (1-β)", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
-                       numericInput("p1_other", "Proportion 1 (p₁)", value = 0.5, min = 0.01, max = 0.99, step = 0.01),
-                       numericInput("p2_other", "Proportion 2 (p₂)", value = 0.3, min = 0.01, max = 0.99, step = 0.01)
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p1_other", "Proportion 1 (p₁) or Percentage (%)", 
+                                 value = "0.5",
+                                 placeholder = "Enter as proportion (0.5) or percentage (50%)"),
+                       div(
+                         class = "who-info-box",
+                         style = "margin-top: 5px; font-size: 12px;",
+                         HTML("<strong>Flexible Input Format:</strong><br>
+                              • Enter as proportion: <em>0.5</em> (for 50%)<br>
+                              • Enter as percentage: <em>50%</em> or <em>50</em><br>
+                              <em>Examples: 0.3, 30%, 5%, 0.05</em>")
+                       ),
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p2_other", "Proportion 2 (p₂) or Percentage (%)", 
+                                 value = "0.3",
+                                 placeholder = "Enter as proportion (0.3) or percentage (30%)")
                      ),
                      "correlation" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
@@ -3903,37 +4019,66 @@ $(document).ready(function() {
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("power_other", "Power (1-β)", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
                        numericInput("or_other", "Odds Ratio (OR)", value = 2.0, min = 1.1, step = 0.1),
-                       numericInput("p1_other", "Proportion in Control Group", value = 0.2, min = 0.01, max = 0.99, step = 0.01)
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p1_other", "Proportion in Control Group or Percentage (%)", 
+                                 value = "0.2",
+                                 placeholder = "Enter as proportion (0.2) or percentage (20%)")
                      ),
                      "relative_risk" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("power_other", "Power (1-β)", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
                        numericInput("rr_other", "Relative Risk (RR)", value = 1.5, min = 1.1, step = 0.1),
-                       numericInput("p1_other", "Proportion in Control Group", value = 0.2, min = 0.01, max = 0.99, step = 0.01)
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p1_other", "Proportion in Control Group or Percentage (%)", 
+                                 value = "0.2",
+                                 placeholder = "Enter as proportion (0.2) or percentage (20%)")
                      ),
                      "prevalence" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("precision_other", "Precision (d)", value = 0.05, min = 0.01, step = 0.01),
-                       numericInput("prevalence_other", "Expected Prevalence", value = 0.1, min = 0.01, max = 0.99, step = 0.01)
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("prevalence_other", "Expected Prevalence or Percentage (%)", 
+                                 value = "0.1",
+                                 placeholder = "Enter as proportion (0.1) or percentage (10%)")
                      ),
                      "case_control" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("power_other", "Power (1-β)", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
                        numericInput("or_other", "Odds Ratio (OR)", value = 2.0, min = 1.1, step = 0.1),
-                       numericInput("p1_other", "Proportion in Controls", value = 0.2, min = 0.01, max = 0.99, step = 0.01),
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p1_other", "Proportion in Controls or Percentage (%)", 
+                                 value = "0.2",
+                                 placeholder = "Enter as proportion (0.2) or percentage (20%)"),
                        numericInput("r_other", "Case:Control Ratio", value = 1, min = 0.1, step = 0.1)
                      ),
                      "cohort" = tagList(
                        numericInput("alpha_other", "Alpha (α)", value = 0.05, min = 0.001, max = 0.2, step = 0.01),
                        numericInput("power_other", "Power (1-β)", value = 0.8, min = 0.5, max = 0.99, step = 0.01),
                        numericInput("rr_other", "Relative Risk (RR)", value = 1.5, min = 1.1, step = 0.1),
-                       numericInput("p1_other", "Proportion in Unexposed", value = 0.2, min = 0.01, max = 0.99, step = 0.01),
+                       # UPDATED: Changed to textInput for percentage support
+                       textInput("p1_other", "Proportion in Unexposed or Percentage (%)", 
+                                 value = "0.2",
+                                 placeholder = "Enter as proportion (0.2) or percentage (20%)"),
                        numericInput("r_other", "Exposed:Unexposed Ratio", value = 1, min = 0.1, step = 0.1)
                      )
     )
     
     return(params)
   })
+  
+  # UPDATED: Helper function to parse proportion inputs for Other Formulas
+  parseProportionInput_other_formula <- function(input_str, param_name) {
+    if (is.null(input_str) || input_str == "") {
+      # Default values based on parameter
+      if (param_name == "p_other") return(0.5)
+      if (param_name == "p1_other") return(0.5)
+      if (param_name == "p2_other") return(0.3)
+      if (param_name == "prevalence_other") return(0.1)
+      return(0.5)
+    }
+    
+    return(parseProportionInput(input_str))
+  }
   
   # UPDATED: Formula descriptions with Single Population Proportion
   output$formula_description <- renderUI({
@@ -3947,10 +4092,11 @@ $(document).ready(function() {
                 <em>n = Z² × p × (1-p) / d²</em><br>
                 <ul>
                   <li><strong>Z</strong> = Z-score for desired confidence level</li>
-                  <li><strong>p</strong> = estimated proportion</li>
+                  <li><strong>p</strong> = estimated proportion (enter as proportion or percentage)</li>
                   <li><strong>d</strong> = margin of error</li>
                 </ul>
                 Use this formula for estimating a single proportion with specified precision.
+                <p><strong>Note:</strong> You can enter proportion as 0.5 or as percentage 50% - both work the same!</p>
               ")
                           ),
                           "mean_known_var" = div(
@@ -3987,10 +4133,11 @@ $(document).ready(function() {
                 <ul>
                   <li><strong>Zα</strong> = Z-score for alpha</li>
                   <li><strong>Zβ</strong> = Z-score for beta (1-power)</li>
-                  <li><strong>p₁, p₂</strong> = proportions in two groups</li>
+                  <li><strong>p₁, p₂</strong> = proportions in two groups (enter as proportion or percentage)</li>
                   <li><strong>p</strong> = (p₁ + p₂)/2</li>
                 </ul>
                 For comparing two independent proportions.
+                <p><strong>Note:</strong> You can enter proportions as 0.5 or as percentage 50% - both work the same!</p>
               ")
                           ),
                           "correlation" = div(
@@ -4029,11 +4176,12 @@ $(document).ready(function() {
                   <li><strong>Zα</strong> = Z-score for alpha</li>
                   <li><strong>Zβ</strong> = Z-score for beta (1-power)</li>
                   <li><strong>OR</strong> = odds ratio</li>
-                  <li><strong>p₁</strong> = proportion in control group</li>
+                  <li><strong>p₁</strong> = proportion in control group (enter as proportion or percentage)</li>
                   <li><strong>p₂</strong> = p₁ × OR / (1 + p₁(OR-1))</li>
                   <li><strong>p</strong> = (p₁ + p₂)/2</li>
                 </ul>
                 For case-control studies testing odds ratios.
+                <p><strong>Note:</strong> You can enter proportion as 0.2 or as percentage 20% - both work the same!</p>
               ")
                           ),
                           "relative_risk" = div(
@@ -4045,11 +4193,12 @@ $(document).ready(function() {
                   <li><strong>Zα</strong> = Z-score for alpha</li>
                   <li><strong>Zβ</strong> = Z-score for beta (1-power)</li>
                   <li><strong>RR</strong> = relative risk</li>
-                  <li><strong>p₁</strong> = proportion in control group</li>
+                  <li><strong>p₁</strong> = proportion in control group (enter as proportion or percentage)</li>
                   <li><strong>p₂</strong> = p₁ × RR</li>
                   <li><strong>p</strong> = (p₁ + p₂)/2</li>
                 </ul>
                 For cohort studies testing relative risk.
+                <p><strong>Note:</strong> You can enter proportion as 0.2 or as percentage 20% - both work the same!</p>
               ")
                           ),
                           "prevalence" = div(
@@ -4059,10 +4208,11 @@ $(document).ready(function() {
                 <em>n = (Z² × p × (1-p)) / d²</em><br>
                 <ul>
                   <li><strong>Z</strong> = Z-score for desired confidence level</li>
-                  <li><strong>p</strong> = expected prevalence</li>
+                  <li><strong>p</strong> = expected prevalence (enter as proportion or percentage)</li>
                   <li><strong>d</strong> = precision (margin of error)</li>
                 </ul>
                 For estimating disease prevalence with specified precision.
+                <p><strong>Note:</strong> You can enter prevalence as 0.1 or as percentage 10% - both work the same!</p>
               ")
                           ),
                           "case_control" = div(
@@ -4074,11 +4224,12 @@ $(document).ready(function() {
                   <li><strong>Zα</strong> = Z-score for alpha</li>
                   <li><strong>Zβ</strong> = Z-score for beta (1-power)</li>
                   <li><strong>OR</strong> = odds ratio</li>
-                  <li><strong>p₁</strong> = proportion in controls</li>
+                  <li><strong>p₁</strong> = proportion in controls (enter as proportion or percentage)</li>
                   <li><strong>p₂</strong> = p₁ × OR / (1 + p₁(OR-1))</li>
                   <li><strong>p</strong> = (p₁ + p₂)/2</li>
                 </ul>
                 For case-control studies with specified case:control ratio.
+                <p><strong>Note:</strong> You can enter proportion as 0.2 or as percentage 20% - both work the same!</p>
               ")
                           ),
                           "cohort" = div(
@@ -4090,11 +4241,12 @@ $(document).ready(function() {
                   <li><strong>Zα</strong> = Z-score for alpha</li>
                   <li><strong>Zβ</strong> = Z-score for beta (1-power)</li>
                   <li><strong>RR</strong> = relative risk</li>
-                  <li><strong>p₁</strong> = proportion in unexposed</li>
+                  <li><strong>p₁</strong> = proportion in unexposed (enter as proportion or percentage)</li>
                   <li><strong>p₂</strong> = p₁ × RR</li>
                   <li><strong>p</strong> = (p₁ + p₂)/2</li>
                 </ul>
                 For cohort studies with specified exposed:unexposed ratio.
+                <p><strong>Note:</strong> You can enter proportion as 0.2 or as percentage 20% - both work the same!</p>
               ")
                           )
     )
@@ -4102,7 +4254,7 @@ $(document).ready(function() {
     return(description)
   })
   
-  # UPDATED: Sample size calculation with Single Population Proportion and fixed Case-Control/Cohort
+  # UPDATED: Sample size calculation with Single Population Proportion and percentage support
   otherSampleSize <- reactive({
     formula_type <- input$formula_type
     
@@ -4110,7 +4262,7 @@ $(document).ready(function() {
       result <- switch(formula_type,
                        "single_proportion" = {
                          alpha <- input$alpha_other
-                         p <- input$p_other
+                         p <- parseProportionInput_other_formula(input$p_other, "p_other")
                          d <- input$d_other
                          z <- qnorm(1 - alpha/2)
                          ceiling((z^2 * p * (1 - p)) / (d^2))
@@ -4133,8 +4285,8 @@ $(document).ready(function() {
                        "proportion_diff" = {
                          alpha <- input$alpha_other
                          power <- input$power_other
-                         p1 <- input$p1_other
-                         p2 <- input$p2_other
+                         p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
+                         p2 <- parseProportionInput_other_formula(input$p2_other, "p2_other")
                          result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                alternative = "two.sided")
                          ceiling(result$n * 2)  # Total sample size for two groups
@@ -4160,7 +4312,7 @@ $(document).ready(function() {
                          alpha <- input$alpha_other
                          power <- input$power_other
                          or <- input$or_other
-                         p1 <- input$p1_other
+                         p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                          p2 <- p1 * or / (1 + p1 * (or - 1))
                          result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                alternative = "two.sided")
@@ -4170,7 +4322,7 @@ $(document).ready(function() {
                          alpha <- input$alpha_other
                          power <- input$power_other
                          rr <- input$rr_other
-                         p1 <- input$p1_other
+                         p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                          p2 <- p1 * rr
                          result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                alternative = "two.sided")
@@ -4178,7 +4330,7 @@ $(document).ready(function() {
                        },
                        "prevalence" = {
                          alpha <- input$alpha_other
-                         p <- input$prevalence_other
+                         p <- parseProportionInput_other_formula(input$prevalence_other, "prevalence_other")
                          d <- input$precision_other
                          z <- qnorm(1 - alpha/2)
                          ceiling((z^2 * p * (1 - p)) / (d^2))
@@ -4187,7 +4339,7 @@ $(document).ready(function() {
                          alpha <- input$alpha_other
                          power <- input$power_other
                          or <- input$or_other
-                         p1 <- input$p1_other
+                         p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                          r <- input$r_other  # case:control ratio
                          
                          # FIXED: Ensure valid proportions and calculate p2 correctly
@@ -4215,7 +4367,7 @@ $(document).ready(function() {
                          alpha <- input$alpha_other
                          power <- input$power_other
                          rr <- input$rr_other
-                         p1 <- input$p1_other
+                         p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                          r <- input$r_other  # exposed:unexposed ratio
                          
                          # FIXED: Ensure valid proportions and calculate p2 correctly
@@ -4256,22 +4408,24 @@ $(document).ready(function() {
     ceiling(n / (1 - non_response_rate))
   })
   
-  # UPDATED: Formula explanations with Single Population Proportion and fixed Case-Control/Cohort
+  # UPDATED: Formula explanations with Single Population Proportion and percentage support
   output$formulaExplanation_other <- renderText({
     formula_type <- input$formula_type
     
     explanation <- switch(formula_type,
                           "single_proportion" = {
                             alpha <- input$alpha_other
-                            p <- input$p_other
+                            p <- parseProportionInput_other_formula(input$p_other, "p_other")
                             d <- input$d_other
                             z <- qnorm(1 - alpha/2)
                             n <- ceiling((z^2 * p * (1 - p)) / (d^2))
                             paste(
                               "Single Population Proportion Formula (EPI INFO 7.2.2.6):\n",
-                              "Formula: n = Z² × p × (1-p) / d²\n",
-                              "Calculation: (", round(z, 3), "² × ", p, " × (1-", p, ")) / ", d, "²\n",
-                              "Step-by-step: (", round(z^2, 3), " × ", p, " × ", (1-p), ") / ", d^2, "\n",
+                              paste("Input provided: '", input$p_other, "'", sep = ""),
+                              paste("Interpreted as proportion: ", round(p, 4), " (", round(p*100, 2), "%)", sep = ""),
+                              "\nFormula: n = Z² × p × (1-p) / d²\n",
+                              "Calculation: (", round(z, 3), "² × ", round(p, 4), " × (1-", round(p, 4), ")) / ", d, "²\n",
+                              "Step-by-step: (", round(z^2, 3), " × ", round(p, 4), " × ", round((1-p), 4), ") / ", d^2, "\n",
                               "Result: ", (z^2 * p * (1-p)), " / ", d^2, " = ", (z^2 * p * (1-p)) / d^2, "\n",
                               "Apply ceiling function: ", n
                             )
@@ -4308,13 +4462,16 @@ $(document).ready(function() {
                           "proportion_diff" = {
                             alpha <- input$alpha_other
                             power <- input$power_other
-                            p1 <- input$p1_other
-                            p2 <- input$p2_other
+                            p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
+                            p2 <- parseProportionInput_other_formula(input$p2_other, "p2_other")
                             result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                   alternative = "two.sided")
                             paste(
                               "Difference Between Two Proportions:\n",
-                              "Proportions: p1 = ", p1, ", p2 = ", p2, "\n",
+                              paste("Proportion 1 input: '", input$p1_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p1, 4), " (", round(p1*100, 2), "%)", sep = ""),
+                              paste("Proportion 2 input: '", input$p2_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p2, 4), " (", round(p2*100, 2), "%)", sep = ""),
                               "Effect size (h): ", round(ES.h(p1, p2), 3), "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
                               "Sample size per group: ", ceiling(result$n), "\n",
@@ -4355,15 +4512,16 @@ $(document).ready(function() {
                             alpha <- input$alpha_other
                             power <- input$power_other
                             or <- input$or_other
-                            p1 <- input$p1_other
+                            p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                             p2 <- p1 * or / (1 + p1 * (or - 1))
                             result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                   alternative = "two.sided")
                             paste(
                               "Odds Ratio:\n",
+                              paste("Control proportion input: '", input$p1_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p1, 4), " (", round(p1*100, 2), "%)", sep = ""),
                               "Odds ratio: ", or, "\n",
-                              "Control proportion: ", p1, "\n",
-                              "Case proportion: ", round(p2, 3), "\n",
+                              "Case proportion: ", round(p2, 3), " (", round(p2*100, 2), "%)", "\n",
                               "Effect size (h): ", round(ES.h(p1, p2), 3), "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
                               "Sample size per group: ", ceiling(result$n), "\n",
@@ -4374,15 +4532,16 @@ $(document).ready(function() {
                             alpha <- input$alpha_other
                             power <- input$power_other
                             rr <- input$rr_other
-                            p1 <- input$p1_other
+                            p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                             p2 <- p1 * rr
                             result <- pwr.2p.test(h = ES.h(p1, p2), sig.level = alpha, power = power, 
                                                   alternative = "two.sided")
                             paste(
                               "Relative Risk:\n",
+                              paste("Unexposed proportion input: '", input$p1_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p1, 4), " (", round(p1*100, 2), "%)", sep = ""),
                               "Relative risk: ", rr, "\n",
-                              "Unexposed proportion: ", p1, "\n",
-                              "Exposed proportion: ", round(p2, 3), "\n",
+                              "Exposed proportion: ", round(p2, 3), " (", round(p2*100, 2), "%)", "\n",
                               "Effect size (h): ", round(ES.h(p1, p2), 3), "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
                               "Sample size per group: ", ceiling(result$n), "\n",
@@ -4391,14 +4550,16 @@ $(document).ready(function() {
                           },
                           "prevalence" = {
                             alpha <- input$alpha_other
-                            p <- input$prevalence_other
+                            p <- parseProportionInput_other_formula(input$prevalence_other, "prevalence_other")
                             d <- input$precision_other
                             z <- qnorm(1 - alpha/2)
                             paste(
                               "Prevalence Study:\n",
-                              "Formula: n = (Z² × p × (1-p)) / d²\n",
-                              "Calculation: (", round(z, 3), "² × ", p, " × (1-", p, ")) / ", d, "²\n",
-                              "Step-by-step: (", round(z^2, 3), " × ", p, " × ", (1-p), ") / ", d^2, "\n",
+                              paste("Prevalence input: '", input$prevalence_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p, 4), " (", round(p*100, 2), "%)", sep = ""),
+                              "\nFormula: n = (Z² × p × (1-p)) / d²\n",
+                              "Calculation: (", round(z, 3), "² × ", round(p, 4), " × (1-", round(p, 4), ")) / ", d, "²\n",
+                              "Step-by-step: (", round(z^2, 3), " × ", round(p, 4), " × ", round((1-p), 4), ") / ", d^2, "\n",
                               "Result: ", (z^2 * p * (1-p)), " / ", d^2, " = ", (z^2 * p * (1-p)) / d^2, "\n",
                               "Apply ceiling function: ", otherSampleSize()
                             )
@@ -4407,7 +4568,7 @@ $(document).ready(function() {
                             alpha <- input$alpha_other
                             power <- input$power_other
                             or <- input$or_other
-                            p1 <- input$p1_other
+                            p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                             r <- input$r_other
                             
                             # FIXED calculations
@@ -4432,9 +4593,10 @@ $(document).ready(function() {
                             
                             paste(
                               "Case-Control Study (Fixed):\n",
+                              paste("Control proportion input: '", input$p1_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p1, 4), " (", round(p1*100, 2), "%)", sep = ""),
                               "Odds ratio: ", or, "\n",
-                              "Control proportion: ", p1, "\n",
-                              "Case proportion: ", round(p2, 3), "\n",
+                              "Case proportion: ", round(p2, 3), " (", round(p2*100, 2), "%)", "\n",
                               "Case:Control ratio: ", r, "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
                               "Cases needed: ", n_cases, "\n",
@@ -4446,7 +4608,7 @@ $(document).ready(function() {
                             alpha <- input$alpha_other
                             power <- input$power_other
                             rr <- input$rr_other
-                            p1 <- input$p1_other
+                            p1 <- parseProportionInput_other_formula(input$p1_other, "p1_other")
                             r <- input$r_other
                             
                             # FIXED calculations
@@ -4471,9 +4633,10 @@ $(document).ready(function() {
                             
                             paste(
                               "Cohort Study (Fixed):\n",
+                              paste("Unexposed proportion input: '", input$p1_other, "'", sep = ""),
+                              paste("Interpreted as: ", round(p1, 4), " (", round(p1*100, 2), "%)", sep = ""),
                               "Relative risk: ", rr, "\n",
-                              "Unexposed proportion: ", p1, "\n",
-                              "Exposed proportion: ", round(p2, 3), "\n",
+                              "Exposed proportion: ", round(p2, 3), " (", round(p2*100, 2), "%)", "\n",
                               "Exposed:Unexposed ratio: ", r, "\n",
                               "Alpha: ", alpha, ", Power: ", power, "\n",
                               "Exposed needed: ", n_exposed, "\n",
