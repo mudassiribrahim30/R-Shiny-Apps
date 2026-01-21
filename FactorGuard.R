@@ -456,7 +456,7 @@ ui <- dashboardPage(
                   fluidRow(
                     column(12,
                            div(class = "box",
-                               h2("FactorGuard: A Parallel Analysis Software for EFA", style = "text-align: center; margin-bottom: 30px;")
+                               h2("FactorGuard: A factor-retention decision tool for EFA", style = "text-align: center; margin-bottom: 30px;")
                            )
                     )
                   ),
@@ -506,10 +506,6 @@ ui <- dashboardPage(
                                  tabPanel("Scree Plot", 
                                           div(class = "plot-container",
                                               plotlyOutput("screePlot", height = "500px")
-                                          ),
-                                          div(class = "download-container",
-                                              downloadButton("downloadScree", "Download Scree Plot", 
-                                                             class = "btn-info btn-block")
                                           )
                                  ),
                                  # NEW ABOUT TAB ADDED HERE
@@ -517,8 +513,8 @@ ui <- dashboardPage(
                                           div(class = "about-container",
                                               div(class = "about-section",
                                                   h3("About Me", icon("user")),
-                                                  p("My name is ", strong("Mudasir Mohammed Ibrahim"), ", a Registered Nurse with a passion for healthcare research and data analysis."),
-                                                  p("As a healthcare professional, I recognized the need for accessible tools that bridge the gap between complex statistical methods and practical research applications. This motivated me to develop FactorGuard - a user-friendly application designed to simplify factor analysis for researchers across various disciplines."),
+                                                  p("My name is ", strong("Mudasir Mohammed Ibrahim"), ", a Registered Nurse with a strong interest in healthcare research and data analysis."),
+                                                  p("Through my work in healthcare and research, I identified a recurring challenge: many researchers struggle to apply advanced statistical methods despite their importance for high-quality research. This inspired me to develop FactorGuard—a user-friendly application designed to make factor analysis more accessible, transparent, and practical for researchers across diverse disciplines."),
                                                   p("Contact: ", icon("envelope"), " mudassiribrahim30@gmail.com")
                                               ),
                                               
@@ -541,7 +537,7 @@ ui <- dashboardPage(
                                                   p("1. ", strong("Horn's Parallel Analysis (1965):"), " Compares eigenvalues from actual data with eigenvalues from random data matrices. Factors are retained when actual eigenvalues exceed the corresponding percentiles of random data eigenvalues."),
                                                   p("2. ", strong("Comparison with Traditional Methods:"), " Addresses limitations of Kaiser's criterion (eigenvalue > 1) and scree plot interpretation by providing empirical, simulation-based evidence."),
                                                   p("3. ", strong("Monte Carlo Simulations:"), " Generates random data with the same dimensions as the original dataset to create appropriate comparison benchmarks."),
-                                                  p("The application uses the ", tags$code("fa.parallel()"), " function from the ", strong("psych"), " package in R, which implements the parallel analysis methodology described in the literature below.")
+                                                  p("All parallel analysis computations in this application are performed using the ", tags$code("fa.parallel()"), " function from the ", strong("psych"), " package in R. Results have been verified against direct R implementations of the same analyses, producing identical outcomes and ensuring reproducibility and methodological consistency.")
                                               ),
                                               
                                               div(class = "about-section",
@@ -565,7 +561,7 @@ https://doi.org/10.1007/BF02289447.")
                                                   div(class = "citation-box",
                                                       p(strong("Application Citation:")),
                                                       p("If you use FactorGuard in your research, please cite as:"),
-                                                      p("Ibrahim, M. M. (2026). FactorGuard: A web application for parallel analysis in factor analysis [Computer software]. Retrieved from [application URL]")
+                                                      p("Ibrahim, M. M. (2026). FactorGuard: A factor-retention decision tool for EFA [Computer software]. Retrieved from [application URL]")
 
                                                   )
                                               ),
@@ -656,10 +652,9 @@ server <- function(input, output, session) {
         cat("PARALLEL ANALYSIS RESULTS\n")
         cat("=========================\n\n")
         cat("Suggested number of factors:", parallel$nfact, "\n")
-        cat("Suggested number of components:", parallel$ncomp, "\n\n")
         cat("INTERPRETATION:\n")
         cat("---------------\n")
-        cat("1. Parallel analysis suggests extracting", parallel$nfact, "factors.\n")
+        cat("1. Parallel analysis indicates that", parallel$nfact, "factors should be retained for further analysis.\n")
         cat("2. Factors are retained when actual eigenvalues exceed the corresponding\n")
         cat("   percentiles of random data eigenvalues (red line).\n")
         cat("3. This method is more robust than Kaiser's criterion (eigenvalue > 1).\n\n")
@@ -858,7 +853,7 @@ server <- function(input, output, session) {
                  y = "Eigenvalue",
                  color = "Data Type",
                  caption = paste("Generated: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
-                                 "\nFactorGuard created by Mudasir Mohammed Ibrahim")) +
+                                 "\nFactorGuard")) +
             theme_minimal() +
             theme(
               plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
@@ -917,7 +912,7 @@ server <- function(input, output, session) {
                  x = "Factor Number", 
                  y = "Eigenvalue",
                  caption = paste("Generated: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), 
-                                 "\nFactorGuard created by Mudasir Mohammed Ibrahim")) +
+                                 "\nFactorGuard")) +
             theme_minimal() +
             theme(
               plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
