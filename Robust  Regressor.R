@@ -1,14 +1,12 @@
-# app.R
-
 library(shiny)
-library(MASS)
+library(haven)
+library(readxl)
 library(robustbase)
+library(dplyr)
 library(DT)
-library(tidyverse)
 library(officer)
 library(lm.beta)
-library(readxl)
-library(haven)
+library(tidyverse)
 
 ui <- fluidPage(
   tags$head(
@@ -70,6 +68,54 @@ ui <- fluidPage(
       .signif-no {
         background-color: #ffffff !important;
       }
+      
+      /* Add notification animation */
+      .update-notification {
+        animation: slideIn 0.5s ease-out;
+      }
+      
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      #close-notification:hover {
+        background-color: #0056b3;
+      }
+    ")),  # This comma separates the style from the script
+    
+    tags$script(HTML("
+      $(document).ready(function() {
+        // Check if notification was already shown today
+        var lastShown = localStorage.getItem('lastUpdateNotification');
+        var today = new Date().toDateString();
+        
+        if (!lastShown || lastShown !== today) {
+          // Show notification after 2 seconds
+          setTimeout(function() {
+            $('#update-notification').fadeIn();
+          }, 2000);
+          
+          // Store today's date
+          localStorage.setItem('lastUpdateNotification', today);
+        }
+        
+        // Close button functionality
+        $('#close-notification').click(function() {
+          $('#update-notification').fadeOut();
+        });
+        
+        // Auto-hide after 15 seconds
+        setTimeout(function() {
+          $('#update-notification').fadeOut();
+        }, 15000);
+      });
     "))
   ),
   
@@ -77,6 +123,8 @@ ui <- fluidPage(
       img(src = "https://cdn-icons-png.flaticon.com/512/2103/2103633.png", 
           class = "logo-img", alt = "Robust Regressor Logo")
   ),
+  
+  title = "Robust Regressor",
   
   titlePanel(
     div(
@@ -86,74 +134,91 @@ ui <- fluidPage(
     )
   ),
   
+  # Update Notification Container
+  tags$div(
+    id = "update-notification",
+    class = "shiny-notification",
+    style = "position: fixed; top: 20px; right: 20px; width: 350px; 
+           background-color: #f8f9fa; border-left: 4px solid #007bff;
+           padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+           z-index: 9999; display: none;",
+    tags$h4(style = "margin-top: 0; color: #0056b3;", 
+            icon("bell"), "Latest Updates"),
+    tags$p(style = "margin: 10px 0; font-weight: bold;", 
+           "Update and fixed issues: 21st January, 2026"),
+    tags$ul(style = "padding-left: 20px; margin: 10px 0;",
+            tags$li("Fixed R vs. Shiny discrepancies with reference categories."),
+            tags$li("Fixed data loading issues with special characters"),
+            tags$li("App now relies solely on robustbase for analysis"),
+            tags$li("Improved Word report generation")
+    ),
+    tags$button(
+      id = "close-notification",
+      style = "background-color: #007bff; color: white; border: none;
+             padding: 5px 15px; border-radius: 3px; cursor: pointer;",
+      "Close"
+    )
+  ),
+  
   sidebarLayout(
     sidebarPanel(
       div(class = "well-panel",
           h4("Data Input"),
-          fileInput("datafile", "Upload File (CSV, Excel, Stata, SPSS)", 
-                    accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".zsav", ".por"),
-                    buttonLabel = "Browse...",
-                    placeholder = "No file selected")
+          fileInput("file", "Upload Data File (Excel, CSV)",
+                    accept = c(".csv", ".sav", ".dta", ".xlsx")),
       ),
       
-      uiOutput("varselect_ui"),
+      uiOutput("var_ui"),
       
-      uiOutput("ref_cat_ui"),
+      uiOutput("ref_ui"),  # Compact reference selection UI
       
       div(class = "well-panel",
           h4("Model Settings"),
-          selectInput("package", "Select Package", 
-                      choices = c("robustbase", "MASS"),
+          selectInput("method", "Select Method (lmrob)",
+                      choices = c("MM", "M", "S"), selected = "MM",
                       width = "100%"),
-          
-          conditionalPanel(
-            condition = "input.package == 'robustbase'",
-            selectInput("method_robustbase", "Select Method (lmrob)",
-                        choices = c("MM", "M", "S"), selected = "MM",
-                        width = "100%")
-          ),
-          
-          conditionalPanel(
-            condition = "input.package == 'MASS'",
-            selectInput("method_mass", "Select Method (rlm)",
-                        choices = c("M", "MM"), selected = "M",
-                        width = "100%")
-          ),
           
           numericInput("decimal_places", "Decimal Places", 
                        value = 4, min = 1, max = 6, width = "100%")
       ),
       
-      actionButton("run_analysis", "Run Analysis", 
+      actionButton("run", "Run Robust Regression", 
                    class = "btn btn-primary",
-                   style = "width: 100%; font-weight: bold;"),
-      br(),
-      textOutput("na_message")
+                   style = "width: 100%; font-weight: bold;")
     ),
     
     mainPanel(
       tabsetPanel(
-        tabPanel("Model Summary", 
+        tabPanel("Model Output", 
                  icon = icon("chart-line"),
-                 div(class = "large-output", verbatimTextOutput("model_summary")),
-                 uiOutput("model_interpretation")),
+                 div(class = "large-output", verbatimTextOutput("model_out"))),
+        
         tabPanel("Estimates Table", 
                  icon = icon("table"),
-                 DTOutput("std_table"),
-                 uiOutput("table_interpretation")),
+                 DTOutput("estimates_table"),
+                 uiOutput("estimates_interpretation")),
+        
         tabPanel("Data View", 
                  icon = icon("database"),
                  h4("Data Preview"),
-                 DTOutput("datatable")),
+                 DTOutput("data_view")),
+        
         tabPanel("Download Full Results", 
                  icon = icon("file-download"),
-                 downloadButton("download_full", "Download Full Results (Word)",
+                 h4("Download Complete Analysis"),
+                 downloadButton("download_report", "Download Word Report",
                                 class = "btn btn-success")),
+        
         tabPanel("About",
                  icon = icon("info-circle"),
                  div(class = "about-section",
                      h3("About Robust Regressor"),
-                     p("Robust Regressor is a user-friendly Shiny application designed for performing robust regression analysis. It leverages two widely used R packages (MASS and robustbase) to provide reliable estimates that are resistant to outliers and data irregularities."),
+                     p(HTML("Robust Regressor is a user-friendly Shiny application for robust regression analysis. 
+       It directly uses the <span style='color: #e74c3c; font-weight: bold;'>robustbase</span> 
+       package to provide reliable estimates that are resistant to outliers and data irregularities, 
+       ensuring your statistical results are trustworthy."),
+                       style = "color: #2c3e50; font-size: 16px; text-align: justify; line-height: 1.5; margin-top: 10px;"),
+                     
                      
                      h4("When to Use Robust Regression vs Ordinary Least Squares (OLS)"),
                      p("Robust regression should be used when:"),
@@ -180,14 +245,23 @@ ui <- fluidPage(
                        tags$li("Examine both unstandardized and standardized coefficients for complete understanding")
                      ),
                      
+                     h4("About the Methods"),
+                     p("MM estimator: Recommended for most applications (balanced robustness and efficiency)"),
+                     p("M estimator: More robust but less efficient"),
+                     p("S estimator: Has high breakdown point"),
+                     p("Updated and issues fixed: 21st January, 2026",
+                       style = "background-color: #f9ed69; color: #000; 
+           font-weight: bold; text-align: center; 
+           padding: 10px; border-radius: 5px; 
+           margin-top: 15px;"),
+                     
+                     
                      div(class = "references",
                          h4("References"),
                          p("Maechler, M., Rousseeuw, P., Croux, C., Todorov, V., Ruckstuhl, A., Salibian-Barrera, M., ... & Verbeke, T. (2021). robustbase: Basic Robust Statistics. R package version 0.93-9."),
-                         p("Venables, W. N. & Ripley, B. D. (2002) Modern Applied Statistics with S. Fourth Edition. Springer, New York. ISBN 0-387-95457-0"),
                          p("Huber, P. J. (1981). Robust Statistics. Wiley."),
                          
                          h4("Developer Information"),
-                         p("Developed by Mudasir Mohammed Ibrahim"),
                          p("For suggestions or problems, please contact: mudassiribrahim30@gmail.com")
                      )
                  )
@@ -198,281 +272,148 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  
-  # Function to safely read data with proper encoding
-  safe_read_data <- function(path, ext) {
-    tryCatch({
-      df <- switch(ext,
-                   csv = read_csv(path, show_col_types = FALSE, 
-                                  locale = locale(encoding = "UTF-8")),
-                   xlsx = read_excel(path),
-                   xls = read_excel(path),
-                   dta = read_dta(path),
-                   sav = read_sav(path),
-                   zsav = read_sav(path),
-                   por = read_por(path),
-                   stop("Unsupported file type")
+  # Load data
+  data <- reactive({
+    req(input$file)
+    ext <- tools::file_ext(input$file$name)
+    
+    df <- tryCatch({
+      switch(ext,
+             csv  = read.csv(input$file$datapath, stringsAsFactors = FALSE),
+             sav  = read_sav(input$file$datapath),
+             dta  = read_dta(input$file$datapath),
+             xlsx = read_excel(input$file$datapath),
+             validate("Unsupported file format")
       )
-      
-      # Clean column names - replace spaces with underscores and remove special characters
-      names(df) <- gsub("[^[:alnum:]_\\.]", "_", names(df))
-      names(df) <- gsub("_{2,}", "_", names(df))  # Remove multiple underscores
-      names(df) <- gsub("^_|_$", "", names(df))   # Remove leading/trailing underscores
-      
-      return(df)
     }, error = function(e) {
       showNotification(paste("Error reading file:", e$message), type = "error")
       return(NULL)
     })
-  }
-  
-  dataset <- reactive({
-    req(input$datafile)
-    ext <- tools::file_ext(input$datafile$name)
-    
-    df <- safe_read_data(input$datafile$datapath, tolower(ext))
     
     if (is.null(df)) {
-      validate("Failed to read the file. Please check file format and encoding.")
+      validate("Failed to read the file. Please check the file format.")
     }
     
-    validate(
-      need(ncol(df) > 0, "File appears to be empty or has no columns."),
-      need(nrow(df) > 0, "File appears to be empty or has no rows."),
-      need(ncol(df) <= 500, "File must contain 500 or fewer variables."),
-      need(nrow(df) <= 10000, "File must contain 10,000 or fewer observations.")
-    )
-    
-    # Convert character variables to factors
-    df <- df %>% 
-      mutate(across(where(is.character), as.factor)) %>%
-      # Remove completely empty rows
-      filter(if_any(everything(), ~!is.na(.)))
-    
-    # Store original names for display
-    attr(df, "original_names") <- names(df)
+    # Clean column names - replace spaces with underscores
+    names(df) <- gsub(" ", "_", names(df))
+    names(df) <- gsub("[^[:alnum:]_\\.]", "_", names(df))
     
     df
   })
   
-  # Store original variable names for display
-  original_names <- reactive({
-    req(dataset())
-    attr(dataset(), "original_names")
-  })
-  
-  output$varselect_ui <- renderUI({
-    req(dataset())
-    vars <- names(dataset())
-    orig_names <- original_names()
-    
-    # Create display names with both original and cleaned names
-    display_names <- ifelse(vars == orig_names, 
-                            vars, 
-                            paste0(orig_names, " [", vars, "]"))
-    
+  # UI for selecting dependent and independent variables
+  output$var_ui <- renderUI({
+    req(data())
+    vars <- names(data())
     tagList(
       div(class = "well-panel",
           h4("Variable Selection"),
-          selectInput("depvar", "Dependent Variable", 
-                      choices = setNames(vars, display_names), 
-                      width = "100%"),
-          selectInput("indepvars", "Independent Variable(s)", 
-                      choices = setNames(vars, display_names), 
-                      multiple = TRUE, width = "100%")
+          selectInput("y", "Dependent Variable", vars, width = "100%"),
+          selectInput("x", "Independent Variables", vars, multiple = TRUE, width = "100%")
       )
     )
   })
   
-  # Function to safely create formula with backticks for non-standard names
-  create_safe_formula <- function(depvar, indepvars) {
-    # Add backticks around variable names if they contain special characters
-    safe_depvar <- ifelse(grepl("[^[:alnum:]_]", depvar), 
-                          paste0("`", depvar, "`"), 
-                          depvar)
+  # Compact UI for changing reference levels of factor variables
+  output$ref_ui <- renderUI({
+    req(data(), input$x)
+    df <- data()
     
-    safe_indepvars <- sapply(indepvars, function(var) {
-      ifelse(grepl("[^[:alnum:]_]", var), 
-             paste0("`", var, "`"), 
-             var)
+    # Convert character columns to factors for selected independent variables
+    df[input$x] <- lapply(df[input$x], function(col) {
+      if (is.character(col)) as.factor(col) else col
     })
     
-    formula_str <- paste(safe_depvar, "~", paste(safe_indepvars, collapse = " + "))
-    as.formula(formula_str)
-  }
-  
-  # Identify categorical variables from selected independent variables
-  cat_vars <- reactive({
-    req(input$indepvars, dataset())
-    indepvars <- input$indepvars
-    data <- dataset()
+    # Identify factor independent variables
+    factor_vars <- input$x[sapply(df[, input$x, drop = FALSE], is.factor)]
+    if (length(factor_vars) == 0) return(NULL)
     
-    # Get categorical variables (factors or character)
-    cat_vars <- names(data)[sapply(data, function(x) is.factor(x) || is.character(x))]
-    
-    # Only return those that are in selected independent variables
-    intersect(indepvars, cat_vars)
+    # Create a single panel with all factor variables for reference selection
+    div(class = "well-panel",
+        h4("Reference Categories"),
+        lapply(factor_vars, function(var) {
+          div(class = "ref-cat-box",
+              selectInput(
+                paste0("ref_", var),
+                label = var,
+                choices = levels(df[[var]]),
+                selected = levels(df[[var]])[1]  # default first level
+              )
+          )
+        })
+    )
   })
   
-  # UI for reference category selection
-  output$ref_cat_ui <- renderUI({
-    req(cat_vars(), dataset())
-    vars <- cat_vars()
-    
-    if (length(vars) > 0) {
-      ref_boxes <- lapply(vars, function(var) {
-        var_data <- dataset()[[var]]
-        choices <- if (is.factor(var_data)) {
-          levels(var_data)
-        } else {
-          unique(na.omit(var_data))
-        }
-        
-        # Get display name
-        orig_names <- original_names()
-        var_index <- which(names(dataset()) == var)
-        display_name <- if (length(var_index) > 0) orig_names[var_index] else var
-        
-        div(class = "ref-cat-box",
-            selectInput(paste0("ref_", var), 
-                        label = paste("Reference Category for:", display_name), 
-                        choices = choices,
-                        selected = choices[1],
-                        width = "100%")
-        )
-      })
-      
-      div(class = "well-panel",
-          h4("Reference Categories"),
-          ref_boxes
-      )
-    }
-  })
-  
-  # Reactive value to store processed data with correct reference categories
+  # Process data with reference levels
   processed_data <- reactive({
-    req(input$depvar, input$indepvars, dataset())
+    req(input$y, input$x, data())
+    df <- data()[, c(input$y, input$x)]
+    df <- na.omit(df)
     
-    selected_vars <- c(input$depvar, input$indepvars)
-    data <- dataset() %>% select(all_of(selected_vars))
+    # Convert character columns to factors if any
+    df[input$x] <- lapply(df[input$x], function(col) {
+      if (is.character(col)) as.factor(col) else col
+    })
     
-    # Set reference levels for categorical variables
-    vars <- cat_vars()
-    for (var in vars) {
-      ref_level <- input[[paste0("ref_", var)]]
-      if (!is.null(ref_level)) {
-        var_data <- data[[var]]
-        
-        # Convert to factor if not already
-        if (!is.factor(var_data)) {
-          var_data <- as.factor(var_data)
-        }
-        
-        current_levels <- levels(var_data)
-        if (is.null(current_levels)) {
-          current_levels <- unique(na.omit(var_data))
-        }
-        
-        # Ensure ref_level exists in the data
-        if (ref_level %in% current_levels) {
-          new_levels <- c(ref_level, setdiff(current_levels, ref_level))
-          data[[var]] <- factor(var_data, levels = new_levels)
-        }
+    # Update reference levels for factors if user selected new ones
+    for (var in input$x) {
+      ref_input <- input[[paste0("ref_", var)]]
+      if (!is.null(ref_input)) {
+        df[[var]] <- relevel(df[[var]], ref = ref_input)
       }
     }
     
-    data
+    df
   })
   
-  model_data <- reactiveVal(NULL)
-  
-  observeEvent(input$run_analysis, {
-    req(processed_data())
+  # Run robust regression
+  model <- eventReactive(input$run, {
+    req(input$y, input$x, processed_data())
+    df <- processed_data()
     
-    data <- processed_data()
-    
-    # Check if data has enough observations
-    validate(
-      need(nrow(data) > 0, "No data available after processing."),
-      need(nrow(data) >= length(input$indepvars) + 1, 
-           paste("Not enough observations for the number of predictors.",
-                 "Need at least", length(input$indepvars) + 1, "observations."))
+    # Build formula and run robust regression
+    formula <- as.formula(
+      paste(input$y, "~", paste(input$x, collapse = "+"))
     )
     
-    na_rows <- sum(!complete.cases(data))
-    clean_data <- na.omit(data)
-    
-    # Check if enough observations remain
-    validate(
-      need(nrow(clean_data) > 0, 
-           "No complete cases available after removing missing values."),
-      need(nrow(clean_data) >= length(input$indepvars) + 1,
-           paste("Not enough complete cases for analysis.",
-                 "Need at least", length(input$indepvars) + 1, "complete observations."))
-    )
-    
-    model_data(clean_data)
-    
-    if (na_rows > 0) {
-      output$na_message <- renderText({
-        paste(na_rows, "rows with missing values were excluded from the analysis.")
-      })
-    } else {
-      output$na_message <- renderText({ "No missing values detected." })
-    }
+    tryCatch({
+      lmrob(formula, data = df, method = input$method)
+    }, error = function(e) {
+      showNotification(paste("Error in model fitting:", e$message), type = "error")
+      return(NULL)
+    })
   })
   
-  model_result <- reactive({
-    req(model_data())
-    
-    data <- model_data()
-    depvar <- input$depvar
-    indepvars <- input$indepvars
-    
-    # Safely create formula with backticks for non-standard names
-    formula <- create_safe_formula(depvar, indepvars)
-    
-    if (input$package == "robustbase") {
-      model <- tryCatch({
-        lmrob(formula, data = data, method = input$method_robustbase)
-      }, error = function(e) {
-        showNotification(paste("Error in robustbase model:", e$message), 
-                         type = "error", duration = 10)
-        return(NULL)
-      })
-    } else {
-      model <- tryCatch({
-        rlm(formula, data = data, method = input$method_mass)
-      }, error = function(e) {
-        showNotification(paste("Error in MASS model:", e$message), 
-                         type = "error", duration = 10)
-        return(NULL)
-      })
-    }
-    
-    validate(need(!is.null(model), "Model fitting failed. Check your data and settings."))
-    model
+  # Show model output
+  output$model_out <- renderPrint({
+    req(model())
+    summary(model())
   })
   
-  # Function to get standardized coefficients
-  get_standardized_coefs <- function(model) {
-    if (inherits(model, "lmrob")) {
-      # For robustbase models, create temporary lm object
-      temp_lm <- tryCatch({
-        lm(model$terms, data = model$model)
-      }, error = function(e) {
-        return(NULL)
-      })
-      
-      if (!is.null(temp_lm)) {
-        lm.beta(temp_lm)$standardized.coefficients
-      } else {
-        rep(NA, length(coef(model)))
-      }
-    } else {
-      # For MASS rlm models
+  # Function to manually extract coefficients and create estimates table
+  create_estimates_table <- function(model) {
+    req(model)
+    
+    # Get model summary
+    summ <- summary(model)
+    
+    # Extract coefficients table from summary
+    coef_table <- summ$coefficients
+    
+    # Get model data for standardization
+    model_data <- model$model
+    
+    # Create a temporary OLS model for standardization
+    temp_lm <- tryCatch({
+      lm(model$terms, data = model_data)
+    }, error = function(e) {
+      return(NULL)
+    })
+    
+    # Get standardized coefficients if possible
+    std_coefs <- if (!is.null(temp_lm)) {
       beta_result <- tryCatch({
-        lm.beta(model)$standardized.coefficients
+        lm.beta(temp_lm)$standardized.coefficients
       }, error = function(e) {
         return(NULL)
       })
@@ -480,362 +421,262 @@ server <- function(input, output, session) {
       if (!is.null(beta_result)) {
         beta_result
       } else {
-        rep(NA, length(coef(model)))
+        rep(NA, nrow(coef_table))
       }
-    }
-  }
-  
-  # Function to extract coefficients and p-values from model summary
-  get_model_coefficients <- function(model) {
-    tryCatch({
-      summ <- summary(model)
-      coef_table <- summ$coefficients
-      
-      if (inherits(model, "lmrob")) {
-        # For robustbase models, use the p-values directly from summary
-        data.frame(
-          Term = rownames(coef_table),
-          Estimate = coef_table[, 1],
-          Std.Error = coef_table[, 2],
-          Statistic = coef_table[, 3],
-          p_value = coef_table[, 4],
-          stringsAsFactors = FALSE
-        )
-      } else {
-        # For MASS rlm models, calculate approximate p-values from t-values
-        df <- model$df.residual
-        p_value <- 2 * pt(abs(coef_table[, 3]), df = df, lower.tail = FALSE)
-        data.frame(
-          Term = rownames(coef_table),
-          Estimate = coef_table[, 1],
-          Std.Error = coef_table[, 2],
-          Statistic = coef_table[, 3],
-          p_value = p_value,
-          stringsAsFactors = FALSE
-        )
-      }
-    }, error = function(e) {
-      # Return minimal data frame if summary fails
-      coefs <- coef(model)
-      data.frame(
-        Term = names(coefs),
-        Estimate = coefs,
-        Std.Error = rep(NA, length(coefs)),
-        Statistic = rep(NA, length(coefs)),
-        p_value = rep(NA, length(coefs)),
-        stringsAsFactors = FALSE
-      )
-    })
-  }
-  
-  output$model_summary <- renderPrint({
-    req(model_result())
-    print(summary(model_result()))
-  })
-  
-  # Interpretation of model summary
-  output$model_interpretation <- renderUI({
-    req(model_result())
-    
-    model <- model_result()
-    is_robustbase <- input$package == "robustbase"
-    
-    interpretation_content <- if (is_robustbase) {
-      tagList(
-        p("For robustbase (lmrob) models:"),
-        tags$ul(
-          tags$li("The 'Pr(>|t|)' column shows exact p-values from the robust model"),
-          tags$li("Variables with p < 0.05 are considered statistically significant"),
-          tags$li("Each variable's significance is evaluated independently in the multivariate context"),
-          tags$li("The estimates are robust to outliers and influential points")
-        )
-      )
     } else {
-      tagList(
-        p("For MASS (rlm) models:"),
-        tags$ul(
-          tags$li("No exact p-values are provided - using t-value approximations"),
-          tags$li("Variables with |t| > 2 are considered likely significant"),
-          tags$li("Each variable's contribution is evaluated independently"),
-          tags$li("The estimates are resistant to outliers in the response")
-        )
-      )
+      rep(NA, nrow(coef_table))
     }
     
-    div(class = "interpretation",
-        h4("Interpretation Guide"),
-        interpretation_content,
-        p("For both models:"),
-        tags$ul(
-          tags$li("Examine the confidence intervals for precision of estimates"),
-          tags$li("Compare standardized coefficients to assess relative importance"),
-          tags$li("Check model convergence/weights for potential issues")
-        )
+    # Create the estimates dataframe
+    estimates_df <- data.frame(
+      Term = rownames(coef_table),
+      Estimate = coef_table[, "Estimate"],
+      Std_Error = coef_table[, "Std. Error"],
+      t_value = coef_table[, "t value"],
+      p_value = coef_table[, "Pr(>|t|)"],
+      stringsAsFactors = FALSE
     )
-  })
+    
+    # Add standardized coefficients
+    estimates_df$Std_Estimate <- std_coefs[match(estimates_df$Term, names(std_coefs))]
+    
+    # Calculate confidence intervals
+    estimates_df$Lower_CI <- estimates_df$Estimate - 1.96 * estimates_df$Std_Error
+    estimates_df$Upper_CI <- estimates_df$Estimate + 1.96 * estimates_df$Std_Error
+    
+    # Add significance indicator
+    estimates_df$Significance <- ifelse(
+      estimates_df$p_value < 0.05 & !is.na(estimates_df$p_value),
+      "Significant",
+      ifelse(is.na(estimates_df$p_value), "NA", "Not Significant")
+    )
+    
+    # Round numeric values
+    decimal_places <- ifelse(is.null(input$decimal_places), 4, input$decimal_places)
+    estimates_df <- estimates_df %>%
+      mutate(across(where(is.numeric), ~round(.x, decimal_places)))
+    
+    return(estimates_df)
+  }
   
-  output$std_table <- renderDT({
-    req(model_result())
+  # Display estimates table
+  output$estimates_table <- renderDT({
+    req(model())
     
-    model <- model_result()
-    coef_df <- get_model_coefficients(model)
+    estimates_df <- create_estimates_table(model())
     
-    # Get standardized coefficients
-    std_coefs <- get_standardized_coefs(model)
+    # Select and rename columns for display
+    display_df <- estimates_df %>%
+      select(
+        Term,
+        Estimate,
+        Std_Estimate,
+        Std_Error,
+        Lower_CI,
+        Upper_CI,
+        p_value,
+        Significance
+      )
     
-    # Create data frame with all needed information
-    df <- coef_df %>%
-      mutate(
-        Std_Estimate = std_coefs[match(Term, names(std_coefs))],
-        Lower_95_CI = Estimate - 1.96 * Std.Error,
-        Upper_95_CI = Estimate + 1.96 * Std.Error,
-        Significance = if (input$package == "robustbase") {
-          ifelse(p_value < 0.05 & !is.na(p_value), 
-                 paste0("Significant (p = ", format.pval(p_value, digits = 3), ")"), 
-                 ifelse(is.na(p_value), "NA", 
-                        paste0("Not Significant (p = ", format.pval(p_value, digits = 3), ")")))
-        } else {
-          ifelse(abs(Statistic) > 2 & !is.na(Statistic), 
-                 paste0("Likely Significant (|t| = ", round(abs(Statistic), 2), ")"), 
-                 ifelse(is.na(Statistic), "NA", 
-                        paste0("Not Significant (|t| = ", round(abs(Statistic), 2), ")")))
-        },
-        across(where(is.numeric), ~round(.x, input$decimal_places))
-      ) %>%
-      select(Term, Estimate, Std_Estimate, Std.Error, Lower_95_CI, Upper_95_CI, Significance)
-    
-    # Create the datatable
+    # Create datatable
     dt <- DT::datatable(
-      df,
+      display_df,
       options = list(
         dom = 't',
-        pageLength = nrow(df),
-        scrollX = TRUE
+        pageLength = nrow(display_df),
+        scrollX = TRUE,
+        autoWidth = TRUE
       ),
       rownames = FALSE,
-      caption = "Model Estimates with Standardized Coefficients and 95% Confidence Intervals",
-      colnames = c('Term', 'Unstandardized Estimate', 'Standardized Estimate', 'Std. Error', 
-                   'Lower 95% CI', 'Upper 95% CI', 'Significance')
+      caption = "Robust Regression Estimates",
+      colnames = c(
+        'Term',
+        'Unstandardized Estimate',
+        'Standardized Estimate',
+        'Std. Error',
+        'Lower 95% CI',
+        'Upper 95% CI',
+        'p-value',
+        'Significance'
+      )
     ) %>%
-      formatStyle(names(df), fontSize = '16px')
-    
-    # Apply conditional formatting based on significance
-    if (input$package == "robustbase") {
-      sig_values <- unique(df$Significance)[str_detect(unique(df$Significance), "Significant")]
-      dt <- dt %>%
-        formatStyle('Significance',
-                    backgroundColor = styleEqual(
-                      sig_values,
-                      rep('#e6ffe6', length(sig_values))
-                    ))
-    } else {
-      sig_values <- unique(df$Significance)[str_detect(unique(df$Significance), "Likely Significant")]
-      dt <- dt %>%
-        formatStyle('Significance',
-                    backgroundColor = styleEqual(
-                      sig_values,
-                      rep('#e6ffe6', length(sig_values))
-                    ))
-    }
+      formatStyle(
+        'Significance',
+        backgroundColor = styleEqual(
+          c('Significant', 'Not Significant', 'NA'),
+          c('#e6ffe6', '#ffffff', '#f5f5f5')
+        )
+      )
     
     dt
   })
   
-  # Interpretation of estimates table
-  output$table_interpretation <- renderUI({
-    req(model_result())
-    
-    is_robustbase <- input$package == "robustbase"
-    
-    interpretation_content <- if (is_robustbase) {
-      tags$ul(
-        tags$li(tags$b("Significant:"), " Variables with p < 0.05 (green highlight) make a statistically significant contribution"),
-        tags$li(tags$b("Exact p-values:"), " Shown in parentheses for each variable"),
-        tags$li(tags$b("Unstandardized Estimate:"), " The change in the dependent variable for a one-unit change in the predictor"),
-        tags$li(tags$b("Standardized Estimate:"), " Allows comparison of effect sizes across variables")
-      )
-    } else {
-      tags$ul(
-        tags$li(tags$b("Likely Significant:"), " Variables with |t| > 2 (green highlight) likely make a significant contribution"),
-        tags$li(tags$b("t-values:"), " Shown in parentheses for each variable"),
-        tags$li(tags$b("Unstandardized Estimate:"), " The change in the dependent variable for a one-unit change in the predictor"),
-        tags$li(tags$b("Standardized Estimate:"), " Allows comparison of effect sizes across variables")
-      )
-    }
+  # Interpretation for estimates table
+  output$estimates_interpretation <- renderUI({
+    req(model())
     
     div(class = "interpretation",
         h4("Interpreting the Estimates Table"),
-        interpretation_content,
-        p("For both methods, examine confidence intervals to assess precision of estimates.")
+        tags$ul(
+          tags$li(tags$b("Unstandardized Estimate:"), " The change in the dependent variable for a one-unit change in the predictor, holding other variables constant"),
+          tags$li(tags$b("Standardized Estimate:"), " Allows comparison of effect sizes across different variables (unitless)"),
+          tags$li(tags$b("Std. Error:"), " The standard deviation of the sampling distribution of the estimate"),
+          tags$li(tags$b("95% Confidence Interval:"), " The range within which the true population parameter is likely to fall"),
+          tags$li(tags$b("p-value:"), " The probability of observing the result if the null hypothesis (no effect) is true"),
+          tags$li(tags$b("Significance:"), " Variables with p < 0.05 (green highlight) are statistically significant at the 5% level")
+        ),
+        p("Note: These estimates are robust to outliers and influential observations, making them more reliable than OLS estimates when data contains anomalies.")
     )
   })
   
-  output$datatable <- renderDT({
-    req(dataset())
+  # Data view tab
+  output$data_view <- renderDT({
+    req(data())
     DT::datatable(
-      head(dataset(), 50), 
-      options = list(scrollX = TRUE, pageLength = 10),
+      data(),
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        dom = 'Bfrtip'
+      ),
       class = 'cell-border stripe',
-      colnames = original_names()  # Show original names in display
+      caption = "Data Preview (First 10 rows shown)"
     )
   })
   
-  output$download_full <- downloadHandler(
-    filename = function() { 
-      paste("Robust_Regression_Full_Results_", Sys.Date(), ".docx", sep = "") 
+  # Download handler for Word report
+  output$download_report <- downloadHandler(
+    filename = function() {
+      paste("robust_regression_report_", Sys.Date(), ".docx", sep = "")
     },
     content = function(file) {
-      req(model_result())
+      req(model())
       
-      model <- model_result()
-      
-      # Get the main results
-      coef_df <- get_model_coefficients(model)
-      std_coefs <- get_standardized_coefs(model)
-      
-      # Create formatted results table
-      results_df <- coef_df %>%
-        mutate(
-          Std_Estimate = std_coefs[match(Term, names(std_coefs))],
-          Lower_CI = Estimate - 1.96 * Std.Error,
-          Upper_CI = Estimate + 1.96 * Std.Error,
-          CI = paste0("[", round(Lower_CI, input$decimal_places), ", ", 
-                      round(Upper_CI, input$decimal_places), "]"),
-          p_value_formatted = if (input$package == "robustbase") {
-            ifelse(is.na(p_value), "NA", format.pval(p_value, digits = 3, eps = 0.001))
-          } else {
-            ifelse(is.na(Statistic), "NA", paste0("t = ", round(Statistic, 2)))
-          }
-        ) %>%
-        select(Term, Estimate, Std.Error, Std_Estimate, CI, p_value_formatted)
+      # Get estimates table
+      estimates_df <- create_estimates_table(model())
       
       # Create a new Word document
       doc <- read_docx() %>%
         body_add_par("ROBUST REGRESSION ANALYSIS REPORT", style = "heading 1") %>%
         body_add_par("") %>%
-        
-        # Add key information section
-        body_add_par("KEY INFORMATION", style = "heading 2") %>%
-        body_add_par("") %>%
-        body_add_par(paste("Date of Analysis:", Sys.Date()), style = "Normal") %>%
-        body_add_par(paste("Dependent Variable:", input$depvar), style = "Normal") %>%
-        body_add_par(paste("Independent Variables:", paste(input$indepvars, collapse = ", ")), style = "Normal") %>%
-        body_add_par(paste("Package Used:", input$package), style = "Normal") %>%
-        body_add_par(paste("Method:", 
-                           ifelse(input$package == "robustbase", 
-                                  input$method_robustbase, 
-                                  input$method_mass)), style = "Normal") %>%
-        body_add_par(paste("Sample Size (after removing missing):", nrow(model_data())), style = "Normal") %>%
+        body_add_par(paste("Generated by Robust Regressor on", Sys.Date()), style = "Normal") %>%
         body_add_par("") %>%
         
-        # Add categorical variable reference levels
-        body_add_par("REFERENCE CATEGORIES FOR CATEGORICAL VARIABLES", style = "heading 2") %>%
+        # Add analysis details
+        body_add_par("ANALYSIS DETAILS", style = "heading 2") %>%
+        body_add_par("") %>%
+        body_add_par(paste("Dependent Variable:", input$y), style = "Normal") %>%
+        body_add_par(paste("Independent Variables:", paste(input$x, collapse = ", ")), style = "Normal") %>%
+        body_add_par(paste("Method:", input$method), style = "Normal") %>%
+        body_add_par(paste("Sample Size:", nrow(processed_data())), style = "Normal") %>%
+        body_add_par("") %>%
+        
+        # Add reference categories if any
+        body_add_par("REFERENCE CATEGORIES", style = "heading 2") %>%
         body_add_par("")
       
       # Add reference category information
-      cat_vars_list <- cat_vars()
-      if (length(cat_vars_list) > 0) {
-        for (var in cat_vars_list) {
-          ref_level <- input[[paste0("ref_", var)]]
-          if (!is.null(ref_level)) {
-            doc <- doc %>% 
-              body_add_par(paste(var, "-> Reference Category:", ref_level), style = "Normal")
-          }
+      ref_cats <- list()
+      for (var in input$x) {
+        ref_input <- input[[paste0("ref_", var)]]
+        if (!is.null(ref_input)) {
+          ref_cats[[var]] <- ref_input
+        }
+      }
+      
+      if (length(ref_cats) > 0) {
+        for (var in names(ref_cats)) {
+          doc <- doc %>% 
+            body_add_par(paste(var, "-> Reference:", ref_cats[[var]]), style = "Normal")
         }
       } else {
         doc <- doc %>% 
-          body_add_par("No categorical variables selected or all variables are continuous.", style = "Normal")
+          body_add_par("No categorical variables with custom reference levels", style = "Normal")
       }
       
-      doc <- doc %>%
-        body_add_par("") %>%
+      doc <- doc %>% body_add_par("") %>%
         
         # Add model summary
         body_add_par("MODEL SUMMARY", style = "heading 2") %>%
         body_add_par("")
       
-      # Capture model summary as text
-      model_summary_text <- capture.output(summary(model))
-      for (line in model_summary_text) {
+      # Capture model summary
+      model_summary <- capture.output(summary(model()))
+      for (line in model_summary) {
         doc <- doc %>% body_add_par(line, style = "Normal")
       }
       
-      doc <- doc %>%
-        body_add_par("") %>%
+      doc <- doc %>% body_add_par("") %>%
         
-        # Add detailed results table
-        body_add_par("DETAILED COEFFICIENTS TABLE", style = "heading 2") %>%
+        # Add detailed estimates table
+        body_add_par("DETAILED ESTIMATES TABLE", style = "heading 2") %>%
         body_add_par("")
       
-      # Create a simple table using body_add_table (not flextable)
-      # First, format the table nicely
-      formatted_table <- results_df %>%
-        mutate(
-          Estimate = round(Estimate, input$decimal_places),
-          Std.Error = round(Std.Error, input$decimal_places),
-          Std_Estimate = round(Std_Estimate, input$decimal_places)
+      # Prepare table for Word document
+      table_df <- estimates_df %>%
+        select(
+          Term,
+          Estimate,
+          Std_Estimate,
+          Std_Error,
+          Lower_CI,
+          Upper_CI,
+          p_value
         ) %>%
         rename(
           Predictor = Term,
           b = Estimate,
-          SE = Std.Error,
           β = Std_Estimate,
-          `95% CI` = CI,
-          `Significance Test` = p_value_formatted
+          SE = Std_Error,
+          `Lower CI` = Lower_CI,
+          `Upper CI` = Upper_CI,
+          `p-value` = p_value
         )
       
-      # Add the table to the document
+      # Add the table
       doc <- doc %>% 
         body_add_table(
-          formatted_table,
+          table_df,
           header = TRUE,
           style = "table_template"
         ) %>%
         body_add_par("") %>%
-        body_add_par("Note: b = unstandardized coefficient, β = standardized coefficient, SE = standard error, CI = confidence interval.", style = "Normal") %>%
-        body_add_par("") %>%
         
-        # Add interpretation section
-        body_add_par("INTERPRETATION GUIDELINES", style = "heading 2") %>%
+        # Add interpretation
+        body_add_par("INTERPRETATION", style = "heading 2") %>%
+        body_add_par("") %>%
+        body_add_par("Key Findings:", style = "Normal") %>%
         body_add_par("")
       
-      # Add interpretation based on package used
-      if (input$package == "robustbase") {
-        doc <- doc %>%
-          body_add_par("For robustbase (lmrob) models:", style = "Normal") %>%
-          body_add_par("• Variables with p < 0.05 are statistically significant", style = "Normal") %>%
-          body_add_par("• The estimates are robust to outliers and influential points", style = "Normal") %>%
-          body_add_par("• Examine both unstandardized (b) and standardized (β) coefficients", style = "Normal") %>%
-          body_add_par("")
+      # Add significant variables
+      sig_vars <- estimates_df %>%
+        filter(Significance == "Significant") %>%
+        pull(Term)
+      
+      if (length(sig_vars) > 0) {
+        doc <- doc %>% 
+          body_add_par("Statistically Significant Variables:", style = "Normal")
+        for (var in sig_vars) {
+          var_info <- estimates_df %>% filter(Term == var)
+          doc <- doc %>% 
+            body_add_par(paste("•", var, 
+                               "(b =", round(var_info$Estimate, 3),
+                               ", p =", format.pval(var_info$p_value, digits = 3), ")"), 
+                         style = "Normal")
+        }
       } else {
-        doc <- doc %>%
-          body_add_par("For MASS (rlm) models:", style = "Normal") %>%
-          body_add_par("• Variables with |t| > 2 are likely significant", style = "Normal") %>%
-          body_add_par("• The estimates are resistant to outliers in the response", style = "Normal") %>%
-          body_add_par("• Examine both unstandardized (b) and standardized (β) coefficients", style = "Normal") %>%
-          body_add_par("")
+        doc <- doc %>% 
+          body_add_par("No statistically significant variables at p < 0.05 level", 
+                       style = "Normal")
       }
       
-      # Add general interpretation
-      doc <- doc %>%
-        body_add_par("General Interpretation:", style = "Normal") %>%
-        body_add_par("1. Unstandardized coefficients (b) show the change in the dependent variable for a one-unit change in the predictor", style = "Normal") %>%
-        body_add_par("2. Standardized coefficients (β) allow comparison of effect sizes across different variables", style = "Normal") %>%
-        body_add_par("3. Confidence intervals show the precision of the estimates", style = "Normal") %>%
-        body_add_par("4. Smaller standard errors indicate more precise estimates", style = "Normal") %>%
+      doc <- doc %>% 
         body_add_par("") %>%
-        
-        # Add model diagnostics
-        body_add_par("MODEL DIAGNOSTICS", style = "heading 2") %>%
-        body_add_par("") %>%
-        body_add_par(paste("Residual degrees of freedom:", model$df.residual), style = "Normal") %>%
-        body_add_par(paste("Number of observations:", nrow(model_data())), style = "Normal")
-      
-      # Check model convergence for robustbase
-      if (inherits(model, "lmrob")) {
-        doc <- doc %>%
-          body_add_par(paste("Model converged:", model$converged), style = "Normal")
-      }
+        body_add_par("Notes:", style = "Normal") %>%
+        body_add_par("1. b = unstandardized coefficient", style = "Normal") %>%
+        body_add_par("2. β = standardized coefficient", style = "Normal") %>%
+        body_add_par("3. All estimates are robust to outliers and influential points", style = "Normal") %>%
+        body_add_par("4. Confidence intervals are approximate 95% intervals", style = "Normal")
       
       # Save the document
       print(doc, target = file)
