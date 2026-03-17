@@ -922,12 +922,77 @@ ui <- fluidPage(
                       )
                   ),
                   
-                  # Developer information
+                  # Developer information with academic profiles
                   div(class = "developer-info",
                       h5("👨‍💻 Developer Information"),
                       p(icon("user-md", style = "margin-right: 10px;"), "Mudasir Mohammed Ibrahim, RN"),
                       p(icon("envelope", style = "margin-right: 10px;"), "mudassiribrahim30@gmail.com"),
-                      p(icon("globe", style = "margin-right: 10px;"), "www.mudasiribrahim.com")
+                      
+                      # Academic profile icons
+                      div(style = "margin: 20px 0; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;",
+                          
+                          # ResearchGate
+                          a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                            target = "_blank",
+                            style = "text-decoration: none; color: white; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-5px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: linear-gradient(135deg, #00ccbb 0%, #009688 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);",
+                                icon("researchgate", style = "font-size: 28px; color: white;")
+                            ),
+                            div(style = "font-size: 12px; font-weight: 500;", "ResearchGate")
+                          ),
+                          
+                          # Google Scholar
+                          a(href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en", 
+                            target = "_blank",
+                            style = "text-decoration: none; color: white; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-5px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);",
+                                icon("graduation-cap", style = "font-size: 28px; color: white;")
+                            ),
+                            div(style = "font-size: 12px; font-weight: 500;", "Google Scholar")
+                          ),
+                          
+                          # Web of Science
+                          a(href = "https://www.webofscience.com/wos/author/record/HPC-2085-2023", 
+                            target = "_blank",
+                            style = "text-decoration: none; color: white; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-5px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);",
+                                icon("book", style = "font-size: 28px; color: white;")
+                            ),
+                            div(style = "font-size: 12px; font-weight: 500;", "Web of Science")
+                          ),
+                          
+                          # ORCID (Optional - you can add this too)
+                          a(href = "https://orcid.org/0000-0002-9049-8222", 
+                            target = "_blank",
+                            style = "text-decoration: none; color: white; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-5px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: linear-gradient(135deg, #a6ce39 0%, #7aa528 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);",
+                                icon("orcid", style = "font-size: 28px; color: white;")
+                            ),
+                            div(style = "font-size: 12px; font-weight: 500;", "ORCID")
+                          )
+                      ),
+                      
+                      # Website link
+                      p(icon("globe", style = "margin-right: 10px;"), 
+                        a(href = "http://www.mudasiribrahim.com", 
+                          target = "_blank", 
+                          style = "color: white; text-decoration: underline;",
+                          "www.mudasiribrahim.com"
+                        )
+                      ),
+                      
+                      # Add a small note about academic profiles
+                      div(style = "margin-top: 15px; font-size: 11px; opacity: 0.8;",
+                          "Connect with me on academic networks"
+                      )
                   )
                 ),
                 
@@ -1044,21 +1109,25 @@ ui <- fluidPage(
               )
           ),
           
-          # Professional Footer
+          # Professional Footer with Dynamic Copyright Year (Pure R)
           div(class = "footer",
               div(style = "display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;",
                   div(style = "text-align: left;",
                       h5("FactorGuard", style = "margin: 0; color: white; font-family: 'Montserrat';"),
-                      p("A factor-retention decision tool for EFA", style = "margin: 5px 0 0 0; font-size: 0.85em; color: white; opacity: 0.8;")
+                      p("A factor-retention decision tool for EFA", 
+                        style = "margin: 5px 0 0 0; font-size: 0.85em; color: white; opacity: 0.8;")
                   ),
                   div(style = "text-align: center; flex-grow: 1;",
-                      p("Built with ❤️ in Ghana by Mudasir Mohammed Ibrahim, RN", style = "margin: 0; color: white;"),
-                      p("© 2026 CC BY 4.0 | Data processed locally - Never stored", 
+                      p("Built with ❤️ in Ghana by Mudasir Mohammed Ibrahim, RN", 
+                        style = "margin: 0; color: white;"),
+                      p(paste("Copyright © 2025-", format(Sys.Date(), "%Y"), "CC BY 4.0 | Data processed locally - Never stored"), 
                         style = "margin: 5px 0 0 0; font-size: 0.85em; color: white; opacity: 0.8;")
                   ),
                   div(style = "text-align: right;",
-                      p(icon("r-project"), " R/Shiny Application", style = "margin: 0; color: white;"),
-                      p("Version 1.0.0", style = "margin: 5px 0 0 0; font-size: 0.85em; color: white; opacity: 0.8;")
+                      p(icon("r-project"), " R/Shiny Application", 
+                        style = "margin: 0; color: white;"),
+                      p("Version 1.0.0", 
+                        style = "margin: 5px 0 0 0; font-size: 0.85em; color: white; opacity: 0.8;")
                   )
               )
           )
