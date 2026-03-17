@@ -12,6 +12,7 @@ library(magick)
 library(flextable)
 library(shinythemes)
 library(shinyjs)
+library(shinydashboard)
 
 app_name <- "MedModr"
 app_version <- "2.1.0"
@@ -19,6 +20,9 @@ release_date <- "October 2025"
 
 ui <- fluidPage(
   useShinyjs(),
+  title = "MedModr",
+  titleWidth = 350,
+  
   theme = shinytheme("cosmo"),
   tags$head(
     tags$style(HTML("
