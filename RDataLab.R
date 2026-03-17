@@ -48,29 +48,24 @@ spss_dark_gray <- "#7F7F7F"
 
 # UI Definition - SPSS Style Interface
 ui <- dashboardPage(
-  skin = "blue",
+  title = "R DataLab - Web Statistical Analysis Software",  # This sets the browser tab title
   
   dashboardHeader(
     title = tags$div(
-      style = "R DataLab",
-      
-      # Logo (from GitHub, enlarged)
+      style = "display: flex; align-items: center;",
       tags$img(
         src = "https://raw.githubusercontent.com/mudassiribrahim30/R-Shiny-Apps/main/RdataLab.png",
-        height = "50px",   # adjust size (bigger, clean look)
+        height = "50px",
         style = "margin-right: 12px;"
       ),
-      
-      # App Name
       span(
         "R DataLab",
         style = paste0(
-          "color: white; font-weight: bold; font-size: 20px; background-color:", spss_blue
+          "color: white; font-weight: bold; font-size: 20px; background-color:", spss_blue, "; padding: 5px 10px; border-radius: 3px;"
         )
       )
     ),
-    
-    titleWidth = 320,  # slightly wider to fit logo + text
+    titleWidth = 320,
     
     dropdownMenu(
       type = "messages",
