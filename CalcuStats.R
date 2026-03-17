@@ -574,14 +574,14 @@ ui <- navbarPage(
                        # Professional Contact Section
                        div(class = "professional-contact",
                            h4("Contribute to CalcuStats Continuous Development"),
-                           p("We are continuously working to enhance CalcuStats with new features and formulas. Your input is valuable in making this tool more comprehensive and useful for the research community."),
-                           p("If you have suggestions for additional formulas or statistical methods that could benefit researchers, or if you encounter any issues, please don't hesitate to share them with us."),
-                           p("We welcome:"),
+                           p("I am continuously working to enhance CalcuStats with new features and formulas. Your input is valuable in making this tool more comprehensive and useful for the research community."),
+                           p("If you have suggestions for additional formulas or statistical methods that could benefit researchers, or if you encounter any issues, please don't hesitate to share them with me."),
+                           p("I welcome:"),
                            tags$ul(
                              tags$li("New formula suggestions for sample size calculation"),
                              tags$li("Any feedback to improve user experience")
                            ),
-                           p("Contact us at:"),
+                           p("Contact me at:"),
                            div(class = "contact-email", "mudassiribrahim30@gmail.com"),
                            p("Your contributions help make CalcuStats a better tool for everyone in the research community.")
                        )
@@ -1427,8 +1427,8 @@ ui <- navbarPage(
                h3("About the Developer"),
                p("CalcuStats was developed by Mudasir Mohammed Ibrahim, a Registered Nurse with a Bachelor of Science degree and Diploma qualifications."),
                p("With expertise in both healthcare and data analysis, Mudasir created this tool to help researchers and students perform essential sample size and statistical calculations with ease."),
-               p("Connect with Mudasir on GitHub:", 
-                 tags$a(href="https://github.com/mudassiribrahim30", target="_blank", "github.com/mudassiribrahim30")),
+               p("Connect with Mudasir on ResearchGate:", 
+                 tags$a(href="https://www.researchgate.net/profile/Mudasir-Ibrahim", target="_blank", "www.researchgate.net/profile/Mudasir-Ibrahim")),
                
                h3("Detailed Instructions"),
                h4("Other Formulas"),
@@ -1457,32 +1457,23 @@ ui <- navbarPage(
            )
   ),
   
-  tabPanel("Usage Statistics",
-           fluidPage(
-             div(
-               style = "text-align: center; padding: 50px; font-size: 16px;",
-               h3("App Usage Statistics"),
-               div(
-                 style = "font-size: 24px; margin: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 10px;",
-                 paste("This app has been used", counter, "times.")
-               ),
-               p("Thank you for using CalcuStats!")
-             )
-           )
-  ),
-  
-  footer = div(
+  # Professional Footer with Dynamic Copyright Year (Text Links Version)
+  div(
     class = "who-footer",
-    HTML("<p>© 2025 Mudasir Mohammed Ibrahim. All rights reserved. | 
-         <a href='https://github.com/mudassiribrahim30' target='_blank'>GitHub Profile</a> | 
-         <a href='mailto:mudassiribrahim30@gmail.com'>Contact Developer</a></p>"),
+    HTML(paste0(
+      "<p>Copyright © 2025 - ", format(Sys.Date(), "%Y"), " CalcuStats. All rights reserved.</p>"
+    )),
+    
+    # Tagline
     div(
-      style = "margin-top: 10px; font-size: 0.9em; color: #fff;",
-      "Your Professional Companion for Statistical Analysis and Sample Size Calculation"
+      style = "margin-top: 15px; font-size: 0.9em; color: #fff;",
+      "Your Companion for Sample Size Calculation and Descriptive Analytics"
     ),
+    
+    # Welcome Message
     div(
-      style = "margin-top: 15px; font-size: 0.8em; color: #ccc;",
-      "We welcome suggestions for new formulas and features. Contact us to contribute!"
+      style = "margin-top: 10px; font-size: 0.8em; color: #ccc;",
+      "Built with ❤️ in Ghana by Mudasir Mohammed Ibrahim, RN"
     )
   )
 )
