@@ -52,18 +52,18 @@ ui <- dashboardPage(
   
   dashboardHeader(
     title = tags$div(
-      style = "display: flex; align-items: center;",
+      style = "R DataLab",
       
       # Logo (from GitHub, enlarged)
       tags$img(
-        src = "https://raw.githubusercontent.com/mudassiribrahim30/R-Shiny-Apps/main/NMTC%20logo.png",
+        src = "https://raw.githubusercontent.com/mudassiribrahim30/R-Shiny-Apps/main/RdataLab.png",
         height = "50px",   # adjust size (bigger, clean look)
         style = "margin-right: 12px;"
       ),
       
       # App Name
       span(
-        "TNMTC DataLab",
+        "R DataLab",
         style = paste0(
           "color: white; font-weight: bold; font-size: 20px; background-color:", spss_blue
         )
@@ -78,7 +78,7 @@ ui <- dashboardPage(
       icon = icon("question-circle"),
       messageItem(
         from = "Help",
-        message = "TNMTC DataLab Help",
+        message = "R DataLab Help",
         icon = icon("question")
       )
     )
@@ -1001,7 +1001,7 @@ ui <- dashboardPage(
           )
         )
       ),
-      # Factor Analysis Tab - CORRECTED VERSION
+      # Factor Analysis Tab - ENHANCED WITH COMPREHENSIVE FACTOR SUGGESTIONS
       tabItem(
         tabName = "factor_analysis",
         h2("Exploratory Factor Analysis", style = paste0("font-weight: bold; color: ", spss_blue, ";")),
@@ -1009,7 +1009,11 @@ ui <- dashboardPage(
           box(
             width = 4, status = "primary", title = "Variables",
             selectizeInput("factor_vars", "Variables", choices = NULL, multiple = TRUE),
-            numericInput("num_factors", "Number of Factors", value = 1, min = 1, max = 20),
+            
+            # Display suggested number of factors based on multiple criteria
+            uiOutput("factor_suggestions_ui"),
+            
+            numericInput("num_factors", "Number of Factors to Extract", value = 1, min = 1, max = 20),
             selectInput("rotation_method", "Rotation Method",
                         choices = c("none", "varimax", "quartimax", "promax", "oblimin", "simplimax", "cluster")),
             numericInput("factor_scores_cutoff", "Factor Loading Cutoff", value = 0.3, min = 0.1, max = 0.9, step = 0.05),
@@ -1324,20 +1328,65 @@ ui <- dashboardPage(
       # About Tab
       tabItem(
         tabName = "about",
-        h2("About TNMTC DataLab", style = paste0("font-weight: bold; color: ", spss_blue, ";")),
+        h2("About R DataLab", style = paste0("font-weight: bold; color: ", spss_blue, ";")),
         fluidRow(
           box(
             width = 12, status = "info", title = "Developer Information",
             div(class = "analysis-panel",
-                h3("TNMTC DataLab - Statistical Analysis Software"),
-                p("TNMTC DataLab is a user-friendly statistical analysis platform that empowers students to perform basic and advanced analyses in R without coding. It streamlines data exploration, statistical testing, and visualization, delivering publication-ready results for research and learning."),
+                h3("R DataLab - Web Statistical Analysis Software"),
+                p("R DataLab is a user-friendly statistical analysis platform that empowers researchers and data analysts to perform basic and advanced analyses in R without coding. It streamlines data exploration, statistical testing, and visualization, delivering publication-ready results for research and learning."),
                 
                 h4("Developer Information"),
-                p("Lead Developer: Mudasir Mohammed Ibrahim"),
-                p("Email: mudassiribrahim30@gmail.com"),
-                p("Collaborator: Mushe Abdul-Hakim"),
-                p("Email: musheabdulhakim99@gmail.com"),
-                p("For any issues, bugs, or feature requests, please contact the lead developer/collaborator via email."),
+                p("Developer: Mudasir Mohammed Ibrahim"),
+                p("For any issues, bugs, or feature requests, please contact me via email: mudassiribrahim30@gmail.com"),
+                
+                # Academic Social Media Icons
+                div(
+                  style = "margin: 20px 0;",
+                  h4("Connect with me on academic networks:", style = "margin-bottom: 15px;"),
+                  div(
+                    style = "display: flex; gap: 30px; flex-wrap: wrap; align-items: center;",
+                    
+                    # ResearchGate
+                    tags$a(
+                      href = "https://www.researchgate.net/profile/Mudasir-Ibrahim",
+                      target = "_blank",
+                      style = "text-decoration: none; display: inline-flex; flex-direction: column; align-items: center;",
+                      tags$i(class = "fa fa-university", style = "font-size: 48px; color: #00CCBB;"),
+                      tags$span(style = "margin-top: 8px; font-size: 14px; color: #333; font-weight: 500;", "ResearchGate")
+                    ),
+                    
+                    # ORCID
+                    tags$a(
+                      href = "https://orcid.org/0000-0002-9049-8222",
+                      target = "_blank",
+                      style = "text-decoration: none; display: inline-flex; flex-direction: column; align-items: center;",
+                      tags$i(class = "fa fa-id-card", style = "font-size: 48px; color: #A6CE39;"),
+                      tags$span(style = "margin-top: 8px; font-size: 14px; color: #333; font-weight: 500;", "ORCID")
+                    ),
+                    
+                    # Google Scholar
+                    tags$a(
+                      href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en",
+                      target = "_blank",
+                      style = "text-decoration: none; display: inline-flex; flex-direction: column; align-items: center;",
+                      tags$i(class = "fa fa-graduation-cap", style = "font-size: 48px; color: #4285F4;"),
+                      tags$span(style = "margin-top: 8px; font-size: 14px; color: #333; font-weight: 500;", "Google Scholar")
+                    ),
+                    
+                    # Web of Science / Publons
+                    tags$a(
+                      href = "https://www.webofscience.com/wos/author/record/HPC-2085-2023",
+                      target = "_blank",
+                      style = "text-decoration: none; display: inline-flex; flex-direction: column; align-items: center;",
+                      tags$i(class = "fa fa-globe", style = "font-size: 48px; color: #0F4D92;"),
+                      tags$span(style = "margin-top: 8px; font-size: 14px; color: #333; font-weight: 500;", "Web of Science")
+                    )
+                  )
+                ),
+                
+                # Divider
+                tags$hr(style = "margin: 25px 0;"),
                 
                 h4("Version Information"),
                 p("Current Version: 2.0"),
@@ -1354,12 +1403,12 @@ ui <- dashboardPage(
                 ),
                 
                 h4("Technical Support"),
-                p("If you encounter any problems while using TNMTC DataLab, please contact:"),
-                p("Email: mudassiribrahim30@gmail.com/musheabdulhakim99@gmail.com"),
-                p("We will respond to your inquiry as soon as possible."),
+                p("If you encounter any problems while using R DataLab, please contact me:"),
+                p(HTML("<i class='fa fa-envelope' style='color: #326EA6; margin-right: 5px;'></i> mudassiribrahim30@gmail.com")),
+                p("I will respond to your inquiry as soon as possible."),
                 
                 h4("Acknowledgments"),
-                p("TNMTC DataLab is built using the R programming language and the Shiny framework."),
+                p("R DataLab is built using the R programming language and the Shiny framework."),
                 p("Special thanks to the R community and package developers for their contributions.")
             )
           )
@@ -1559,6 +1608,7 @@ server <- function(input, output, session) {
       return(FALSE)
     })
   }
+  
   
   # Store analysis results for export
   analysis_results <- reactiveValues(
@@ -2232,6 +2282,7 @@ server <- function(input, output, session) {
   observeEvent(data(), {
     edited_data(data())
   })
+  
   
   # Render interactive DataTable
   output$data_preview <- renderDT({
