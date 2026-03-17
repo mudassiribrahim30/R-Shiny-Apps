@@ -5,10 +5,10 @@ library(haven)
 library(readxl)
 library(ggplot2)
 library(officer)
-library(flextable)
 library(rmarkdown)
 library(tidyverse)
 library(sortable)
+library(scales)
 
 # Helper function to convert haven_labelled variables to factors with labels
 convert_labelled_to_factor <- function(df) {
@@ -33,13 +33,10 @@ convert_labelled_to_factor <- function(df) {
 ui <- dashboardPage(
   skin = "blue",
   dashboardHeader(
-    title = span(
-      icon("chart-line"), 
-      "CATrend Analyzer",
-      style = "font-weight: bold; font-size: 20px; color: #FFFFFF;"
-    ),
+    title = "CATrend Analyzer - An Open Source Tool for Performing Cochran-Armitage Trend Test",
     titleWidth = 350
   ),
+  
   
   dashboardSidebar(
     width = 250,
@@ -321,6 +318,79 @@ ui <- dashboardPage(
           margin-bottom: 20px;
           font-weight: 600;
         }
+        
+        /* Crosstab styling */
+        .crosstab-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 10px 0;
+        }
+        
+        .crosstab-table th, .crosstab-table td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: center;
+        }
+        
+        .crosstab-table th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+        }
+        
+        .crosstab-input {
+          width: 80px;
+          text-align: center;
+        }
+        
+        .data-type-card {
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: 2px solid transparent;
+        }
+        
+        .data-type-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .data-type-card.selected {
+          border-color: #0093D0;
+          background-color: #f0f8ff;
+        }
+        
+        /* Plot customization controls */
+        .plot-controls {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 5px;
+          margin-bottom: 15px;
+          border-left: 4px solid #17a2b8;
+        }
+        
+        /* Professional font styling for test results */
+        .test-results {
+          font-family: 'Courier New', monospace;
+          font-size: 14px;
+          line-height: 1.4;
+          white-space: pre-wrap;
+        }
+        
+        .test-results-header {
+          font-weight: bold;
+          font-size: 16px;
+          margin-bottom: 10px;
+        }
+        
+        /* Enhanced table styling */
+        .enhanced-table {
+          font-size: 14px;
+        }
+        
+        .enhanced-table th {
+          background-color: #f8f9fa;
+          font-weight: bold;
+          text-align: center;
+        }
       "))
     ),
     
@@ -384,8 +454,58 @@ ui <- dashboardPage(
                            p("Developed by:"),
                            tags$h4("Mudasir Mohammed Ibrahim"),
                            tags$p("Registered Nurse"),
-                           tags$p("Email: ", tags$a(href="mailto:mudassiribrahim30@gmail.com", "mudassiribrahim30@gmail.com"))
-                       ),
+                           
+                           # Academic profile links with icons
+                           div(style = "margin: 15px 0; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;",
+                               
+                               # ResearchGate
+                               a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                                 target = "_blank",
+                                 title = "ResearchGate Profile",
+                                 style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                                 onmouseover = "this.style.transform='translateY(-3px)'",
+                                 onmouseout = "this.style.transform='translateY(0)'",
+                                 div(style = "background: #00ccbb; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                     icon("researchgate", style = "font-size: 22px; color: white;")
+                                 ),
+                                 div(style = "font-size: 11px; font-weight: 500;", "ResearchGate")
+                               ),
+                               
+                               
+                               # Web of Science / Publons
+                               a(href = "https://www.webofscience.com/wos/author/record/HPC-2085-2023", 
+                                 target = "_blank",
+                                 title = "Web of Science / Publons Profile",
+                                 style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                                 onmouseover = "this.style.transform='translateY(-3px)'",
+                                 onmouseout = "this.style.transform='translateY(0)'",
+                                 div(style = "background: #ff6b6b; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                     icon("book", style = "font-size: 22px; color: white;")
+                                 ),
+                                 div(style = "font-size: 11px; font-weight: 500;", "Web of Science")
+                               ),
+                               
+                               # GitHub
+                               a(href = "https://github.com/mudassiribrahim30", 
+                                 target = "_blank",
+                                 title = "GitHub Profile",
+                                 style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                                 onmouseover = "this.style.transform='translateY(-3px)'",
+                                 onmouseout = "this.style.transform='translateY(0)'",
+                                 div(style = "background: #333; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                     icon("github", style = "font-size: 22px; color: white;")
+                                 ),
+                                 div(style = "font-size: 11px; font-weight: 500;", "GitHub")
+                               )
+                           ),
+                           
+                           # ORCID (optional - can add if you have one)
+                           tags$p("ORCID: ", tags$a(href="https://orcid.org/0000-0002-9049-8222", 
+                                                    target = "_blank",
+                                                    style = "color: #38b2ac; font-weight: 500;",
+                                                    "0000-0002-9049-8222"))
+                       ),                       
+                       
                        
                        div(class = "feature-card",
                            h3("Application Features"),
@@ -407,52 +527,130 @@ ui <- dashboardPage(
               )
       ),
       
-      # Data Upload Tab
+      # Data Upload Tab - UPDATED WITH TWO OPTIONS
       tabItem(tabName = "upload",
               fluidRow(
                 box(
-                  title = "Upload Data File", status = "primary", solidHeader = TRUE, width = 12,
-                  radioButtons("file_type", "Select File Type:",
-                               choices = c("CSV" = "csv", "Excel" = "excel", 
-                                           "Stata" = "stata", "SPSS" = "spss"),
-                               selected = "csv", inline = TRUE),
-                  
-                  conditionalPanel(
-                    condition = "input.file_type == 'csv'",
-                    fileInput("file_csv", "Choose CSV File",
-                              accept = c("text/csv", "text/comma-separated-values",
-                                         "text/plain", ".csv")),
-                    checkboxInput("header_csv", "Header", TRUE),
-                    radioButtons("sep_csv", "Separator",
-                                 choices = c(Comma = ",", Semicolon = ";", Tab = "\t"),
-                                 selected = ",", inline = TRUE),
-                    radioButtons("quote_csv", "Quote",
-                                 choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"),
-                                 selected = '"', inline = TRUE)
-                  ),
-                  
-                  conditionalPanel(
-                    condition = "input.file_type == 'excel'",
-                    fileInput("file_excel", "Choose Excel File",
-                              accept = c(".xls", ".xlsx")),
-                    numericInput("sheet_excel", "Sheet Number", value = 1, min = 1),
-                    textInput("range_excel", "Cell Range (optional)", placeholder = "A1:Z100")
-                  ),
-                  
-                  conditionalPanel(
-                    condition = "input.file_type == 'stata'",
-                    fileInput("file_stata", "Choose Stata File",
-                              accept = c(".dta"))
-                  ),
-                  
-                  conditionalPanel(
-                    condition = "input.file_type == 'spss'",
-                    fileInput("file_spss", "Choose SPSS File",
-                              accept = c(".sav"))
+                  title = "Select Data Type", status = "primary", solidHeader = TRUE, width = 12,
+                  fluidRow(
+                    column(6,
+                           div(class = "data-type-card",
+                               style = "padding: 20px; text-align: center; background: white; border-radius: 8px; cursor: pointer;",
+                               onclick = "$('#data_type_normal').click();",
+                               h4(icon("table"), "Normal Data"),
+                               p("Raw dataset with individual observations"),
+                               p("Suitable for standard analysis"),
+                               radioButtons("data_type", NULL, 
+                                            choices = c("Normal Data" = "normal"), 
+                                            selected = "normal")
+                           )
+                    ),
+                    column(6,
+                           div(class = "data-type-card",
+                               style = "padding: 20px; text-align: center; background: white; border-radius: 8px; cursor: pointer;",
+                               onclick = "$('#data_type_crosstab').click();",
+                               h4(icon("th"), "Crosstabulation Data"),
+                               p("Already summarized in contingency table format"),
+                               p("Enter counts manually"),
+                               radioButtons("data_type", NULL, 
+                                            choices = c("Crosstabulation Data" = "crosstab"), 
+                                            selected = character(0))
+                           )
+                    )
                   )
                 )
               ),
               
+              # Normal Data Upload Section
+              conditionalPanel(
+                condition = "input.data_type == 'normal'",
+                fluidRow(
+                  box(
+                    title = "Upload Data File", status = "info", solidHeader = TRUE, width = 12,
+                    radioButtons("file_type", "Select File Type:",
+                                 choices = c("CSV" = "csv", "Excel" = "excel", 
+                                             "Stata" = "stata", "SPSS" = "spss"),
+                                 selected = "csv", inline = TRUE),
+                    
+                    conditionalPanel(
+                      condition = "input.file_type == 'csv'",
+                      fileInput("file_csv", "Choose CSV File",
+                                accept = c("text/csv", "text/comma-separated-values",
+                                           "text/plain", ".csv")),
+                      checkboxInput("header_csv", "Header", TRUE),
+                      radioButtons("sep_csv", "Separator",
+                                   choices = c(Comma = ",", Semicolon = ";", Tab = "\t"),
+                                   selected = ",", inline = TRUE),
+                      radioButtons("quote_csv", "Quote",
+                                   choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"),
+                                   selected = '"', inline = TRUE)
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "input.file_type == 'excel'",
+                      fileInput("file_excel", "Choose Excel File",
+                                accept = c(".xls", ".xlsx")),
+                      numericInput("sheet_excel", "Sheet Number", value = 1, min = 1),
+                      textInput("range_excel", "Cell Range (optional)", placeholder = "A1:Z100")
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "input.file_type == 'stata'",
+                      fileInput("file_stata", "Choose Stata File",
+                                accept = c(".dta"))
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "input.file_type == 'spss'",
+                      fileInput("file_spss", "Choose SPSS File",
+                                accept = c(".sav"))
+                    )
+                  )
+                )
+              ),
+              
+              # Crosstabulation Data Section
+              conditionalPanel(
+                condition = "input.data_type == 'crosstab'",
+                fluidRow(
+                  box(
+                    title = "Crosstabulation Data Setup", status = "info", solidHeader = TRUE, width = 12,
+                    fluidRow(
+                      column(6,
+                             textInput("dep_var_name", "Dependent Variable Name:", value = "Outcome"),
+                             textInput("ind_var_name", "Independent Variable Name:", value = "Exposure"),
+                             numericInput("n_dep_levels", "Number of Dependent Variable Levels:", 
+                                          value = 2, min = 2, max = 10),
+                             numericInput("n_ind_levels", "Number of Independent Variable Levels:", 
+                                          value = 3, min = 2, max = 10),
+                             actionButton("setup_crosstab", "Setup Crosstabulation Table", 
+                                          class = "btn-primary")
+                      ),
+                      column(6,
+                             div(class = "instruction-highlight",
+                                 icon("info-circle"),
+                                 "Set up your contingency table by specifying the number of levels for both variables, then enter the counts in the table that will appear below."
+                             )
+                      )
+                    )
+                  )
+                ),
+                
+                # Dynamic crosstabulation table UI
+                uiOutput("crosstab_ui"),
+                
+                # Action button to finalize crosstab data
+                fluidRow(
+                  box(
+                    title = "Finalize Crosstabulation Data", status = "success", solidHeader = TRUE, width = 12,
+                    actionButton("create_crosstab_data", "Create Dataset from Crosstabulation", 
+                                 class = "btn-success", icon = icon("check")),
+                    helpText("Click this button after entering all counts to create the dataset for analysis.")
+                  )
+                )
+              ),
+              
+              # Data Preview (common to both types)
               fluidRow(
                 box(
                   title = "Data Preview", status = "info", solidHeader = TRUE, width = 12,
@@ -543,11 +741,77 @@ ui <- dashboardPage(
                 )
               ),
               
-              # Stacked Bar Plot moved down (third thing users see)
+              # Enhanced Crosstabulation Results with Percentages
               fluidRow(
                 box(
-                  title = "Stacked Bar Plot", status = "info", solidHeader = TRUE, width = 12,
-                  plotOutput("bar_plot", height = "500px")
+                  title = "Enhanced Crosstabulation Results", status = "info", solidHeader = TRUE, width = 12,
+                  div(class = "results-panel",
+                      h4("Contingency Table with Row, Column, and Total Percentages"),
+                      DTOutput("enhanced_crosstab")
+                  )
+                )
+              ),
+              
+              # Enhanced Plot Controls
+              fluidRow(
+                box(
+                  title = "Plot Customization", status = "warning", solidHeader = TRUE, width = 12,
+                  div(class = "plot-controls",
+                      fluidRow(
+                        # In the Plot Customization section of the Analysis tab
+                        column(3,
+                               selectInput("plot_type", "Plot Value Type:",
+                                           choices = c("Counts" = "counts",
+                                                       "Row Percentages" = "row_percent",
+                                                       "Column Percentages" = "col_percent"),
+                                           selected = "col_percent")
+                        ),
+                        column(3,
+                               textInput("plot_title", "Plot Title:", 
+                                         value = "Stacked Bar Plot"),
+                               numericInput("title_size", "Title Size:", 
+                                            value = 16, min = 8, max = 24)
+                        ),
+                        column(3,
+                               numericInput("label_size", "Label Size:", 
+                                            value = 12, min = 6, max = 20),
+                               numericInput("legend_size", "Legend Text Size:", 
+                                            value = 12, min = 6, max = 20)
+                        ),
+                        column(3,
+                               numericInput("axis_title_size", "Axis Title Size:", 
+                                            value = 14, min = 8, max = 20),
+                               numericInput("axis_text_size", "Axis Text Size:", 
+                                            value = 12, min = 6, max = 18)
+                        )
+                      ),
+                      fluidRow(
+                        column(12,
+                               h5("Custom Colors for Dependent Variable Levels:"),
+                               uiOutput("color_pickers_ui")
+                        )
+                      )
+                  )
+                )
+              ),
+              
+              # Enhanced Stacked Bar Plot
+              fluidRow(
+                box(
+                  title = "Enhanced Stacked Bar Plot", status = "info", solidHeader = TRUE, width = 12,
+                  plotOutput("enhanced_bar_plot", height = "600px"),
+                  
+                  # ADD THIS DOWNLOAD INSTRUCTION SECTION
+                  div(
+                    style = "margin-top: 20px; padding: 15px; background-color: #FFF9C4; border-left: 4px solid #F39C12; border-radius: 4px;",
+                    tags$div(
+                      style = "display: flex; align-items: center;",
+                      tags$strong(style = "color: #7D6608; font-size: 16px;", 
+                                  icon("download"), "DOWNLOAD FULL ANALYSIS REPORT:"),
+                      tags$span(style = "margin-left: 10px; color: #7D6608; font-weight: bold;",
+                                "Go to the 'Results' section and click on 'Download Full Report' to get the complete analysis including this graph plot, statistical results, and detailed interpretation.")
+                    )
+                  )
                 )
               )
       ),
@@ -595,6 +859,8 @@ server <- function(input, output, session) {
   dep_level_order <- reactiveVal(NULL)
   ind_level_order <- reactiveVal(NULL)
   analysis_done <- reactiveVal(FALSE)
+  crosstab_data <- reactiveVal(NULL)
+  custom_colors <- reactiveVal(list())
   
   # Track if analysis has been completed
   output$analysis_done <- reactive({
@@ -605,7 +871,7 @@ server <- function(input, output, session) {
   # Load data based on file type - UPDATED FOR SPSS AND STATA
   observe({
     tryCatch({
-      req(input$file_type)
+      req(input$file_type, input$data_type == "normal")
       
       if (input$file_type == "csv" && !is.null(input$file_csv)) {
         df <- read.csv(input$file_csv$datapath,
@@ -648,12 +914,110 @@ server <- function(input, output, session) {
     })
   })
   
+  # Crosstabulation UI
+  output$crosstab_ui <- renderUI({
+    req(input$setup_crosstab, input$n_dep_levels, input$n_ind_levels)
+    
+    n_dep <- input$n_dep_levels
+    n_ind <- input$n_ind_levels
+    
+    fluidRow(
+      box(
+        title = "Crosstabulation Table - Enter Counts", status = "primary", solidHeader = TRUE, width = 12,
+        div(
+          style = "overflow-x: auto;",
+          tags$table(
+            class = "crosstab-table",
+            tags$tr(
+              tags$th(""),
+              tags$th(colspan = n_ind, input$ind_var_name)
+            ),
+            tags$tr(
+              tags$th(paste(input$dep_var_name, "↓ /", input$ind_var_name, "→")),
+              lapply(1:n_ind, function(j) {
+                tags$th(textInput(paste0("ind_level_", j), paste("Level", j), value = paste("Level", j)))
+              })
+            ),
+            lapply(1:n_dep, function(i) {
+              tags$tr(
+                tags$th(textInput(paste0("dep_level_", i), paste("Level", i), value = paste("Level", i))),
+                lapply(1:n_ind, function(j) {
+                  tags$td(
+                    numericInput(paste0("count_", i, "_", j), NULL, value = 0, min = 0, step = 1,
+                                 width = "80px")
+                  )
+                })
+              )
+            })
+          )
+        )
+      )
+    )
+  })
+  
+  # Create dataset from crosstabulation
+  observeEvent(input$create_crosstab_data, {
+    req(input$n_dep_levels, input$n_ind_levels)
+    
+    tryCatch({
+      n_dep <- input$n_dep_levels
+      n_ind <- input$n_ind_levels
+      
+      # Get level names
+      dep_levels <- sapply(1:n_dep, function(i) {
+        input[[paste0("dep_level_", i)]]
+      })
+      
+      ind_levels <- sapply(1:n_ind, function(j) {
+        input[[paste0("ind_level_", j)]]
+      })
+      
+      # Get counts and create dataset
+      observations <- list()
+      for (i in 1:n_dep) {
+        for (j in 1:n_ind) {
+          count <- input[[paste0("count_", i, "_", j)]]
+          if (!is.null(count) && count > 0) {
+            # Create observations for each count
+            for (k in 1:count) {
+              observations[[length(observations) + 1]] <- data.frame(
+                dep_var = dep_levels[i],
+                ind_var = ind_levels[j],
+                stringsAsFactors = FALSE
+              )
+            }
+          }
+        }
+      }
+      
+      if (length(observations) > 0) {
+        df <- do.call(rbind, observations)
+        names(df) <- c(input$dep_var_name, input$ind_var_name)
+        
+        data_loaded(df)
+        data_cleaned(df)
+        crosstab_data(TRUE)
+        
+        showNotification(paste("Crosstabulation dataset created with", nrow(df), "observations"), 
+                         type = "message")
+      } else {
+        showNotification("Please enter some counts greater than 0", type = "warning")
+      }
+    }, error = function(e) {
+      showNotification(paste("Error creating dataset:", e$message), type = "error")
+    })
+  })
+  
   # Data preview
   output$data_preview <- renderDT({
     req(data_loaded())
     datatable(data_loaded(), 
               options = list(scrollX = TRUE, pageLength = 5),
-              caption = "Original Data Preview")
+              caption = if (isTRUE(crosstab_data())) {
+                "Crosstabulation Data (Created from Counts)"
+              } else {
+                "Original Data Preview"
+              })
   })
   
   # Missing data summary
@@ -868,6 +1232,56 @@ server <- function(input, output, session) {
     }
   })
   
+  # Color pickers for dependent variable levels
+  output$color_pickers_ui <- renderUI({
+    req(data_cleaned(), input$dependent_var)
+    
+    dep_levels <- unique(data_cleaned()[[input$dependent_var]])
+    dep_levels <- dep_levels[!is.na(dep_levels)]
+    current_dep_order <- if(!is.null(dep_level_order())) dep_level_order() else as.character(dep_levels)
+    
+    # Default colors
+    default_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+                        "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")
+    
+    tagList(
+      fluidRow(
+        lapply(seq_along(current_dep_order), function(i) {
+          level <- current_dep_order[i]
+          default_color <- default_colors[((i-1) %% length(default_colors)) + 1]
+          column(3,
+                 colourpicker::colourInput(
+                   inputId = paste0("color_", gsub("[^a-zA-Z0-9]", "_", level)),
+                   label = level,
+                   value = default_color
+                 )
+          )
+        })
+      )
+    )
+  })
+  
+  # Get custom colors
+  observe({
+    req(data_cleaned(), input$dependent_var)
+    
+    dep_levels <- unique(data_cleaned()[[input$dependent_var]])
+    dep_levels <- dep_levels[!is.na(dep_levels)]
+    current_dep_order <- if(!is.null(dep_level_order())) dep_level_order() else as.character(dep_levels)
+    
+    colors_list <- list()
+    for (level in current_dep_order) {
+      color_id <- paste0("color_", gsub("[^a-zA-Z0-9]", "_", level))
+      if (!is.null(input[[color_id]])) {
+        colors_list[[level]] <- input[[color_id]]
+      }
+    }
+    
+    if (length(colors_list) > 0) {
+      custom_colors(colors_list)
+    }
+  })
+  
   # ACCURATE Cochran-Armitage test implementation using the provided formula
   perform_cochran_armitage_accurate <- function(cont_table, test_type = "two.sided", continuity_correction = FALSE) {
     # Implementation following the exact theoretical background provided
@@ -971,6 +1385,62 @@ server <- function(input, output, session) {
     return(result)
   }
   
+  # Enhanced crosstabulation with percentages - CORRECTED VERSION
+  output$enhanced_crosstab <- renderDT({
+    req(analysis_results())
+    results <- analysis_results()
+    
+    cont_table <- results$contingency_table
+    
+    # Calculate percentages - CORRECTED: swapped row and column calculations
+    row_pct <- prop.table(cont_table, 1) * 100  # Percentage within each ROW (dependent variable level)
+    col_pct <- prop.table(cont_table, 2) * 100  # Percentage within each COLUMN (independent variable level)
+    total_pct <- prop.table(cont_table) * 100   # Percentage of total
+    
+    # Create combined table
+    row_names <- rownames(cont_table)
+    col_names <- colnames(cont_table)
+    
+    # Combine all tables - CORRECTED LABELS
+    combined_table <- data.frame(
+      Measure = c("Counts", rep("", nrow(cont_table)-1),
+                  "Column % (Within Dependent Level)", rep("", nrow(cont_table)-1),
+                  "Row % (Within Independent Level)", rep("", nrow(cont_table)-1),
+                  "Total %", rep("", nrow(cont_table)-1)),
+      Row = rep(row_names, 4)
+    )
+    
+    # Add data for each measure type - CORRECTED: using proper percentages
+    for (j in 1:ncol(cont_table)) {
+      col_name <- col_names[j]
+      combined_table[[col_name]] <- c(
+        # Counts
+        cont_table[, j],
+        # Row percentages (percentage within each dependent variable level)
+        sprintf("%.1f%%", row_pct[, j]),
+        # Column percentages (percentage within each independent variable level)  
+        sprintf("%.1f%%", col_pct[, j]),
+        # Total percentages
+        sprintf("%.1f%%", total_pct[, j])
+      )
+    }
+    
+    datatable(
+      combined_table,
+      options = list(
+        scrollX = TRUE,
+        pageLength = 20,
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel', 'pdf')
+      ),
+      caption = paste("Enhanced Crosstabulation: Counts, Row %, Column %, and Total %"),
+      rownames = FALSE
+    ) %>%
+      formatStyle(
+        columns = 1:ncol(combined_table),
+        fontSize = '14px'
+      )
+  })
   # Analysis results
   analysis_results <- eventReactive(input$analyze, {
     req(data_cleaned(), input$dependent_var, input$independent_var)
@@ -1044,28 +1514,17 @@ server <- function(input, output, session) {
         continuity_correction = input$continuity_correction
       )
       
-      # Create stacked bar plot
-      bar_plot_data <- df_processed %>%
+      # Create enhanced plot data
+      plot_data <- df_processed %>%
         count(!!sym(ind_var), !!sym(dep_var)) %>%
         group_by(!!sym(ind_var)) %>%
-        mutate(proportion = n / sum(n))
-      
-      bar_plot <- ggplot(bar_plot_data, aes(x = !!sym(ind_var), y = proportion, fill = !!sym(dep_var))) +
-        geom_bar(stat = "identity", position = "stack") +
-        geom_text(aes(label = paste0("n=", n)), 
-                  position = position_stack(vjust = 0.5), size = 3) +
-        labs(
-          title = paste("Stacked Bar Plot:", dep_var, "by", ind_var),
-          x = ind_var,
-          y = "Proportion",
-          fill = dep_var
-        ) +
-        theme_minimal() +
-        theme(
-          axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.position = "bottom"
-        ) +
-        scale_y_continuous(labels = scales::percent)
+        mutate(
+          count = n,
+          row_percent = n / sum(n) * 100,
+          col_percent = n / sum(n[!!sym(ind_var) == first(!!sym(ind_var))]) * 100,
+          total_percent = n / sum(n) * 100
+        ) %>%
+        ungroup()
       
       # Set analysis as done
       analysis_done(TRUE)
@@ -1073,7 +1532,7 @@ server <- function(input, output, session) {
       list(
         contingency_table = cont_table,
         test_results = ca_test,
-        bar_plot = bar_plot,
+        plot_data = plot_data,
         data = df_processed,
         dep_var = dep_var,
         ind_var = ind_var,
@@ -1088,7 +1547,102 @@ server <- function(input, output, session) {
     })
   })
   
-  # Test results
+  # Enhanced bar plot - CORRECTED VERSION WITH PROPER PERCENTAGE CALCULATIONS
+  output$enhanced_bar_plot <- renderPlot({
+    req(analysis_results(), input$plot_type)
+    
+    results <- analysis_results()
+    
+    # Get the processed data and create proper plot data
+    df_processed <- results$data
+    dep_var <- results$dep_var
+    ind_var <- results$ind_var
+    
+    # Create fresh plot data with proper calculations
+    plot_data <- df_processed %>%
+      count(!!sym(ind_var), !!sym(dep_var)) %>%
+      group_by(!!sym(ind_var)) %>%
+      mutate(
+        row_percent = n / sum(n) * 100  # Row percentage: within each independent variable group
+      ) %>%
+      ungroup() %>%
+      group_by(!!sym(dep_var)) %>%
+      mutate(
+        col_percent = n / sum(n) * 100  # Column percentage: within each dependent variable level
+      ) %>%
+      ungroup() %>%
+      mutate(
+        total_percent = n / sum(n) * 100  # Total percentage: of overall total
+      )
+    
+    # Determine which value to plot based on user selection - CORRECTED LOGIC
+    if (input$plot_type == "counts") {
+      plot_data$plot_value <- plot_data$n
+      y_label <- "Count"
+      label_format <- function(x) format(x, big.mark = ",")
+    } else if (input$plot_type == "row_percent") {
+      plot_data$plot_value <- plot_data$row_percent
+      y_label <- "Percentage Within Group (%)"
+      label_format <- function(x) paste0(format(round(x, 1), nsmall = 1), "%")
+    } else if (input$plot_type == "col_percent") {
+      plot_data$plot_value <- plot_data$col_percent
+      y_label <- "Percentage Within Category (%)"
+      label_format <- function(x) paste0(format(round(x, 1), nsmall = 1), "%")
+    }
+    
+    # Get custom colors
+    colors <- custom_colors()
+    if (length(colors) == 0) {
+      # Use default colors if no custom colors set
+      colors <- scales::hue_pal()(length(results$dep_levels))
+      names(colors) <- results$dep_levels
+    }
+    
+    # Create the enhanced plot with professional styling
+    p <- ggplot(plot_data, aes(x = !!sym(ind_var), y = plot_value, 
+                               fill = !!sym(dep_var))) +
+      geom_bar(stat = "identity", position = "stack") +
+      geom_text(aes(label = label_format(plot_value)), 
+                position = position_stack(vjust = 0.5), 
+                size = input$label_size, 
+                color = "white",
+                fontface = "bold") +
+      labs(
+        title = input$plot_title,
+        x = ind_var,
+        y = y_label,
+        fill = dep_var
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = input$title_size, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = input$axis_title_size, face = "bold"),
+        axis.text = element_text(size = input$axis_text_size),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.title = element_text(size = input$legend_size, face = "bold"),
+        legend.text = element_text(size = input$legend_size),
+        legend.position = "bottom",
+        panel.grid.major = element_line(color = "grey80", linewidth = 0.2),
+        panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA)
+      )
+    
+    # Apply custom colors if available
+    if (length(colors) > 0) {
+      p <- p + scale_fill_manual(values = colors)
+    }
+    
+    # Adjust y-axis for percentages
+    if (input$plot_type %in% c("row_percent", "col_percent")) {
+      p <- p + scale_y_continuous(labels = function(x) paste0(format(round(x, 1), nsmall = 1), "%"))
+    } else {
+      p <- p + scale_y_continuous(labels = label_format)
+    }
+    
+    return(p)
+  })
+  # Test results - FIXED WITH PROFESSIONAL FORMATTING
   output$test_results <- renderPrint({
     req(analysis_results())
     results <- analysis_results()
@@ -1185,13 +1739,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Bar plot
-  output$bar_plot <- renderPlot({
-    req(analysis_results())
-    results <- analysis_results()
-    print(results$bar_plot)
-  })
-  
   # Report preview
   output$report_preview <- renderUI({
     req(analysis_results())
@@ -1218,7 +1765,7 @@ server <- function(input, output, session) {
     ))
   })
   
-  # Download report - FIXED FORMULA VERSION
+  # Download report - ENHANCED VERSION WITH FIXED PLOT
   output$download_report <- downloadHandler(
     filename = function() {
       paste0("cochran_armitage_report_", Sys.Date(), ".docx")
@@ -1247,7 +1794,89 @@ server <- function(input, output, session) {
         test_type <- results$test_results$test_type
         continuity_correction <- results$test_results$continuity_correction
         
-        # Create the Rmd content with proper formula formatting for Word
+        # Calculate enhanced crosstabulation for report
+        row_pct <- prop.table(cont_table, 1) * 100
+        col_pct <- prop.table(cont_table, 2) * 100
+        total_pct <- prop.table(cont_table) * 100
+        
+        # Save the enhanced plot to a temporary file - USING CURRENT PLOT SETTINGS FROM APP
+        temp_plot <- file.path(tempdir(), "enhanced_plot.png")
+        
+        # Recreate the enhanced plot for the report using CURRENT APP SETTINGS
+        plot_data <- results$plot_data
+        
+        # Use the same plot type as currently selected in the app
+        current_plot_type <- input$plot_type
+        if (is.null(current_plot_type)) {
+          current_plot_type <- "col_percent"  # Default if not set
+        }
+        
+        # Determine plot values based on current app selection - CORRECTED
+        if (current_plot_type == "counts") {
+          plot_data$plot_value <- plot_data$count
+          y_label <- "Count"
+          label_format <- function(x) format(x, big.mark = ",")
+        } else if (current_plot_type == "row_percent") {
+          plot_data$plot_value <- plot_data$row_percent
+          y_label <- "Percentage Within Group (%)"
+          label_format <- function(x) paste0(format(round(x, 1), nsmall = 1), "%")
+        } else if (current_plot_type == "col_percent") {
+          plot_data$plot_value <- plot_data$col_percent
+          y_label <- "Percentage Within Category (%)"
+          label_format <- function(x) paste0(format(round(x, 1), nsmall = 1), "%")
+        }
+        
+        # Get current custom colors from app
+        colors <- custom_colors()
+        if (length(colors) == 0) {
+          colors <- scales::hue_pal()(length(results$dep_levels))
+          names(colors) <- results$dep_levels
+        }
+        
+        # Get current plot title from app or use default
+        current_plot_title <- ifelse(!is.null(input$plot_title) && input$plot_title != "", 
+                                     input$plot_title, 
+                                     paste("Stacked Bar Plot:", dep_var, "by", ind_var))
+        
+        # Create plot with EXACTLY the same styling as the app
+        report_plot <- ggplot(plot_data, aes(x = !!sym(ind_var), y = plot_value, 
+                                             fill = !!sym(dep_var))) +
+          geom_bar(stat = "identity", position = "stack") +
+          geom_text(aes(label = label_format(plot_value)), 
+                    position = position_stack(vjust = 0.5), 
+                    size = 4, 
+                    color = "white",
+                    fontface = "bold") +
+          labs(
+            title = current_plot_title,
+            x = ind_var,
+            y = y_label,
+            fill = dep_var
+          ) +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+            axis.title = element_text(size = 14, face = "bold"),
+            axis.text = element_text(size = 12),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            legend.title = element_text(size = 12, face = "bold"),
+            legend.text = element_text(size = 12),
+            legend.position = "bottom",
+            panel.grid.major = element_line(color = "grey80", linewidth = 0.2),
+            panel.grid.minor = element_blank(),
+            plot.background = element_rect(fill = "white", color = NA),
+            panel.background = element_rect(fill = "white", color = NA)
+          ) +
+          scale_fill_manual(values = colors)
+        
+        # Adjust y-axis for percentages
+        if (current_plot_type %in% c("row_percent", "col_percent")) {
+          report_plot <- report_plot + scale_y_continuous(labels = function(x) paste0(format(round(x, 1), nsmall = 1), "%"))
+        }
+        
+        ggsave(temp_plot, plot = report_plot, width = 10, height = 8, dpi = 300)
+        
+        # Create the Rmd content with enhanced crosstabulation
         rmd_content <- paste0(
           "---\n",
           "title: \"Cochran-Armitage Trend Test Report\"\n",
@@ -1264,21 +1893,51 @@ server <- function(input, output, session) {
           "- **Independent Variable:** ", ind_var, "\n", 
           "- **Sample Size:** ", sample_size, "\n",
           "- **Test Type:** ", test_type, "\n",
-          "- **Continuity Correction:** ", ifelse(continuity_correction, "Yes", "No"), "\n\n",
+          "- **Continuity Correction:** ", ifelse(continuity_correction, "Yes", "No"), "\n",
+          "- **Plot Type:** ", switch(current_plot_type,
+                                      "counts" = "Counts",
+                                      "row_percent" = "Percentage Within Group (Row %)", 
+                                      "col_percent" = "Percentage Within Category (Column %)"), "\n\n",
           
           "## Level Ordering\n\n",
           "- **Dependent Variable Levels:** ", paste(results$dep_levels, collapse = " → "), "\n",
           "- **Independent Variable Levels:** ", paste(results$ind_levels, collapse = " < "), "\n\n",
           
-          "## Contingency Table\n\n",
+          "## Enhanced Crosstabulation Results\n\n",
+          "### Contingency Table with Counts\n",
           "```{r, echo=FALSE}\n",
-          "knitr::kable(addmargins(cont_table), caption = 'Contingency Table with Totals')\n",
+          "knitr::kable(cont_table, caption = 'Contingency Table - Counts')\n",
+          "```\n\n",
+          
+          "### Column Percentages\n",
+          "```{r, echo=FALSE}\n",
+          "row_pct_table <- prop.table(cont_table, 1) * 100\n",
+          "knitr::kable(round(row_pct_table, 1), caption = 'Column Percentages (%)')\n",
+          "```\n\n",
+          
+          "### Row Percentages\n", 
+          "```{r, echo=FALSE}\n",
+          "col_pct_table <- prop.table(cont_table, 2) * 100\n",
+          "knitr::kable(round(col_pct_table, 1), caption = 'Row Percentages (%)')\n",
+          "```\n\n",
+          
+          "### Total Percentages\n",
+          "```{r, echo=FALSE}\n",
+          "total_pct_table <- prop.table(cont_table) * 100\n",
+          "knitr::kable(round(total_pct_table, 1), caption = 'Total Percentages (%)')\n",
           "```\n\n",
           
           "## Statistical Results\n\n",
           "- **Z-statistic:** ", format(z_stat, digits = 4), "\n",
           "- **Chi-square statistic:** ", format(chi_sq, digits = 4), "\n", 
           "- **P-value:** ", format(p_val, digits = 4), "\n\n",
+          
+          "## Visualization\n\n",
+          "**Plot Type: ", switch(current_plot_type,
+                                  "counts" = "Counts",
+                                  "row_percent" = "Percentage Within Group (Row %)",
+                                  "col_percent" = "Percentage Within Category (Column %)"), "**\n\n",
+          "![](", temp_plot, "){width=100%}\n\n",
           
           "## Interpretation\n\n",
           if (p_val < 0.05) {
@@ -1313,10 +1972,6 @@ server <- function(input, output, session) {
         # Write the Rmd content to temporary file
         writeLines(rmd_content, temp_report)
         
-        # Save the plot to a temporary file
-        temp_plot <- file.path(tempdir(), "plot.png")
-        ggsave(temp_plot, plot = results$bar_plot, width = 8, height = 6, dpi = 300)
-        
         # Render the report
         render(temp_report, 
                output_file = file,
@@ -1330,6 +1985,7 @@ server <- function(input, output, session) {
       })
     }
   )
+  
 }
 
 # Run the application
