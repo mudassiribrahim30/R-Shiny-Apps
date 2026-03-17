@@ -1,4 +1,4 @@
-library(shiny)
+#library(shiny)
 library(shinythemes)
 library(readxl)
 library(readr)
@@ -9,6 +9,8 @@ library(DT)
 library(dplyr)
 library(labelled)
 library(purrr)
+library(shinyjs)
+
 
 # Enhanced function to handle various file formats with better error handling
 load_data_file <- function(file_path, file_type) {
@@ -502,6 +504,10 @@ get_spss_metadata <- function(spss_data) {
 # UI Definition with improved font sizes, theme toggle, and moving app name
 ui <- fluidPage(
   theme = shinytheme("flatly"),
+  useShinyjs(),
+  title = "Data2SPSS - Professional Data Conversion to SPSS Tool",
+  titleWidth = 350,
+  
   
   # JavaScript for theme toggle
   tags$head(
@@ -1724,7 +1730,7 @@ ui <- fluidPage(
       div(class = "blog-header-content",
           h1(class = "app-title-main", "Data2SPSS"),
           p(class = "app-subtitle-main", 
-            "Professional Data Conversion Tool"),
+            "Professional Data Conversion to SPSS Tool"),
           p(class = "app-tagline", 
             "Transform your research data into SPSS-ready format with intelligent variable detection and proper labeling")
       )
@@ -2002,27 +2008,72 @@ ui <- fluidPage(
           icon = icon("user-tie"),
           div(class = "main-content",
               div(class = "developer-card",
-                  div(class = "developer-avatar", 
-                      img(src = "https://avatars.githubusercontent.com/u/123456789?v=4", 
-                          alt = "Developer Photo",
-                          onerror="this.src='https://via.placeholder.com/140x140/002D72/ffffff?text=MMI'")
-                  ),
                   h2("Mudasir Mohammed Ibrahim"),
                   h4("Registered Nurse"),
                   p("Passionate about creating tools that bridge the gap between healthcare data and statistical analysis."),
                   
-                  div(class = "contact-links",
-                      a(href = "mailto:mudassiribrahim30@gmail.com", 
-                        class = "contact-link",
-                        icon("envelope"), " mudassiribrahim30@gmail.com"),
-                      br(),
-                      a(href = "https://github.com/mudassiribrahim30", 
-                        target = "_blank",
-                        class = "contact-link",
-                        icon("github"), " GitHub Profile")
+                  br(),
+                  div(class = "academic-links",
+                      style = "margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;",
+                      h5("Connect with me on academic networks:", style = "margin-bottom: 15px; color: #1A5276;"),
+                      div(style = "display: flex; justify-content: center; gap: 25px; flex-wrap: wrap;",
+                          
+                          # ResearchGate
+                          a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                            target = "_blank", 
+                            title = "ResearchGate Profile",
+                            style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-3px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: #00ccbb; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                icon("researchgate", style = "font-size: 24px; color: white;")
+                            ),
+                            div(style = "font-size: 11px; font-weight: 500;", "")
+                          ),
+                          
+                          # Google Scholar
+                          a(href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en", 
+                            target = "_blank", 
+                            title = "Google Scholar Profile",
+                            style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-3px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: #4285f4; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                icon("graduation-cap", style = "font-size: 24px; color: white;")
+                            ),
+                            div(style = "font-size: 11px; font-weight: 500;", "")
+                          ),
+                          
+                          # Web of Science
+                          a(href = "https://www.webofscience.com/wos/author/record/HPC-2085-2023", 
+                            target = "_blank", 
+                            title = "Web of Science Profile",
+                            style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-3px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: #ff6b6b; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                icon("book", style = "font-size: 24px; color: white;")
+                            ),
+                            div(style = "font-size: 11px; font-weight: 500;", "")
+                          ),
+                          
+                          # ORCID
+                          a(href = "https://orcid.org/0000-0002-9049-8222", 
+                            target = "_blank", 
+                            title = "ORCID Profile",
+                            style = "color: #2d3748; text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; transition: transform 0.3s ease;",
+                            onmouseover = "this.style.transform='translateY(-3px)'",
+                            onmouseout = "this.style.transform='translateY(0)'",
+                            div(style = "background: #a6ce39; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);",
+                                icon("orcid", style = "font-size: 24px; color: white;")
+                            ),
+                            div(style = "font-size: 11px; font-weight: 500;", "")
+                          )
+                      )
                   )
               ),
               
+              # About This Application section - NOW INSIDE THE DEVELOPER TAB
               div(class = "blog-card",
                   h3("About This Application"),
                   p("This Data2SPSS web application was developed to address the common challenges researchers face when preparing data for statistical analysis in SPSS. The tool automates the tedious process of variable type detection, value labeling, and measure type setting."),
@@ -2057,10 +2108,9 @@ ui <- fluidPage(
       )
   ),
   
-  # Copyright footer
+  # Copyright footer with dynamic year
   div(class = "copyright-footer",
-      p("© 2025 Data2SPSS | Developed by Mudasir Mohammed Ibrahim"),
-      p(a(href = "mailto:mudassiribrahim30@gmail.com")),
+      p(paste("Copyright © 2025-", format(Sys.Date(), "%Y"), "Data2SPSS | Developed by Mudasir Mohammed Ibrahim")),
       p("No rights reserved. This app is free to use and distribute.")
   )
 )
