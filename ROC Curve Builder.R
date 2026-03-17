@@ -13,9 +13,15 @@ library(officer)
 library(shinycssloaders)
 library(shinyjs)
 
+
+
+
 ui <- fluidPage(
   theme = shinytheme("flatly"),
   useShinyjs(),
+    title = "ROC Curve Builder",
+    titleWidth = 350,
+  
   
   tags$head(
     tags$style(HTML("
@@ -463,16 +469,39 @@ ui <- fluidPage(
       class = "copyright-footer",
       div(class = "copyright-content",
           div(class = "copyright-notice", 
-              icon("copyright"), 
-              "Copyright 2025 Mudasir Mohammed Ibrahim. All Rights Reserved."),
+              "Copyright © 2025-", format(Sys.Date(), "%Y"), " ROC Curve Builder. All Rights Reserved."),
           div(class = "copyright-links",
               a("Terms of Use", href = "#", onclick = "alert('Terms of Use: This software is provided for academic and research purposes.')"),
-              "|",
+              " | ",
               a("Privacy Policy", href = "#", onclick = "alert('Privacy Policy: This application does not collect or store any user data. All processing occurs locally in your browser.')"),
-              "|",
+              " | ",
               a("Contact", href = "mailto:mudassiribrahim30@gmail.com"),
-              "|",
+              " | ",
               a("License Information", href = "#", onclick = "alert('License: Academic and Research Use.')")
+          ),
+          br(),
+          div(class = "academic-links",
+              style = "margin-top: 10px;",
+              span("Connect with me (Developer): ", style = "font-weight: 500; margin-right: 10px;"),
+              a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                target = "_blank", 
+                title = "ResearchGate Profile",
+                icon("researchgate"), " ResearchGate"),
+              " | ",
+              a(href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en", 
+                target = "_blank", 
+                title = "Google Scholar Profile",
+                icon("graduation-cap"), " Google Scholar"),
+              " | ",
+              a(href = "https://www.webofscience.com/wos/author/record/HPC-2085-2023", 
+                target = "_blank", 
+                title = "Web of Science Profile",
+                icon("book"), " Web of Science"),
+              " | ",
+              a(href = "https://orcid.org/0000-0002-9049-8222", 
+                target = "_blank", 
+                title = "ORCID Profile",
+                icon("orcid"), " ORCID")
           )
       )
     ),
@@ -681,33 +710,6 @@ ui <- fluidPage(
                            
                            h4("Intended Use"),
                            p("This tool is designed for academic research, clinical studies, machine learning model evaluation, and any scenario requiring binary classification performance assessment.")
-                       )
-                )
-              ),
-              
-              fluidRow(
-                column(6, offset = 3,
-                       div(class = "about-card developer-info",
-                           h3("Developer Information"),
-                           div(class = "developer-avatar",
-                               icon("user")
-                           ),
-                           h4("Mudasir Mohammed Ibrahim"),
-                           p("Registered Nurse"),
-                           tags$p(icon("envelope"), " ", 
-                                  a("mudassiribrahim30@gmail.com", href = "mailto:mudassiribrahim30@gmail.com")),
-                           tags$p(icon("github"), " ", 
-                                  a("GitHub Profile", href = "https://github.com", target = "_blank")),
-                           tags$p(icon("linkedin"), " ", 
-                                  a("LinkedIn Profile", href = "https://linkedin.com", target = "_blank")),
-                           
-                           div(style = "margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;",
-                               h5("Copyright Notice"),
-                               p(icon("copyright"), "Copyright 2025 Mudasir Mohammed Ibrahim. All Rights Reserved.", 
-                                 style = "font-size: 0.9em; color: #6c757d; margin-bottom: 5px;"),
-                               p("",
-                                 style = "font-size: 0.8em; color: #6c757d;")
-                           )
                        )
                 )
               ),
