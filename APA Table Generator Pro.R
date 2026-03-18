@@ -142,9 +142,59 @@ ui <- fluidPage(
   ),
   
   # Copyright Footer
-  tags$div(
+  tags$footer(
     class = "copyright-footer",
-    "© 2025 Mudasir Mohammed Ibrahim (mudassiribrahim30@gmail.com) - APA Table Generator Pro"
+    style = "padding: 20px 30px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;",
+    
+    # Copyright on the left
+    tags$div(
+      style = "color: #868e96; font-size: 0.9em;",
+      paste("Copyright © 2025-", format(Sys.Date(), "%Y"), "APA Table Generator Pro")
+    ),
+    
+    # Connect with Me section on the right
+    tags$div(
+      style = "display: flex; align-items: center; gap: 15px;",
+      
+      # Connect with Me text
+      tags$span(
+        style = "font-size: 1em; color: #495057; margin-right: 5px;",
+        "Connect with Me:"
+      ),
+      
+      # ResearchGate
+      tags$a(
+        href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+        target = "_blank",
+        icon("researchgate", class = "fa-lg"),
+        title = "ResearchGate",
+        style = "color: #00ccbb; text-decoration: none; transition: color 0.3s;",
+        onmouseover = "this.style.color='#00aa99'",
+        onmouseout = "this.style.color='#00ccbb'"
+      ),
+      
+      # LinkedIn
+      tags$a(
+        href = "https://linkedin.com/in/mudasir-mohammed-ibrahim-16b5141b0", 
+        target = "_blank",
+        icon("linkedin", class = "fa-lg"),
+        title = "LinkedIn",
+        style = "color: #0077b5; text-decoration: none; transition: color 0.3s;",
+        onmouseover = "this.style.color='#005582'",
+        onmouseout = "this.style.color='#0077b5'"
+      ),
+      
+      # ORCID
+      tags$a(
+        href = "https://orcid.org/0000-0002-9049-8222", 
+        target = "_blank",
+        icon("orcid", class = "fa-lg"),
+        title = "ORCID",
+        style = "color: #A6CE39; text-decoration: none; transition: color 0.3s;",
+        onmouseover = "this.style.color='#7FA52B'",
+        onmouseout = "this.style.color='#A6CE39'"
+      )
+    )
   ),
   
   # Main Content
