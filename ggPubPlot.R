@@ -15,7 +15,7 @@ library(ggridges)
 library(ggpubr)
 library(ggtext)
 library(bslib)
-library(waffle)
+#library(waffle)
 library(ggwordcloud)
 library(GGally)
 library(ggalluvial)
@@ -23,28 +23,16 @@ library(ggsci)
 library(colourpicker)
 library(nortest) # For Anderson-Darling test
 
-# Custom CSS for professional styling and animations
+# Custom CSS for professional styling with subtle, eye-friendly colors
 custom_css <- "
-/* Professional styling */
+/* Professional styling with subtle, eye-friendly colors */
 .professional-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2C3E50 0%, #3498DB 100%);
   color: white;
   padding: 20px 25px;
   margin-bottom: 25px;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.professional-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
 }
 
 .header-container {
@@ -60,278 +48,446 @@ custom_css <- "
 
 .app-title h1 {
   margin: 0;
-  font-weight: 800;
-  font-size: 2.5em;
+  font-weight: 700;
+  font-size: 2.2em;
+  color: white;
+  letter-spacing: -0.5px;
 }
 
 .app-subtitle {
   margin: 0;
-  font-size: 1.2em;
-  opacity: 0.95;
+  font-size: 1.1em;
+  opacity: 0.9;
   margin-top: 5px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 300;
 }
 
-.header-tabs {
-  display: flex;
-  align-items: center;
+/* Professional tab styling */
+.nav-tabs {
+  border-bottom: none !important;
 }
 
+.nav-tabs > li > a {
+  border: none !important;
+  color: white !important;
+  font-weight: 500 !important;
+  padding: 10px 20px !important;
+  border-radius: 6px !important;
+  margin: 0 3px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px;
+}
+
+.nav-tabs > li > a:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+  background: white !important;
+  color: #2C3E50 !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Sidebar with clean, professional styling */
 .sidebar-panel {
-  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 10px;
+  background: #F8FAFC;
+  border-radius: 12px;
   padding: 20px;
   height: 85vh;
   overflow-y: auto;
-  box-shadow: 2px 0 15px rgba(0,0,0,0.1);
-  border-right: 1px solid #dee2e6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  border: 1px solid #EDF2F7;
 }
 
 .main-panel {
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 25px;
   height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  border: 1px solid #EDF2F7;
 }
 
 .section-header {
-  color: #495057;
-  border-bottom: 2px solid #667eea;
+  color: #2C3E50;
+  border-bottom: 2px solid #E2E8F0;
   padding-bottom: 8px;
   margin-bottom: 15px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Button animations */
+/* Professional button styles */
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #3498DB;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px 20px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+  color: white;
+  font-size: 14px;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  background: #2980B9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: #27AE60;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px 20px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+  color: white;
+  font-size: 14px;
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+  background: #229954;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
 }
 
-/* Card animations */
+.btn-info {
+  background: #3498DB;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+  color: white;
+  font-size: 14px;
+}
+
+.btn-info:hover {
+  background: #2980B9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Card styling with subtle hover effects */
 .feature-card {
   background: white;
-  border-radius: 12px;
-  padding: 25px;
-  margin: 15px 0;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  border: 1px solid #EDF2F7;
+  transition: all 0.2s ease;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: left 0.5s ease;
-}
-
-.feature-card:hover::before {
-  left: 100%;
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+  border-color: #CBD5E0;
 }
 
 .feature-icon {
-  font-size: 2.5em;
-  color: #667eea;
-  margin-bottom: 15px;
+  font-size: 2.2em;
+  color: #3498DB;
+  margin-bottom: 12px;
 }
 
-/* Tab styling - Updated for header tabs */
-.header-tabs .nav-tabs {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.header-tabs .nav-tabs .nav-link {
-  border: none;
-  color: white;
-  font-weight: 500;
-  padding: 12px 25px;
-  border-radius: 8px;
-  margin: 0 5px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.header-tabs .nav-tabs .nav-link.active {
-  background: rgba(255, 255, 255, 0.3);
-  color: white;
-  border: none;
-  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
-}
-
-.header-tabs .nav-tabs .nav-link:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-/* Main content tabs */
-.main-tabs .nav-tabs {
-  border-bottom: 2px solid #e9ecef;
-}
-
-.main-tabs .nav-tabs .nav-link {
-  border: none;
-  color: #6c757d;
-  font-weight: 500;
-  padding: 12px 25px;
-  border-radius: 8px 8px 0 0;
-  transition: all 0.3s ease;
-}
-
-.main-tabs .nav-tabs .nav-link.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 -2px 10px rgba(102, 126, 234, 0.3);
-}
-
-.main-tabs .nav-tabs .nav-link:hover:not(.active) {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-
-/* Input styling */
-.form-control, .selectize-input {
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 8px 12px;
-  transition: all 0.3s ease;
-}
-
-.form-control:focus, .selectize-input.focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-/* Animation for plot loading */
-.plot-container {
-  position: relative;
-}
-
-.plot-loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-}
-
-/* Home page specific styles */
+/* Hero section with professional gradient */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2C3E50 0%, #3498DB 100%);
   color: white;
-  padding: 60px 40px;
-  border-radius: 15px;
+  padding: 50px 30px;
+  border-radius: 12px;
   text-align: center;
-  margin-bottom: 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\"><polygon fill=\"rgba(255,255,255,0.05)\" points=\"0,1000 1000,0 1000,1000\"/></svg>');
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(44, 62, 80, 0.15);
 }
 
 .hero-title {
-  font-size: 3em;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  font-size: 2.5em;
+  font-weight: 600;
+  margin-bottom: 15px;
+  letter-spacing: -0.5px;
 }
 
 .hero-subtitle {
-  font-size: 1.3em;
+  font-size: 1.2em;
   opacity: 0.9;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
+  font-weight: 300;
 }
 
+/* Statistics with clean styling */
 .stats-container {
   display: flex;
   justify-content: space-around;
-  margin: 40px 0;
+  margin: 30px 0;
 }
 
 .stat-item {
   text-align: center;
-  padding: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  border: 1px solid #EDF2F7;
 }
 
 .stat-number {
-  font-size: 2.5em;
-  font-weight: 700;
-  color: #667eea;
+  font-size: 2.2em;
+  font-weight: 600;
+  color: #2C3E50;
   display: block;
 }
 
 .stat-label {
-  color: #6c757d;
+  color: #7F8C8D;
   font-weight: 500;
+  font-size: 14px;
 }
 
-/* Fade-in animation */
+/* Input styling with clean focus states */
+.form-control, .selectize-input {
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  background: white;
+  font-size: 14px;
+}
+
+.form-control:focus, .selectize-input.focus {
+  border-color: #3498DB;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  outline: none;
+}
+
+/* Radio and checkbox styling */
+.radio, .checkbox {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #4A5568;
+}
+
+.radio input[type=\"radio\"], 
+.checkbox input[type=\"checkbox\"] {
+  margin-right: 5px;
+}
+
+/* Slider styling */
+.irs-bar {
+  background: #3498DB !important;
+}
+
+.irs-handle {
+  border-color: #3498DB !important;
+  background: white !important;
+}
+
+/* Selectize dropdown */
+.selectize-dropdown {
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.selectize-dropdown .active {
+  background: #F7FAFC !important;
+  color: #2C3E50 !important;
+}
+
+/* Data table styling */
+.dataTables_wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+.dataTables_wrapper table {
+  border: 1px solid #EDF2F7;
+}
+
+.dataTables_wrapper thead {
+  background: #F8FAFC;
+  color: #2C3E50;
+  font-weight: 600;
+}
+
+.dataTables_wrapper tbody tr:hover {
+  background: #F7FAFC;
+}
+
+/* Animations */
 .fade-in {
-  animation: fadeIn 0.8s ease-in;
+  animation: fadeIn 0.5s ease-in;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Pulse animation for important elements */
-.pulse {
-  animation: pulse 2s infinite;
+/* Scrollbar styling */
+.sidebar-panel::-webkit-scrollbar {
+  width: 6px;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+.sidebar-panel::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 3px;
+}
+
+.sidebar-panel::-webkit-scrollbar-thumb {
+  background: #CBD5E0;
+  border-radius: 3px;
+}
+
+.sidebar-panel::-webkit-scrollbar-thumb:hover {
+  background: #A0AEC0;
+}
+
+/* Category colors container */
+.category-colors-container {
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #F8FAFC;
+}
+
+/* Developer info card */
+.developer-info {
+  background: #F8FAFC;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #E2E8F0;
+  margin-top: 15px;
+  font-size: 13px;
+  color: #4A5568;
+}
+
+.developer-info a {
+  color: #3498DB;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.developer-info a:hover {
+  text-decoration: underline;
+}
+
+/* Help text */
+.help-text {
+  font-size: 12px;
+  color: #718096;
+  margin-top: 4px;
+}
+
+/* Well panels */
+.well {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 15px;
+}
+
+/* Alert boxes */
+.alert-info {
+  background: #EBF8FF;
+  border: 1px solid #90CDF4;
+  color: #2C5282;
+  border-radius: 6px;
+}
+
+.alert-success {
+  background: #F0FFF4;
+  border: 1px solid #9AE6B4;
+  color: #276749;
+  border-radius: 6px;
+}
+
+.alert-warning {
+  background: #FFFAF0;
+  border: 1px solid #FBD38D;
+  color: #7B341E;
+  border-radius: 6px;
+}
+
+.alert-danger {
+  background: #FFF5F5;
+  border: 1px solid #FEB2B2;
+  color: #9B2C2C;
+  border-radius: 6px;
+}
+
+/* Progress bars */
+.progress {
+  background: #EDF2F7;
+  border-radius: 4px;
+  height: 8px;
+}
+
+.progress-bar {
+  background: #3498DB;
+  border-radius: 4px;
+}
+
+/* Tab content */
+.tab-content {
+  padding: 20px 0;
+}
+
+/* Plot container */
+.plot-container {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #EDF2F7;
+  margin-bottom: 20px;
+}
+
+/* Statistical results */
+.statistical-results {
+  background: #F8FAFC;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #E2E8F0;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .professional-header {
+    padding: 15px;
+  }
+  
+  .app-title h1 {
+    font-size: 1.8em;
+  }
+  
+  .hero-title {
+    font-size: 2em;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1em;
+  }
 }
 "
 
@@ -351,587 +507,605 @@ ui <- fluidPage(
     base_font = font_google("Inter"),
     heading_font = font_google("Inter")
   ),
+  title = "ggPubPlot - Professional Data Visualization Platform",
+  titleWidth = 350,
   tags$head(
     tags$style(HTML(custom_css)),
     tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")
   ),
   
+  # Header with tabs
   div(
-    class = "professional-header fade-in",
+    class = "professional-header",
     div(
       class = "header-container",
       div(
         class = "app-title",
-        h1("ggPubPlot", class = "pulse", style = "margin: 0;"),
+        h1("ggPubPlot", class = "pulse"),
         p("Professional Data Visualization Platform", class = "app-subtitle")
       ),
       div(
-        class = "header-tabs",
         tabsetPanel(
           id = "main_tabs",
           type = "tabs",
           tabPanel(
-            "Home",
-            value = "home",
-            icon = icon("home")
+            title = div(icon("home"), "Home"),
+            value = "home"
           ),
           tabPanel(
-            "Plot",
-            value = "plot",
-            icon = icon("chart-line")
+            title = div(icon("chart-line"), "Plot"),
+            value = "plot"
           ),
           tabPanel(
-            "Data",
-            value = "data",
-            icon = icon("table")
+            title = div(icon("table"), "Data"),
+            value = "data"
           ),
           tabPanel(
-            "Usage",
-            value = "usage",
-            icon = icon("code")
+            title = div(icon("code"), "Usage"),
+            value = "usage"
           )
         )
       )
     )
   ),
   
-  # Home tab content
-  conditionalPanel(
-    condition = "input.main_tabs == 'home'",
-    div(
-      class = "main-panel",
+  # Main content area
+  div(
+    style = "padding: 0 20px;",
+    
+    # Home tab content
+    conditionalPanel(
+      condition = "input.main_tabs == 'home'",
       div(
-        class = "hero-section fade-in",
-        h1(class = "hero-title", "Welcome to ggPubPlot"),
-        p(class = "hero-subtitle", "Developed by Mudasir Mohammed Ibrahim, this app empowers users to create stunning, publication-quality visualizations with ease."),
-        actionButton("get_started", "Get Started", 
-                     class = "btn-primary pulse",
-                     style = "font-size: 1.2em; padding: 15px 30px;")
-      ),
-      
-      div(
-        class = "stats-container fade-in",
-        div(class = "stat-item",
-            span(class = "stat-number", "20+"),
-            span(class = "stat-label", "Plot Types")
-        ),
-        div(class = "stat-item",
-            span(class = "stat-number", "11"),
-            span(class = "stat-label", "Themes")
-        ),
-        div(class = "stat-item",
-            span(class = "stat-number", "∞"),
-            span(class = "stat-label", "Customizations")
-        )
-      ),
-      
-      h2("Key Features", style = "text-align: center; margin: 40px 0 30px 0; color: #495057;"),
-      
-      fluidRow(
-        column(6,
-               div(class = "feature-card fade-in",
-                   div(class = "feature-icon", HTML("<i class='fas fa-chart-line'></i>")),
-                   h4("Advanced Visualization"),
-                   p("Create sophisticated plots with extensive customization options for professional publications.")
-               )
-        ),
-        column(6,
-               div(class = "feature-card fade-in",
-                   div(class = "feature-icon", HTML("<i class='fas fa-palette'></i>")),
-                   h4("Beautiful Themes"),
-                   p("Choose from multiple professional themes and color palettes to match your publication style.")
-               )
-        )
-      ),
-      
-      fluidRow(
-        column(6,
-               div(class = "feature-card fade-in",
-                   div(class = "feature-icon", HTML("<i class='fas fa-cogs'></i>")),
-                   h4("Statistical Analysis"),
-                   p("Built-in statistical tests and annotations to enhance your data storytelling.")
-               )
-        ),
-        column(6,
-               div(class = "feature-card fade-in",
-                   div(class = "feature-icon", HTML("<i class='fas fa-download'></i>")),
-                   h4("Export Ready"),
-                   p("High-resolution exports with customizable dimensions for journals and presentations.")
-               )
-        )
-      ),
-      
-      fluidRow(
-        column(12,
-               div(class = "feature-card fade-in",
-                   style = "text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;",
-                   h3("Ready to Create Amazing Visualizations?"),
-                   p("Start by uploading your data or exploring with sample datasets."),
-                   actionButton("explore_features", "Explore Features", 
-                                class = "btn-primary",
-                                style = "background: white; color: #667eea; border: none; margin-top: 15px;")
-               )
-        )
-      )
-    )
-  ),
-  
-  # Plot tab content
-  conditionalPanel(
-    condition = "input.main_tabs == 'plot'",
-    sidebarLayout(
-      sidebarPanel(
-        width = 3,
-        class = "sidebar-panel",
-        h4("Data Input", class = "section-header"),
-        radioButtons(
-          "data_source",
-          "Data Source:",
-          choices = c("Upload File" = "upload", "Sample Data" = "sample"),
-          selected = "upload",
-          inline = TRUE
-        ),
-        conditionalPanel(
-          condition = "input.data_source == 'upload'",
-          fileInput(
-            "file_upload",
-            "Upload Data File",
-            accept = c(
-              ".csv", ".xlsx", ".xls",
-              ".sav", ".dta", ".rds", ".tsv"
-            ),
-            multiple = FALSE,
-            buttonLabel = "Browse...",
-            placeholder = "No file selected"
-          ),
-          selectInput(
-            "file_type",
-            "File Type:",
-            choices = c(
-              "Auto-detect" = "auto",
-              "CSV" = "csv",
-              "Excel" = "excel",
-              "SPSS" = "spss",
-              "Stata" = "stata",
-              "TSV" = "tsv"
-            ),
-            selected = "auto"
-          ),
-          conditionalPanel(
-            condition = "input.file_type == 'csv' || input.file_type == 'tsv'",
-            checkboxInput("header", "Header", TRUE),
-            radioButtons("sep", "Separator",
-                         choices = c(
-                           Comma = ",",
-                           Semicolon = ";",
-                           Tab = "\t",
-                           Space = " "
-                         ),
-                         selected = ","
-            ),
-            radioButtons("quote", "Quote",
-                         choices = c(
-                           None = "",
-                           "Double Quote" = "\"",
-                           "Single Quote" = "'"
-                         ),
-                         selected = "\""
-            )
-          ),
-          conditionalPanel(
-            condition = "input.file_type == 'excel'",
-            numericInput("sheet", "Sheet Number", value = 1, min = 1)
-          )
-        ),
-        conditionalPanel(
-          condition = "input.data_source == 'sample'",
-          selectInput(
-            "sample_data",
-            "Sample Dataset:",
-            choices = c(
-              "mpg" = "mpg",
-              "diamonds" = "diamonds",
-              "iris" = "iris",
-              "mtcars" = "mtcars",
-              "gapminder" = "gapminder",
-              "economics" = "economics",
-              "txhousing" = "txhousing",
-              "luv_colours" = "luv_colours"
-            )
-          )
-        ),
-        hr(),
-        h4("Plot Configuration", class = "section-header"),
-        selectInput(
-          "plot_type",
-          "Plot Type:",
-          choices = c(
-            "Scatter Plot" = "scatter",
-            "Line Plot" = "line",
-            "Bar Plot" = "bar",
-            "Histogram" = "histogram",
-            "Density Plot" = "density",
-            "Box Plot" = "boxplot",
-            "Violin Plot" = "violin",
-            "Area Plot" = "area",
-            "Tile Plot" = "tile",
-            "Raster Plot" = "raster",
-            "Dot Plot" = "dotplot",
-            "Smooth Line" = "smooth",
-            "Quantile Regression" = "quantile",
-            "Path Plot" = "path",
-            "Ribbon Plot" = "ribbon",
-            "Polygon Plot" = "polygon",
-            "Contour Plot" = "contour",
-            "2D Density" = "density2d",
-            "Binned Heatmap" = "bin2d",
-            "Hexbin Plot" = "hex",
-            "Jitter Plot" = "jitter",
-            "Point Range" = "pointrange",
-            "Error Bars" = "errorbar",
-            "Crossbar" = "crossbar",
-            "Linerange" = "linerange",
-            "Step Plot" = "step",
-            "Map" = "map",
-            "Pie Chart" = "pie",
-            "Donut Chart" = "donut",
-            "Waffle Chart" = "waffle",
-            "Alluvial" = "alluvial",
-            "Sina Plot" = "sina",
-            "Ridgeline Plot" = "ridgeline",
-            "Parallel Coordinates" = "parcoord",
-            "Word Cloud" = "wordcloud",
-            "Clustered Bar Chart" = "clustered_bar"
-          ),
-          selected = "scatter"
-        ),
-        conditionalPanel(
-          condition = "input.plot_type != 'pie' && input.plot_type != 'donut' && input.plot_type != 'waffle' && input.plot_type != 'wordcloud'",
-          selectInput("x_var", "X Variable:", choices = NULL)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type != 'histogram' && input.plot_type != 'density' && input.plot_type != 'density2d' && input.plot_type != 'bin2d' && input.plot_type != 'hex' && input.plot_type != 'pie' && input.plot_type != 'donut' && input.plot_type != 'waffle' && input.plot_type != 'wordcloud'",
-          selectInput("y_var", "Y Variable:", choices = NULL)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
-          selectInput("pie_var", "Categorical Variable:", choices = NULL)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'waffle'",
-          selectInput("waffle_var", "Categorical Variable:", choices = NULL)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'wordcloud'",
-          selectInput("word_var", "Text Variable:", choices = NULL),
-          selectInput("freq_var", "Frequency Variable:", choices = NULL)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'clustered_bar'",
-          selectInput("cluster_var", "Cluster Variable:", choices = NULL)
-        ),
-        selectInput("color_var", "Color Variable (Optional):", choices = c("None" = "none")),
-        selectInput("size_var", "Size Variable (Optional):", choices = c("None" = "none")),
-        selectInput("shape_var", "Shape Variable (Optional):", choices = c("None" = "none")),
-        selectInput("facet_var", "Facet Variable (Optional):", choices = c("None" = "none")),
-        selectInput("group_var", "Group Variable (Optional):", choices = c("None" = "none")),
-        conditionalPanel(
-          condition = "input.plot_type == 'scatter' || input.plot_type == 'boxplot' || input.plot_type == 'violin' || input.plot_type == 'jitter'",
-          checkboxInput("show_ids", "Show Data Point IDs", FALSE),
-          conditionalPanel(
-            condition = "input.show_ids == true",
-            selectInput("id_var", "ID Variable:", choices = NULL)
-          )
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'boxplot'",
-          checkboxInput("show_outliers", "Identify Outliers", FALSE)
-        ),
-        
-        hr(),
-        h4("Plot Dimensions", class = "section-header"),
-        sliderInput("plot_width", "Plot Width (inches):", min = 4, max = 20, value = 10, step = 0.5),
-        sliderInput("plot_height", "Plot Height (inches):", min = 4, max = 20, value = 6, step = 0.5),
-        sliderInput("plot_dpi", "Resolution (DPI):", min = 72, max = 600, value = 300, step = 10),
-        
-        hr(),
-        h4("Color Customization", class = "section-header"),
-        radioButtons("color_choice", "Color Options:",
-                     choices = c("Single Color" = "single", "Custom by Category" = "category"),
-                     selected = "single",
-                     inline = TRUE),
-        conditionalPanel(
-          condition = "input.color_choice == 'single'",
-          colourpicker::colourInput("single_color", "Select Color:", value = "#667eea", showColour = "both")
-        ),
-        conditionalPanel(
-          condition = "input.color_choice == 'category' && (input.color_var != 'none' || input.plot_type == 'pie' || input.plot_type == 'donut' || input.plot_type == 'bar' || input.plot_type == 'clustered_bar')",
+        class = "main-panel fade-in",
+        div(
+          class = "hero-section",
+          h1(class = "hero-title", "Welcome to ggPubPlot"),
+          p(class = "hero-subtitle", "Developed by Mudasir Mohammed Ibrahim, this app empowers users to create stunning, publication-quality visualizations with ease."),
+          actionButton("get_started", "Get Started", 
+                       class = "btn-primary pulse",
+                       style = "font-size: 1.2em; padding: 15px 30px;"),
+          
+          # Add ResearchGate link
           div(
-            style = "border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: white;",
-            h5("Category Colors", style = "margin-top: 0; color: #495057;"),
-            div(
-              style = "resize: both; overflow: auto; max-height: 400px; min-height: 100px; border: 1px solid #eee; padding: 10px; border-radius: 6px;",
-              uiOutput("category_colors_ui")
-            ),
-            helpText("Tip: Click the color box, then use arrow keys to browse and select a color", style = "font-size: 12px; color: #6c757d;")
-          )
-        ),
-        
-        conditionalPanel(
-          condition = "input.plot_type == 'bar' || input.plot_type == 'clustered_bar'",
-          checkboxInput("show_values", "Show Values on Bars", TRUE),
-          conditionalPanel(
-            condition = "input.show_values",
-            numericInput("value_size", "Value Size:", value = 4, min = 1, max = 10),
-            numericInput("value_digits", "Decimal Digits:", value = 1, min = 0, max = 5),
-            checkboxInput("show_percentage", "Show Percentage", FALSE),
-            conditionalPanel(
-              condition = "input.show_percentage",
-              checkboxInput("show_both", "Show Both Count and Percentage", FALSE)
+            class = "researchgate-link",
+            style = "margin-top: 30px; font-size: 1.2em;",
+            "Connect with Me",
+            tags$a(
+              href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+              target = "_blank",
+              icon("researchgate", class = "fa-2x"), 
+              style = "color: #00ccbb; text-decoration: none; margin-left: 10px; vertical-align: middle; transition: color 0.3s;",
+              onmouseover = "this.style.color='#00aa99'",
+              onmouseout = "this.style.color='#00ccbb'"
             )
-          )
-        ),
-        
-        conditionalPanel(
-          condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
-          checkboxInput("pie_labels", "Show Labels", TRUE),
-          conditionalPanel(
-            condition = "input.pie_labels",
-            numericInput("label_size", "Label Size:", value = 4, min = 1, max = 10),
-            numericInput("label_digits", "Decimal Digits:", value = 1, min = 0, max = 5)
-          )
-        ),
-        
-        hr(),
-        h4("Aesthetics & Options", class = "section-header"),
-        conditionalPanel(
-          condition = "input.plot_type == 'scatter' || input.plot_type == 'line' || input.plot_type == 'pointrange' || input.plot_type == 'jitter'",
-          sliderInput("point_size", "Point Size:", min = 0.1, max = 10, value = 2, step = 0.1),
-          sliderInput("point_alpha", "Point Transparency:", min = 0, max = 1, value = 1, step = 0.05)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'line' || input.plot_type == 'path' || input.plot_type == 'step'",
-          sliderInput("line_size", "Line Size:", min = 0.1, max = 5, value = 1, step = 0.1),
-          sliderInput("line_alpha", "Line Transparency:", min = 0, max = 1, value = 1, step = 0.05),
-          selectInput(
-            "line_type",
-            "Line Type:",
-            choices = c(
-              "solid", "dashed", "dotted",
-              "dotdash", "longdash", "twodash"
-            ),
-            selected = "solid"
-          )
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'bar' || input.plot_type == 'histogram' || input.plot_type == 'density' || input.plot_type == 'area' || input.plot_type == 'violin' || input.plot_type == 'boxplot' || input.plot_type == 'ribbon' || input.plot_type == 'polygon' || input.plot_type == 'clustered_bar'",
-          sliderInput("fill_alpha", "Fill Transparency:", min = 0, max = 1, value = 0.7, step = 0.05)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'bar' || input.plot_type == 'histogram' || input.plot_type == 'boxplot' || input.plot_type == 'violin' || input.plot_type == 'dotplot' || input.plot_type == 'crossbar' || input.plot_type == 'linerange' || input.plot_type == 'pointrange' || input.plot_type == 'errorbar' || input.plot_type == 'clustered_bar'",
-          radioButtons(
-            "position",
-            "Position Adjustment:",
-            choices = c(
-              "stack" = "stack",
-              "dodge" = "dodge",
-              "fill" = "fill",
-              "identity" = "identity"
-            ),
-            selected = "dodge",
-            inline = TRUE
-          )
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'histogram' || input.plot_type == 'density'",
-          sliderInput("binwidth", "Bin Width:", min = 0.1, max = 10, value = 1, step = 0.1),
-          numericInput("bins", "Number of Bins:", value = 30, min = 1)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'smooth'",
-          selectInput(
-            "smooth_method",
-            "Smoothing Method:",
-            choices = c(
-              "loess" = "loess",
-              "gam" = "gam",
-              "lm" = "lm",
-              "glm" = "glm",
-              "rlm" = "rlm"
-            ),
-            selected = "loess"
-          ),
-          sliderInput("smooth_span", "Smooth Span:", min = 0.1, max = 1, value = 0.75, step = 0.05),
-          checkboxInput("se", "Show Confidence Interval", TRUE)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'boxplot' || input.plot_type == 'violin'",
-          checkboxInput("notch", "Notched Boxplot", FALSE),
-          sliderInput("width", "Width:", min = 0.1, max = 1, value = 0.7, step = 0.05),
-          checkboxInput("rotate_plot", "Rotate Plot (Horizontal)", FALSE)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'bar' || input.plot_type == 'clustered_bar'",
-          checkboxInput("rotate_barplot", "Rotate Plot (Horizontal)", FALSE)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'violin'",
-          checkboxInput("trim", "Trim Violins", TRUE),
-          sliderInput("violin_scale", "Violin Scale:", min = 0.1, max = 2, value = 1, step = 0.1)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'density2d' || input.plot_type == 'contour'",
-          sliderInput("contour_size", "Contour Size:", min = 0.1, max = 2, value = 0.5, step = 0.1),
-          numericInput("contour_bins", "Number of Contour Levels:", value = 10, min = 1)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'hex'",
-          numericInput("hex_bins", "Number of Hex Bins:", value = 30, min = 1)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
-          sliderInput("pie_size", "Pie Size:", min = 0.1, max = 1, value = 1, step = 0.05)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'waffle'",
-          numericInput("waffle_rows", "Number of Rows:", value = 10, min = 1),
-          numericInput("waffle_cols", "Number of Columns:", value = 10, min = 1)
-        ),
-        
-        hr(),
-        h4("Statistical Tests", class = "section-header"),
-        p("Click the button below to run statistical tests and see the results.", 
-          style = "font-size: 12px; color: #6c757d; margin-bottom: 10px;"),
-        
-        actionButton("run_tests", "Run Statistical Tests", 
-                     class = "btn-primary",
-                     style = "margin-bottom: 15px; width: 100%;"),
-        
-        conditionalPanel(
-          condition = "input.plot_type == 'scatter'",
-          checkboxInput("show_correlation", "Show Correlation", FALSE),
-          conditionalPanel(
-            condition = "input.show_correlation == true",
-            radioButtons("cor_method", "Correlation Method:",
-                         choices = c("Pearson" = "pearson", "Spearman" = "spearman", "Kendall" = "kendall"),
-                         selected = "pearson",
-                         inline = TRUE)
-          )
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'boxplot' || input.plot_type == 'violin'",
-          checkboxInput("show_test", "Show Statistical Test", FALSE),
-          conditionalPanel(
-            condition = "input.show_test == true",
-            selectInput("test_method", "Test Method:",
-                        choices = c("Wilcoxon" = "wilcox.test", "t-test" = "t.test", "Kruskal-Wallis" = "kruskal.test"),
-                        selected = "wilcox.test")
-          )
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'bar' && input.x_var != 'none' && input.y_var != 'none'",
-          checkboxInput("show_chisq", "Show Chi-square Test", FALSE)
-        ),
-        conditionalPanel(
-          condition = "input.plot_type == 'histogram'",
-          checkboxInput("show_normality", "Show Normality Tests", FALSE)
-        ),
-        
-        hr(),
-        h4("Labels & Titles", class = "section-header"),
-        textInput("title", "Plot Title:", value = ""),
-        textInput("x_lab", "X Axis Label:", value = ""),
-        textInput("y_lab", "Y Axis Label:", value = ""),
-        textInput("caption", "Caption:", value = ""),
-        textInput("tag", "Tag:", value = ""),
-        hr(),
-        h4("Theme & Appearance", class = "section-header"),
-        selectInput(
-          "theme",
-          "Theme:",
-          choices = c(
-            "Gray" = "theme_gray",
-            "Classic" = "theme_classic",
-            "Minimal" = "theme_minimal",
-            "BW" = "theme_bw",
-            "Light" = "theme_light",
-            "Dark" = "theme_dark",
-            "Void" = "theme_void",
-            "Test" = "theme_test",
-            "Pubr" = "theme_pubr",
-            "Pubclean" = "theme_pubclean",
-            "Linedraw" = "theme_linedraw"
-          ),
-          selected = "theme_gray"
-        ),
-        sliderInput("base_size", "Base Font Size:", min = 8, max = 24, value = 12, step = 1),
-        checkboxInput("coord_flip", "Flip Coordinates", FALSE),
-        checkboxInput("interactive", "Interactive Plot", FALSE),
-        hr(),
-        div(
-          style = "display: flex; flex-direction: column; gap: 10px;",
-          actionButton("run_analysis", "Generate Plot", 
-                       class = "btn-primary",
-                       style = "width: 100%;"),
-          downloadButton("download_plot", "Download Plot", 
-                         class = "btn-success",
-                         style = "width: 100%;"),
-          downloadButton("download_data", "Download Data", 
-                         class = "btn-info",
-                         style = "width: 100%; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); border: none;")
-        ),
-        hr(),
-        div(
-          style = "background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-top: 20px;",
-          p(strong("Developer Info"), style = "color: #495057; margin-bottom: 10px;"),
-          p("Name: Mudasir Mohammed Ibrahim", style = "margin: 5px 0; color: #6c757d;"),
-          p("For suggestions or problems, contact:", style = "margin: 5px 0; color: #6c757d;"),
-          p(HTML("<a href='mailto:mudassiribrahim30@gmail.com' style='color: #667eea;'>mudassiribrahim30@gmail.com</a>"))
         )
       ),
-      mainPanel(
-        width = 9,
-        class = "main-panel",
+        
         div(
-          class = "plot-container",
-          conditionalPanel(
-            condition = "input.interactive == false",
-            plotOutput("static_plot", height = "600px")
+          class = "stats-container",
+          div(class = "stat-item",
+              span(class = "stat-number", "20+"),
+              span(class = "stat-label", "Plot Types")
           ),
-          conditionalPanel(
-            condition = "input.interactive == true",
-            girafeOutput("interactive_plot", height = "600px")
+          div(class = "stat-item",
+              span(class = "stat-number", "11"),
+              span(class = "stat-label", "Themes")
+          ),
+          div(class = "stat-item",
+              span(class = "stat-number", "∞"),
+              span(class = "stat-label", "Customizations")
           )
         ),
-        conditionalPanel(
-          condition = "input.run_tests > 0",
-          div(class = "fade-in",
-              h4("Statistical Test Results"),
-              verbatimTextOutput("statistical_results")
+        
+        h2("Key Features", style = "text-align: center; margin: 40px 0 30px 0; color: #495057;"),
+        
+        fluidRow(
+          column(6,
+                 div(class = "feature-card",
+                     div(class = "feature-icon", HTML("<i class='fas fa-chart-line'></i>")),
+                     h4("Advanced Visualization"),
+                     p("Create sophisticated plots with extensive customization options.")
+                 )
+          ),
+          column(6,
+                 div(class = "feature-card",
+                     div(class = "feature-icon", HTML("<i class='fas fa-palette'></i>")),
+                     h4("Beautiful Themes"),
+                     p("Choose from multiple professional themes and color palettes.")
+                 )
+          )
+        ),
+        
+        fluidRow(
+          column(6,
+                 div(class = "feature-card",
+                     div(class = "feature-icon", HTML("<i class='fas fa-cogs'></i>")),
+                     h4("Statistical Analysis"),
+                     p("Built-in statistical tests and annotations.")
+                 )
+          ),
+          column(6,
+                 div(class = "feature-card",
+                     div(class = "feature-icon", HTML("<i class='fas fa-download'></i>")),
+                     h4("Export Ready"),
+                     p("High-resolution exports for journals and presentations.")
+                 )
+          )
+        ),
+        
+        fluidRow(
+          column(12,
+                 div(class = "feature-card",
+                     style = "text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;",
+                     h3("Ready to Create Amazing Visualizations?"),
+                     p("Start by uploading your data or exploring with sample datasets."),
+                     actionButton("explore_features", "Explore Features", 
+                                  class = "btn-primary",
+                                  style = "background: white; color: #667eea; border: none; margin-top: 15px;")
+                 )
           )
         )
       )
-    )
-  ),
-  
-  # Data tab content
-  conditionalPanel(
-    condition = "input.main_tabs == 'data'",
-    div(
-      class = "main-panel",
-      DTOutput("data_table")
-    )
-  ),
-  
-  # Usage tab content
-  conditionalPanel(
-    condition = "input.main_tabs == 'usage'",
-    div(
-      class = "main-panel",
-      verbatimTextOutput("plot_code"),
-      actionButton("copy_code", "Thank You for Using the App", 
-                   class = "btn-primary",
-                   style = "margin-top: 10px; width: 100%;")
+    ),
+    
+    # Plot tab content
+    conditionalPanel(
+      condition = "input.main_tabs == 'plot'",
+      sidebarLayout(
+        sidebarPanel(
+          width = 3,
+          class = "sidebar-panel",
+          h4("Data Input", class = "section-header"),
+          radioButtons(
+            "data_source",
+            "Data Source:",
+            choices = c("Upload File" = "upload", "Sample Data" = "sample"),
+            selected = "upload",
+            inline = TRUE
+          ),
+          conditionalPanel(
+            condition = "input.data_source == 'upload'",
+            fileInput(
+              "file_upload",
+              "Upload Data File",
+              accept = c(
+                ".csv", ".xlsx", ".xls",
+                ".sav", ".dta", ".rds", ".tsv"
+              ),
+              multiple = FALSE,
+              buttonLabel = "Browse...",
+              placeholder = "No file selected"
+            ),
+            selectInput(
+              "file_type",
+              "File Type:",
+              choices = c(
+                "Auto-detect" = "auto",
+                "CSV" = "csv",
+                "Excel" = "excel",
+                "SPSS" = "spss",
+                "Stata" = "stata",
+                "TSV" = "tsv"
+              ),
+              selected = "auto"
+            ),
+            conditionalPanel(
+              condition = "input.file_type == 'csv' || input.file_type == 'tsv'",
+              checkboxInput("header", "Header", TRUE),
+              radioButtons("sep", "Separator",
+                           choices = c(
+                             Comma = ",",
+                             Semicolon = ";",
+                             Tab = "\t",
+                             Space = " "
+                           ),
+                           selected = ","
+              ),
+              radioButtons("quote", "Quote",
+                           choices = c(
+                             None = "",
+                             "Double Quote" = "\"",
+                             "Single Quote" = "'"
+                           ),
+                           selected = "\""
+              )
+            ),
+            conditionalPanel(
+              condition = "input.file_type == 'excel'",
+              numericInput("sheet", "Sheet Number", value = 1, min = 1)
+            )
+          ),
+          conditionalPanel(
+            condition = "input.data_source == 'sample'",
+            selectInput(
+              "sample_data",
+              "Sample Dataset:",
+              choices = c(
+                "mpg" = "mpg",
+                "diamonds" = "diamonds",
+                "iris" = "iris",
+                "mtcars" = "mtcars",
+                "gapminder" = "gapminder",
+                "economics" = "economics",
+                "txhousing" = "txhousing",
+                "luv_colours" = "luv_colours"
+              )
+            )
+          ),
+          hr(),
+          h4("Plot Configuration", class = "section-header"),
+          selectInput(
+            "plot_type",
+            "Plot Type:",
+            choices = c(
+              "Scatter Plot" = "scatter",
+              "Line Plot" = "line",
+              "Bar Plot" = "bar",
+              "Histogram" = "histogram",
+              "Density Plot" = "density",
+              "Box Plot" = "boxplot",
+              "Violin Plot" = "violin",
+              "Area Plot" = "area",
+              "Tile Plot" = "tile",
+              "Raster Plot" = "raster",
+              "Dot Plot" = "dotplot",
+              "Smooth Line" = "smooth",
+              "Quantile Regression" = "quantile",
+              "Path Plot" = "path",
+              "Ribbon Plot" = "ribbon",
+              "Polygon Plot" = "polygon",
+              "Contour Plot" = "contour",
+              "2D Density" = "density2d",
+              "Binned Heatmap" = "bin2d",
+              "Hexbin Plot" = "hex",
+              "Jitter Plot" = "jitter",
+              "Point Range" = "pointrange",
+              "Error Bars" = "errorbar",
+              "Crossbar" = "crossbar",
+              "Linerange" = "linerange",
+              "Step Plot" = "step",
+              "Map" = "map",
+              "Pie Chart" = "pie",
+              "Donut Chart" = "donut",
+              "Waffle Chart" = "waffle",
+              "Alluvial" = "alluvial",
+              "Sina Plot" = "sina",
+              "Ridgeline Plot" = "ridgeline",
+              "Parallel Coordinates" = "parcoord",
+              "Word Cloud" = "wordcloud",
+              "Clustered Bar Chart" = "clustered_bar"
+            ),
+            selected = "scatter"
+          ),
+          conditionalPanel(
+            condition = "input.plot_type != 'pie' && input.plot_type != 'donut' && input.plot_type != 'waffle' && input.plot_type != 'wordcloud'",
+            selectInput("x_var", "X Variable:", choices = NULL)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type != 'histogram' && input.plot_type != 'density' && input.plot_type != 'density2d' && input.plot_type != 'bin2d' && input.plot_type != 'hex' && input.plot_type != 'pie' && input.plot_type != 'donut' && input.plot_type != 'waffle' && input.plot_type != 'wordcloud'",
+            selectInput("y_var", "Y Variable:", choices = NULL)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
+            selectInput("pie_var", "Categorical Variable:", choices = NULL)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'waffle'",
+            selectInput("waffle_var", "Categorical Variable:", choices = NULL)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'wordcloud'",
+            selectInput("word_var", "Text Variable:", choices = NULL),
+            selectInput("freq_var", "Frequency Variable:", choices = NULL)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'clustered_bar'",
+            selectInput("cluster_var", "Cluster Variable:", choices = NULL)
+          ),
+          selectInput("color_var", "Color Variable (Optional):", choices = c("None" = "none")),
+          selectInput("size_var", "Size Variable (Optional):", choices = c("None" = "none")),
+          selectInput("shape_var", "Shape Variable (Optional):", choices = c("None" = "none")),
+          selectInput("facet_var", "Facet Variable (Optional):", choices = c("None" = "none")),
+          selectInput("group_var", "Group Variable (Optional):", choices = c("None" = "none")),
+          conditionalPanel(
+            condition = "input.plot_type == 'scatter' || input.plot_type == 'boxplot' || input.plot_type == 'violin' || input.plot_type == 'jitter'",
+            checkboxInput("show_ids", "Show Data Point IDs", FALSE),
+            conditionalPanel(
+              condition = "input.show_ids == true",
+              selectInput("id_var", "ID Variable:", choices = NULL)
+            )
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'boxplot'",
+            checkboxInput("show_outliers", "Identify Outliers", FALSE)
+          ),
+          
+          hr(),
+          h4("Plot Dimensions", class = "section-header"),
+          sliderInput("plot_width", "Plot Width (inches):", min = 4, max = 20, value = 10, step = 0.5),
+          sliderInput("plot_height", "Plot Height (inches):", min = 4, max = 20, value = 6, step = 0.5),
+          sliderInput("plot_dpi", "Resolution (DPI):", min = 72, max = 600, value = 300, step = 10),
+          
+          hr(),
+          h4("Color Customization", class = "section-header"),
+          radioButtons("color_choice", "Color Options:",
+                       choices = c("Single Color" = "single", "Custom by Category" = "category"),
+                       selected = "single",
+                       inline = TRUE),
+          conditionalPanel(
+            condition = "input.color_choice == 'single'",
+            colourpicker::colourInput("single_color", "Select Color:", value = "#667eea", showColour = "both")
+          ),
+          conditionalPanel(
+            condition = "input.color_choice == 'category' && (input.color_var != 'none' || input.plot_type == 'pie' || input.plot_type == 'donut' || input.plot_type == 'bar' || input.plot_type == 'clustered_bar')",
+            div(
+              style = "border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: white;",
+              h5("Category Colors", style = "margin-top: 0; color: #495057;"),
+              div(
+                style = "resize: both; overflow: auto; max-height: 400px; min-height: 100px; border: 1px solid #eee; padding: 10px; border-radius: 6px;",
+                uiOutput("category_colors_ui")
+              ),
+              helpText("Tip: Click the color box, then use arrow keys to browse and select a color", style = "font-size: 12px; color: #6c757d;")
+            )
+          ),
+          
+          conditionalPanel(
+            condition = "input.plot_type == 'bar' || input.plot_type == 'clustered_bar'",
+            checkboxInput("show_values", "Show Values on Bars", TRUE),
+            conditionalPanel(
+              condition = "input.show_values",
+              numericInput("value_size", "Value Size:", value = 4, min = 1, max = 10),
+              numericInput("value_digits", "Decimal Digits:", value = 1, min = 0, max = 5),
+              checkboxInput("show_percentage", "Show Percentage", FALSE),
+              conditionalPanel(
+                condition = "input.show_percentage",
+                checkboxInput("show_both", "Show Both Count and Percentage", FALSE)
+              )
+            )
+          ),
+          
+          conditionalPanel(
+            condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
+            checkboxInput("pie_labels", "Show Labels", TRUE),
+            conditionalPanel(
+              condition = "input.pie_labels",
+              numericInput("label_size", "Label Size:", value = 4, min = 1, max = 10),
+              numericInput("label_digits", "Decimal Digits:", value = 1, min = 0, max = 5)
+            )
+          ),
+          
+          hr(),
+          h4("Aesthetics & Options", class = "section-header"),
+          conditionalPanel(
+            condition = "input.plot_type == 'scatter' || input.plot_type == 'line' || input.plot_type == 'pointrange' || input.plot_type == 'jitter'",
+            sliderInput("point_size", "Point Size:", min = 0.1, max = 10, value = 2, step = 0.1),
+            sliderInput("point_alpha", "Point Transparency:", min = 0, max = 1, value = 1, step = 0.05)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'line' || input.plot_type == 'path' || input.plot_type == 'step'",
+            sliderInput("line_size", "Line Size:", min = 0.1, max = 5, value = 1, step = 0.1),
+            sliderInput("line_alpha", "Line Transparency:", min = 0, max = 1, value = 1, step = 0.05),
+            selectInput(
+              "line_type",
+              "Line Type:",
+              choices = c(
+                "solid", "dashed", "dotted",
+                "dotdash", "longdash", "twodash"
+              ),
+              selected = "solid"
+            )
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'bar' || input.plot_type == 'histogram' || input.plot_type == 'density' || input.plot_type == 'area' || input.plot_type == 'violin' || input.plot_type == 'boxplot' || input.plot_type == 'ribbon' || input.plot_type == 'polygon' || input.plot_type == 'clustered_bar'",
+            sliderInput("fill_alpha", "Fill Transparency:", min = 0, max = 1, value = 0.7, step = 0.05)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'bar' || input.plot_type == 'histogram' || input.plot_type == 'boxplot' || input.plot_type == 'violin' || input.plot_type == 'dotplot' || input.plot_type == 'crossbar' || input.plot_type == 'linerange' || input.plot_type == 'pointrange' || input.plot_type == 'errorbar' || input.plot_type == 'clustered_bar'",
+            radioButtons(
+              "position",
+              "Position Adjustment:",
+              choices = c(
+                "stack" = "stack",
+                "dodge" = "dodge",
+                "fill" = "fill",
+                "identity" = "identity"
+              ),
+              selected = "dodge",
+              inline = TRUE
+            )
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'histogram' || input.plot_type == 'density'",
+            sliderInput("binwidth", "Bin Width:", min = 0.1, max = 10, value = 1, step = 0.1),
+            numericInput("bins", "Number of Bins:", value = 30, min = 1)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'smooth'",
+            selectInput(
+              "smooth_method",
+              "Smoothing Method:",
+              choices = c(
+                "loess" = "loess",
+                "gam" = "gam",
+                "lm" = "lm",
+                "glm" = "glm",
+                "rlm" = "rlm"
+              ),
+              selected = "loess"
+            ),
+            sliderInput("smooth_span", "Smooth Span:", min = 0.1, max = 1, value = 0.75, step = 0.05),
+            checkboxInput("se", "Show Confidence Interval", TRUE)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'boxplot' || input.plot_type == 'violin'",
+            checkboxInput("notch", "Notched Boxplot", FALSE),
+            sliderInput("width", "Width:", min = 0.1, max = 1, value = 0.7, step = 0.05),
+            checkboxInput("rotate_plot", "Rotate Plot (Horizontal)", FALSE)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'bar' || input.plot_type == 'clustered_bar'",
+            checkboxInput("rotate_barplot", "Rotate Plot (Horizontal)", FALSE)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'violin'",
+            checkboxInput("trim", "Trim Violins", TRUE),
+            sliderInput("violin_scale", "Violin Scale:", min = 0.1, max = 2, value = 1, step = 0.1)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'density2d' || input.plot_type == 'contour'",
+            sliderInput("contour_size", "Contour Size:", min = 0.1, max = 2, value = 0.5, step = 0.1),
+            numericInput("contour_bins", "Number of Contour Levels:", value = 10, min = 1)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'hex'",
+            numericInput("hex_bins", "Number of Hex Bins:", value = 30, min = 1)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'pie' || input.plot_type == 'donut'",
+            sliderInput("pie_size", "Pie Size:", min = 0.1, max = 1, value = 1, step = 0.05)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'waffle'",
+            numericInput("waffle_rows", "Number of Rows:", value = 10, min = 1),
+            numericInput("waffle_cols", "Number of Columns:", value = 10, min = 1)
+          ),
+          
+          hr(),
+          h4("Statistical Tests", class = "section-header"),
+          p("Click the button below to run statistical tests and see the results.", 
+            style = "font-size: 12px; color: #6c757d; margin-bottom: 10px;"),
+          
+          actionButton("run_tests", "Run Statistical Tests", 
+                       class = "btn-primary",
+                       style = "margin-bottom: 15px; width: 100%;"),
+          
+          conditionalPanel(
+            condition = "input.plot_type == 'scatter'",
+            checkboxInput("show_correlation", "Show Correlation", FALSE),
+            conditionalPanel(
+              condition = "input.show_correlation == true",
+              radioButtons("cor_method", "Correlation Method:",
+                           choices = c("Pearson" = "pearson", "Spearman" = "spearman", "Kendall" = "kendall"),
+                           selected = "pearson",
+                           inline = TRUE)
+            )
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'boxplot' || input.plot_type == 'violin'",
+            checkboxInput("show_test", "Show Statistical Test", FALSE),
+            conditionalPanel(
+              condition = "input.show_test == true",
+              selectInput("test_method", "Test Method:",
+                          choices = c("Wilcoxon" = "wilcox.test", "t-test" = "t.test", "Kruskal-Wallis" = "kruskal.test"),
+                          selected = "wilcox.test")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'bar' && input.x_var != 'none' && input.y_var != 'none'",
+            checkboxInput("show_chisq", "Show Chi-square Test", FALSE)
+          ),
+          conditionalPanel(
+            condition = "input.plot_type == 'histogram'",
+            checkboxInput("show_normality", "Show Normality Tests", FALSE)
+          ),
+          
+          hr(),
+          h4("Labels & Titles", class = "section-header"),
+          textInput("title", "Plot Title:", value = ""),
+          textInput("x_lab", "X Axis Label:", value = ""),
+          textInput("y_lab", "Y Axis Label:", value = ""),
+          textInput("caption", "Caption:", value = ""),
+          textInput("tag", "Tag:", value = ""),
+          hr(),
+          h4("Theme & Appearance", class = "section-header"),
+          selectInput(
+            "theme",
+            "Theme:",
+            choices = c(
+              "Gray" = "theme_gray",
+              "Classic" = "theme_classic",
+              "Minimal" = "theme_minimal",
+              "BW" = "theme_bw",
+              "Light" = "theme_light",
+              "Dark" = "theme_dark",
+              "Void" = "theme_void",
+              "Test" = "theme_test",
+              "Pubr" = "theme_pubr",
+              "Pubclean" = "theme_pubclean",
+              "Linedraw" = "theme_linedraw"
+            ),
+            selected = "theme_gray"
+          ),
+          sliderInput("base_size", "Base Font Size:", min = 8, max = 24, value = 12, step = 1),
+          checkboxInput("coord_flip", "Flip Coordinates", FALSE),
+          checkboxInput("interactive", "Interactive Plot", FALSE),
+          hr(),
+          div(
+            style = "display: flex; flex-direction: column; gap: 10px;",
+            actionButton("run_analysis", "Generate Plot", 
+                         class = "btn-primary",
+                         style = "width: 100%;"),
+            downloadButton("download_plot", "Download Plot", 
+                           class = "btn-success",
+                           style = "width: 100%;"),
+            downloadButton("download_data", "Download Data", 
+                           class = "btn-info",
+                           style = "width: 100%; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); border: none;")
+          ),
+          hr(),
+          div(
+            style = "background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 15px; border-radius: 8px; margin-top: 20px;",
+            p(strong("Developer Info"), style = "color: #495057; margin-bottom: 10px;"),
+            p("Name: Mudasir Mohammed Ibrahim", style = "margin: 5px 0; color: #6c757d;"),
+            p("For suggestions or problems, contact:", style = "margin: 5px 0; color: #6c757d;"),
+            p(HTML("<a href='mailto:mudassiribrahim30@gmail.com' style='color: #667eea;'>mudassiribrahim30@gmail.com</a>"))
+          )
+        ),
+        mainPanel(
+          width = 9,
+          class = "main-panel",
+          div(
+            class = "plot-container",
+            conditionalPanel(
+              condition = "input.interactive == false",
+              plotOutput("static_plot", height = "600px")
+            ),
+            conditionalPanel(
+              condition = "input.interactive == true",
+              girafeOutput("interactive_plot", height = "600px")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.run_tests > 0",
+            div(class = "fade-in",
+                h4("Statistical Test Results"),
+                verbatimTextOutput("statistical_results")
+            )
+          )
+        )
+      )
+    ),
+    
+    # Data tab content
+    conditionalPanel(
+      condition = "input.main_tabs == 'data'",
+      div(
+        class = "main-panel",
+        DTOutput("data_table")
+      )
+    ),
+    
+    # Usage tab content
+    conditionalPanel(
+      condition = "input.main_tabs == 'usage'",
+      div(
+        class = "main-panel",
+        verbatimTextOutput("plot_code"),
+        actionButton("copy_code", "Thank You for Using the App", 
+                     class = "btn-primary",
+                     style = "margin-top: 10px; width: 100%;")
+      )
     )
   )
 )
