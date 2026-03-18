@@ -533,7 +533,20 @@ ui <- fluidPage(
           # Footer - now at the bottom and visible across all tabs
           div(class = "footer",
               p("SysSampler | Developed by Mudasir Mohammed Ibrahim"),
-              p("© 2024 All Rights Reserved")
+              p(HTML(paste0("Copyright © 2025-", format(Sys.Date(), "%Y"), " All Rights Reserved | ",
+                            a(icon("researchgate"), 
+                              href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                              target = "_blank", 
+                              rel = "noopener noreferrer",
+                              title = "ResearchGate",
+                              style = "color: #00CED1; text-decoration: none; margin: 0 5px;"),
+                            " | ",
+                            a(icon("github"), 
+                              href = "https://github.com/mudassiribrahim30", 
+                              target = "_blank", 
+                              rel = "noopener noreferrer",
+                              title = "GitHub",
+                              style = "color: #FFFFFF; text-decoration: none; margin: 0 5px;"))))
           )
       )
   )
