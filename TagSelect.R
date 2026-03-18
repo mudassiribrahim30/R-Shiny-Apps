@@ -309,16 +309,54 @@ ui <- fluidPage(
         padding: 10px;
       }
       
-      .footer {
-        background: var(--primary-gradient);
-        color: white;
-        text-align: center;
-        padding: 15px;
-        border-radius: 0px;
-        margin-top: auto;
-        font-size: 0.9em;
-        width: 100%;
-      }
+.footer {
+    background: var(--primary-gradient);
+    color: white;
+    text-align: center;
+    padding: 15px;
+    border-radius: 0px;
+    margin-top: auto;
+    font-size: 0.9em;
+    width: 100%;
+}
+
+.footer p {
+    color: white !important;
+    margin: 5px 0;
+}
+
+.social-links {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.social-links a {
+    color: white !important;
+    text-decoration: none;
+    margin: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.social-links a:hover {
+    text-decoration: underline;
+}
+
+.social-links a i {
+    font-size: 1.1em;
+}
+
+[data-theme='dark'] .footer {
+    background: linear-gradient(135deg, #1a2634, #2d3748);
+}
+
+[data-theme='dark'] .social-links a {
+    color: white !important;
+}
       
       .content-wrapper {
         flex: 1;
@@ -1075,8 +1113,18 @@ ui <- fluidPage(
           
           div(class = "footer",
               p("TagSelect | Developed by Mudasir Mohammed Ibrahim"),
-              p("© 2025 All Rights Reserved")
+              div(class = "social-links",
+                  a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                    target = "_blank", 
+                    icon("researchgate"), " ResearchGate"),
+                  " | ",
+                  a(href = "https://github.com/mudassiribrahim30", 
+                    target = "_blank", 
+                    icon("github"), " GitHub")
+              ),
+              p(paste0("Copyright © 2025-", format(Sys.Date(), "%Y"), " All Rights Reserved"))
           )
+
       )
   )
 )
