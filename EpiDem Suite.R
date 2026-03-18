@@ -476,33 +476,76 @@ ui <- navbarPage(
   ),
   footer = div(
     class = "footer",
-    "Copyright © Mudasir Mohammed Ibrahim (mudassiribrahim30@gmail.com)"
+    style = "padding: 15px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 0.95rem;",
+    
+    HTML(paste0(
+      "Copyright © 2025-", 
+      format(Sys.Date(), "%Y"), 
+      " EpiDem Suite | ",
+      "<span style='font-weight: 500; color: #2c3e50;'>Connect with me:</span> ",
+      
+      # ResearchGate
+      "<a href='https://www.researchgate.net/profile/Mudasir-Ibrahim' target='_blank' style='color: #0C5EA8; text-decoration: none; font-weight: 500; transition: all 0.3s ease; margin: 0 5px;' ",
+      "onmouseover=\"this.style.color='#00CCBB'; this.style.textDecoration='underline'\" ",
+      "onmouseout=\"this.style.color='#0C5EA8'; this.style.textDecoration='none'\">",
+      "<i class='ai ai-researchgate' style='margin-right: 3px; font-size: 1.1rem;'></i>ResearchGate",
+      "</a>",
+      
+      " | ",
+      
+      # LinkedIn
+      "<a href='https://linkedin.com/in/mudasir-mohammed-ibrahim-16b5141b0' target='_blank' style='color: #0077B5; text-decoration: none; font-weight: 500; transition: all 0.3s ease; margin: 0 5px;' ",
+      "onmouseover=\"this.style.color='#005582'; this.style.textDecoration='underline'\" ",
+      "onmouseout=\"this.style.color='#0077B5'; this.style.textDecoration='none'\">",
+      "<i class='fab fa-linkedin' style='margin-right: 3px; font-size: 1.1rem;'></i>LinkedIn",
+      "</a>",
+      
+      " | ",
+      
+      # ORCID
+      "<a href='https://orcid.org/0000-0002-9049-8222' target='_blank' style='color: #A6CE39; text-decoration: none; font-weight: 500; transition: all 0.3s ease; margin: 0 5px;' ",
+      "onmouseover=\"this.style.color='#8FB339'; this.style.textDecoration='underline'\" ",
+      "onmouseout=\"this.style.color='#A6CE39'; this.style.textDecoration='none'\">",
+      "<i class='ai ai-orcid' style='margin-right: 3px; font-size: 1.1rem;'></i>ORCID",
+      "</a>"
+    ))
   ),
+  
   windowTitle = "EpiDem Suite - Epidemiological Analysis Tool",
   id = "nav",
   header = tags$head(
     tags$style(HTML(custom_css)),
     useShinyjs(),
     tags$script(HTML("
-      $(document).ready(function() {
-        // Add animation to navbar brand
-        $('.navbar-brand').css({
-          'animation': 'gentleMove 3s ease-in-out infinite',
-          'transform-origin': 'center'
-        });
-        
-        // Smooth scrolling for anchor links
-        $('a[href^=\"#\"]').on('click', function(e) {
-          if(this.hash !== '') {
-            e.preventDefault();
-            const hash = this.hash;
-            $('html, body').animate({
-              scrollTop: $(hash).offset().top - 70
-            }, 800);
-          }
-        });
-      });
-    "))
+  $(document).ready(function() {
+    // Add animation to navbar brand
+    $('.navbar-brand').css({
+      'animation': 'gentleMove 3s ease-in-out infinite',
+      'transform-origin': 'center'
+    });
+    
+    // Fix for tab clicks - prevent any unwanted scrolling
+    $(document).on('click', '.nav-tabs a', function(e) {
+      // Don't prevent default, just ensure no unwanted scrolling happens
+      // This allows normal tab functionality while preventing the hash scroll
+      return true;
+    });
+    
+    // Remove any automatic scrolling to hash
+    if (window.location.hash) {
+      // Store the hash
+      var hash = window.location.hash;
+      
+      // Clear it temporarily
+      window.location.hash = '';
+      
+      // Restore it without scrolling
+      setTimeout(function() {
+        window.location.hash = hash;
+      }, 1);
+    }
+  });
+"))
   ),
   theme = bslib::bs_theme(
     version = 5, 
@@ -3382,7 +3425,7 @@ server <- function(input, output, session) {
     return(p)
   })
   
- 
+  
   # ULTRA-ROBUST CORRELATION ANALYSIS - WITHOUT WGCNA
   cor_results <- eventReactive(input$run_cor, {
     req(input$cor_var1, input$cor_var2, processed_data())
@@ -3820,7 +3863,7 @@ server <- function(input, output, session) {
       ))
     })
   })
-    # Add this function to check data types
+  # Add this function to check data types
   check_variable_types <- function(df, var1, var2) {
     type1 <- class(df[[var1]])[1]
     type2 <- class(df[[var2]])[1]
