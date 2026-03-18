@@ -23,13 +23,37 @@ library(pander)
 
 ui <- dashboardPage(
   dashboardHeader(
-    title = span(
-      "FAnalyzr",
-      style = "font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.8rem; 
-               color: #000000 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-    ),
-    titleWidth = 250
+    title = "FAnalyzr",
+    titleWidth = 250,
+    tags$li(
+      class = "dropdown",
+      tags$div(
+        style = "display: flex; align-items: center; height: 50px; padding-right: 15px;",
+        span("Connect with Developer:", 
+             style = "font-family: 'Poppins', sans-serif; font-size: 13px; color: #2c3e50; font-weight: 500; margin-right: 10px;"),
+        tags$a(
+          href = "https://github.com/mudassiribrahim30",  # Replace with your GitHub username
+          target = "_blank",
+          tags$i(class = "fab fa-github", 
+                 style = "font-size: 24px; color: #1a1e24; margin: 0 8px; text-shadow: 0 2px 3px rgba(0,0,0,0.2);")
+        ),
+        tags$a(
+          href = "https://linkedin.com/in/mudasir-mohammed-ibrahim-16b5141b0",  # Replace with your LinkedIn profile
+          target = "_blank",
+          tags$i(class = "fab fa-linkedin", 
+                 style = "font-size: 24px; color: #006192; margin: 0 8px; text-shadow: 0 2px 3px rgba(0,0,0,0.15);")
+        ),
+        tags$a(
+          href = "https://www.researchgate.net/profile/Mudasir-Ibrahim",  # Replace with your ResearchGate profile
+          target = "_blank",
+          tags$i(class = "fab fa-researchgate", 
+                 style = "font-size: 24px; color: #00a88f; margin: 0 8px; text-shadow: 0 2px 3px rgba(0,0,0,0.15);")
+        )
+      )
+    )
   ),
+  
+  
   dashboardSidebar(
     width = 300,
     tags$head(
