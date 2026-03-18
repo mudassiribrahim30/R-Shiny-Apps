@@ -422,11 +422,20 @@ ui <- fluidPage(
   
   div(
     class = "developer-info",
-    "Developed by ",
+    "Built with ❤️ in Ghana by",
     tags$b("Mudasir Mohammed Ibrahim"),
     br(),
-    "For suggestions: ",
-    tags$a(href = "mailto:mudassiribrahim30@gmail.com", "mudassiribrahim30@gmail.com")
+    div(
+      style = "display: flex; gap: 15px; justify-content: center; align-items: center; margin-top: 5px;",
+      tags$a(href = "mailto:mudassiribrahim30@gmail.com", 
+             icon("envelope"), " Email"),
+      tags$a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+             target = "_blank", 
+             icon("researchgate"), " ResearchGate"),
+      tags$a(href = "https://github.com/mudassiribrahim30", 
+             target = "_blank", 
+             icon("github"), " GitHub")
+    )
   )
 )
 
