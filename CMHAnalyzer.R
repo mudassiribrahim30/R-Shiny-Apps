@@ -199,11 +199,7 @@ calculate_cmh_analysis <- function(strata_tables, conf_level = 0.95) {
 ui <- dashboardPage(
   skin = "blue",
   dashboardHeader(
-    title = span(
-      icon("chart-bar"), 
-      "CMH Analyzer",
-      style = "font-weight: bold; font-size: 20px; color: #FFFFFF;"
-    ),
+    title = "CMH Analyzer - An Open Source Tool for Performing Cochran–Mantel–Haenszel test",
     titleWidth = 350
   ),
   
@@ -317,7 +313,8 @@ ui <- dashboardPage(
                            tags$ul(
                              tags$li("Mudasir Mohammed Ibrahim, RN"),
                              tags$li("Registered Nurse"),
-                             tags$li(HTML("<a href='mailto:mudassiribrahim30@gmail.com'>mudassiribrahim30@gmail.com</a>"))
+                             tags$li(HTML("<a href='mailto:mudassiribrahim30@gmail.com'>mudassiribrahim30@gmail.com</a>")),
+                             tags$li(HTML("<a href='https://www.researchgate.net/profile/Mudasir-Ibrahim' target='_blank'>Connect with me on ResearchGate</a>"))
                            )
                        )
                 )
