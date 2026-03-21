@@ -15,12 +15,12 @@ library(shinyjs)
 library(shinydashboard)
 
 app_name <- "MedModr"
-app_version <- "2.1.0"
+app_version <- "3.0.0"
 release_date <- "October 2025"
 
 ui <- fluidPage(
   useShinyjs(),
-  title = "MedModr",
+  title = "MedModr | Mediation and Moderation Analyses Software",
   titleWidth = 350,
   
   theme = shinytheme("cosmo"),
@@ -631,7 +631,7 @@ ui <- fluidPage(
                  div(class = "choice-icon", icon("code")),
                  div(class = "choice-title", "Syntax Interface"),
                  div(class = "choice-description", 
-                     "Write lavaan syntax directly for maximum flexibility and control. For advanced users.")
+                     "Write lavaan syntax directly for maximum flexibility and control. For R users.")
              )
       )
     ),
@@ -689,13 +689,24 @@ ui <- fluidPage(
           
           div(class = "analysis-options",
               h5("Output Options:"),
-              checkboxGroupInput("output_options", "Select output to include:",
-                                 choices = c("Total Effects" = "total",
-                                             "Direct Effects" = "direct",
-                                             "Indirect Effects" = "indirect",
-                                             "Path Coefficients" = "paths",
-                                             "Model Fit Indices" = "fit"),
-                                 selected = c("total", "direct", "indirect", "paths", "fit"))
+              conditionalPanel(
+                condition = "input.analysis_type_interactive == 'Moderation'",
+                checkboxGroupInput("output_options_moderation", "Select output to include:",
+                                   choices = c("Interaction Effects" = "interaction",
+                                               "Simple Slopes" = "slopes",
+                                               "Model Fit Indices" = "fit"),
+                                   selected = c("interaction", "slopes", "fit"))
+              ),
+              conditionalPanel(
+                condition = "input.analysis_type_interactive != 'Moderation'",
+                checkboxGroupInput("output_options", "Select output to include:",
+                                   choices = c("Total Effects" = "total",
+                                               "Direct Effects" = "direct",
+                                               "Indirect Effects" = "indirect",
+                                               "Path Coefficients" = "paths",
+                                               "Model Fit Indices" = "fit"),
+                                   selected = c("total", "direct", "indirect", "paths", "fit"))
+              )
           )
         ),
         
@@ -1068,8 +1079,22 @@ ui <- fluidPage(
                        ),
                        h5("Statistical Engine:"),
                        p("This app uses the", tags$strong("lavaan"), "package (Latent Variable Analysis) for all structural equation modeling analyses."),
-                       h5("Developed by:"),
-                       p("Mudasir Mohammed Ibrahim"),
+                       h5("Developed by:", style = "margin-bottom: 5px;"),
+                       div(style = "display: flex; align-items: center; gap: 15px; margin-bottom: 15px;",
+                           p("Mudasir Mohammed Ibrahim", style = "margin: 0; font-weight: 500;"),
+                           a(href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en", 
+                             target = "_blank",
+                             icon("graduation-cap", class = "fa-2x", style = "color: #4285f4; transition: all 0.3s ease;"),
+                             style = "text-decoration: none;"),
+                           a(href = "https://orcid.org/0000-0002-9049-8222", 
+                             target = "_blank",
+                             icon("orcid", class = "fa-2x", style = "color: #A6CE39; transition: all 0.3s ease;"),
+                             style = "text-decoration: none;"),
+                           a(href = "https://www.researchgate.net/profile/Mudasir-Ibrahim", 
+                             target = "_blank",
+                             icon("researchgate", class = "fa-2x", style = "color: #00CCBB; transition: all 0.3s ease;"),
+                             style = "text-decoration: none;")
+                       ),
                        h5("Contact:"),
                        p("mudassiribrahim30@gmail.com"),
                        h5("License:"),
@@ -1691,11 +1716,11 @@ server <- function(input, output, session) {
   output$simple_mediation_syntax <- renderText({
     "# Replace X, M, Y with your actual variable names
 M ~ a*X
-Y ~ b*M + cp*X
+Y ~ b*M + c*X
 
 # Define effects
 Indirect_Effect_M := a*b
-Total_Effect := cp + (a*b)"
+Total_Effect := c + (a*b)"
   })
   
   output$serial_mediation_syntax <- renderText({
@@ -2281,8 +2306,8 @@ Simple_Slope_High := b1 + b3*(1)"
       cat(sprintf("SRMR = %.3f\n\n", fit_measures["srmr"]))
       
       cat("Fit Interpretation:\n")
-      if (fit_measures["cfi"] > 0.95 && fit_measures["rmsea"] <= 0.08) {
-        cat("Excellent model fit (CFI > 0.95, RMSEA <= 0.08)\n")
+      if (fit_measures["cfi"] > 0.90 && fit_measures["rmsea"] <= 0.08) {
+        cat("Excellent model fit (CFI > 0.90, RMSEA <= 0.08)\n")
       } else if (fit_measures["cfi"] > 0.90 && fit_measures["rmsea"] < 0.08) {
         cat("Acceptable model fit (CFI > 0.90, RMSEA < 0.08)\n")
       } else {
@@ -2306,7 +2331,7 @@ Simple_Slope_High := b1 + b3*(1)"
     })
   })
   
-  # Create mediation path estimates table
+  # Create path estimates table (with bivariate associations for moderation)
   output$mediationTable <- renderDT({
     req(model_fit())
     fit <- model_fit()
@@ -2328,21 +2353,174 @@ Simple_Slope_High := b1 + b3*(1)"
                                  ci = TRUE)
       }
       
-      mediation_paths <- pe[pe$op == "~", ]
-      indirect_effects <- pe[pe$op == ":=" & grepl("Indirect_Effect|Total_Effect|Simple_Slope", pe$lhs), ]
+      # For moderation analysis, replace main effects with bivariate associations
+      if(current_interface() == "interactive" && input$analysis_type_interactive == "Moderation") {
+        
+        # Get the original path estimates
+        mediation_paths <- pe[pe$op == "~", ]
+        indirect_effects <- pe[pe$op == ":=" & grepl("Indirect_Effect|Total_Effect|Simple_Slope", pe$lhs), ]
+        
+        # Identify which rows are the main effects (X → Y and W → Y)
+        x_var <- selected_variables$X
+        w_var <- selected_variables$W
+        y_var <- selected_variables$Y
+        
+        # Compute bivariate associations using simple linear regression
+        df <- data()
+        
+        # Function to compute bivariate regression
+        compute_bivariate <- function(dep_var, indep_var, data) {
+          formula <- as.formula(paste(dep_var, "~", indep_var))
+          lm_fit <- lm(formula, data = data, na.action = na.omit)
+          summary_fit <- summary(lm_fit)
+          
+          if (indep_var %in% rownames(coef(summary_fit))) {
+            coefs <- coef(summary_fit)[indep_var, ]
+            est <- coefs["Estimate"]
+            se <- coefs["Std. Error"]
+            t_val <- coefs["t value"]
+            p_val <- coefs["Pr(>|t|)"]
+            
+            # Calculate confidence intervals
+            ci_lower <- est - 1.96 * se
+            ci_upper <- est + 1.96 * se
+            
+            # Calculate standardized beta
+            sd_x <- sd(data[[indep_var]], na.rm = TRUE)
+            sd_y <- sd(data[[dep_var]], na.rm = TRUE)
+            std_beta <- est * (sd_x / sd_y)
+            
+            # Calculate standardized SE
+            std_se <- std_beta / t_val
+            
+            return(list(
+              lhs = dep_var,
+              rhs = indep_var,
+              op = "~",
+              est = est,
+              std.all = std_beta,
+              se = se,
+              pvalue = p_val,
+              ci.lower = ci_lower,
+              ci.upper = ci_upper
+            ))
+          }
+          return(NULL)
+        }
+        
+        # Compute bivariate associations
+        bivariate_xy <- compute_bivariate(y_var, x_var, df)
+        bivariate_wy <- compute_bivariate(y_var, w_var, df)
+        
+        # Create a modified version of mediation_paths
+        modified_paths <- mediation_paths
+        
+        # Replace X → Y and W → Y with bivariate results
+        if(!is.null(bivariate_xy)) {
+          xy_rows <- which(modified_paths$lhs == y_var & modified_paths$rhs == x_var)
+          if(length(xy_rows) > 0) {
+            for(i in xy_rows) {
+              modified_paths$est[i] <- bivariate_xy$est
+              modified_paths$std.all[i] <- bivariate_xy$std.all
+              modified_paths$se[i] <- bivariate_xy$se
+              modified_paths$pvalue[i] <- bivariate_xy$pvalue
+              modified_paths$ci.lower[i] <- bivariate_xy$ci.lower
+              modified_paths$ci.upper[i] <- bivariate_xy$ci.upper
+            }
+          } else {
+            # If not found, add as new rows
+            new_row <- data.frame(
+              lhs = bivariate_xy$lhs,
+              op = bivariate_xy$op,
+              rhs = bivariate_xy$rhs,
+              est = bivariate_xy$est,
+              std.all = bivariate_xy$std.all,
+              se = bivariate_xy$se,
+              pvalue = bivariate_xy$pvalue,
+              ci.lower = bivariate_xy$ci.lower,
+              ci.upper = bivariate_xy$ci.upper,
+              stringsAsFactors = FALSE
+            )
+            modified_paths <- rbind(modified_paths, new_row)
+          }
+        }
+        
+        if(!is.null(bivariate_wy)) {
+          wy_rows <- which(modified_paths$lhs == y_var & modified_paths$rhs == w_var)
+          if(length(wy_rows) > 0) {
+            for(i in wy_rows) {
+              modified_paths$est[i] <- bivariate_wy$est
+              modified_paths$std.all[i] <- bivariate_wy$std.all
+              modified_paths$se[i] <- bivariate_wy$se
+              modified_paths$pvalue[i] <- bivariate_wy$pvalue
+              modified_paths$ci.lower[i] <- bivariate_wy$ci.lower
+              modified_paths$ci.upper[i] <- bivariate_wy$ci.upper
+            }
+          } else {
+            # If not found, add as new rows
+            new_row <- data.frame(
+              lhs = bivariate_wy$lhs,
+              op = bivariate_wy$op,
+              rhs = bivariate_wy$rhs,
+              est = bivariate_wy$est,
+              std.all = bivariate_wy$std.all,
+              se = bivariate_wy$se,
+              pvalue = bivariate_wy$pvalue,
+              ci.lower = bivariate_wy$ci.lower,
+              ci.upper = bivariate_wy$ci.upper,
+              stringsAsFactors = FALSE
+            )
+            modified_paths <- rbind(modified_paths, new_row)
+          }
+        }
+        
+        # Keep the interaction effect and simple slopes as is
+        interaction_effect <- mediation_paths[grepl("_", mediation_paths$rhs) & 
+                                                !mediation_paths$rhs %in% c(x_var, w_var), ]
+        simple_slopes <- indirect_effects
+        
+        # Combine everything
+        relevant_paths <- rbind(modified_paths, simple_slopes)
+        
+        # Remove duplicates (if any)
+        relevant_paths <- unique(relevant_paths)
+        
+      } else {
+        # For mediation analyses, keep original behavior
+        mediation_paths <- pe[pe$op == "~", ]
+        indirect_effects <- pe[pe$op == ":=" & grepl("Indirect_Effect|Total_Effect|Simple_Slope", pe$lhs), ]
+        relevant_paths <- rbind(mediation_paths, indirect_effects)
+      }
       
-      relevant_paths <- rbind(mediation_paths, indirect_effects)
-      
+      # Create the pathway names
       relevant_paths$Pathway <- ifelse(relevant_paths$op == "~", 
                                        paste(relevant_paths$lhs, "<-", relevant_paths$rhs),
                                        paste(relevant_paths$lhs, ":=", relevant_paths$rhs))
       
+      # Prepare table data
       table_data <- relevant_paths[, c("Pathway", "est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")]
       names(table_data) <- c("Pathway", "Estimate", "Std. Estimate", "SE", "p-value", "CI Lower", "CI Upper")
       
       table_data$`p-value` <- format.pval(table_data$`p-value`, digits = 3, eps = 0.001)
       table_data[, c("Estimate", "Std. Estimate", "SE", "CI Lower", "CI Upper")] <- 
         round(table_data[, c("Estimate", "Std. Estimate", "SE", "CI Lower", "CI Upper")], 3)
+      
+      # Add a note for moderation analysis
+      if(current_interface() == "interactive" && input$analysis_type_interactive == "Moderation") {
+        table_data <- rbind(
+          table_data,
+          data.frame(
+            Pathway = "Note: X → Y and W → Y are bivariate associations from simple linear regression (not controlling for other variables)",
+            Estimate = NA,
+            `Std. Estimate` = NA,
+            SE = NA,
+            `p-value` = NA,
+            `CI Lower` = NA,
+            `CI Upper` = NA,
+            check.names = FALSE
+          )
+        )
+      }
       
       datatable(
         table_data,
