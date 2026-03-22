@@ -20,7 +20,7 @@ release_date <- "October 2025"
 
 ui <- fluidPage(
   useShinyjs(),
-  title = "MedModr | R Shiny App for Mediation & Moderation Analysis",
+  title = "MedModr | An Open-Source Mediation & Moderation Software",
   titleWidth = 350,
   
   theme = shinytheme("cosmo"),
@@ -865,7 +865,7 @@ ui <- fluidPage(
                                sliderInput("edge_label_size", "Edge Label Size:", 
                                            min = 0.5, max = 2, value = 1.2, step = 0.1),
                                sliderInput("arrow_size", "Arrow Size:", 
-                                           min = 0.5, max = 2, value = 1, step = 0.1),
+                                           min = 0.5, max = 5, value = 1.5, step = 0.1),
                                sliderInput("edge_width", "Path Line Width:", 
                                            min = 0.5, max = 5, value = 1.5, step = 0.5),
                                
@@ -875,14 +875,7 @@ ui <- fluidPage(
                                colourpicker::colourInput("edge_color", "Path Line Color:", value = "black"),
                                
                                h5("Node Labels"),
-                               textInput("node_x_label", "X Variable Label:", 
-                                         placeholder = "Label for X variable"),
-                               textInput("node_y_label", "Y Variable Label:", 
-                                         placeholder = "Label for Y variable"),
-                               textInput("node_m_label", "M Variable Label:", 
-                                         placeholder = "Label for M variable"),
-                               textInput("node_m1_label", "M1 Variable Label:", 
-                                         placeholder = "Label for M1 variable"),
+                               uiOutput("node_labels_ui"),
                                
                                downloadButton("download_diagram", "Download Diagram (PNG)", 
                                               class = "btn-success btn-block")
@@ -1050,7 +1043,7 @@ ui <- fluidPage(
           tabPanel("About",
                    div(class = "well",
                        h4(app_name, "v", app_version),
-                       p("A user-friendly interface for mediation, serial mediation, and moderation analysis using the lavaan package for structural equation modeling."),
+                       p("A user-friendly R Shiny application for simple mediation, serial mediation, and moderation analysis using the lavaan package for structural equation modeling (SEM)."),
                        h5("Key Features:"),
                        tags$ul(
                          tags$li("Dual interface: Interactive point-and-click AND syntax-based"),
@@ -1614,6 +1607,78 @@ server <- function(input, output, session) {
                          )
     )
     return(guide_text)
+  })
+  
+  # Dynamic node labels UI based on analysis type
+  output$node_labels_ui <- renderUI({
+    # Determine analysis type
+    if (current_interface() == "interactive") {
+      analysis_type <- input$analysis_type_interactive
+    } else {
+      analysis_type <- input$analysis_type
+    }
+    
+    # Create appropriate number of label boxes
+    if (analysis_type == "Simple Mediation") {
+      tagList(
+        div(class = "well", style = "padding: 10px; margin-bottom: 10px;",
+            h6("Node Labels (enter text to display on diagram):", style = "margin-top: 0;"),
+            textInput("node_x_label", "X Variable Label:", 
+                      placeholder = "Label for X variable",
+                      value = if(!is.null(selected_variables$X)) selected_variables$X else ""),
+            textInput("node_m_label", "M Variable Label:", 
+                      placeholder = "Label for M variable",
+                      value = if(!is.null(selected_variables$M)) selected_variables$M else ""),
+            textInput("node_y_label", "Y Variable Label:", 
+                      placeholder = "Label for Y variable",
+                      value = if(!is.null(selected_variables$Y)) selected_variables$Y else "")
+        )
+      )
+    } else if (analysis_type == "Serial Mediation") {
+      tagList(
+        div(class = "well", style = "padding: 10px; margin-bottom: 10px;",
+            h6("Node Labels (enter text to display on diagram):", style = "margin-top: 0;"),
+            textInput("node_x_label", "X Variable Label:", 
+                      placeholder = "Label for X variable",
+                      value = if(!is.null(selected_variables$X)) selected_variables$X else ""),
+            textInput("node_m1_label", "M1 Variable Label:", 
+                      placeholder = "Label for M1 variable",
+                      value = if(!is.null(selected_variables$M1)) selected_variables$M1 else ""),
+            textInput("node_m2_label", "M2 Variable Label:", 
+                      placeholder = "Label for M2 variable",
+                      value = if(!is.null(selected_variables$M2)) selected_variables$M2 else ""),
+            textInput("node_y_label", "Y Variable Label:", 
+                      placeholder = "Label for Y variable",
+                      value = if(!is.null(selected_variables$Y)) selected_variables$Y else "")
+        )
+      )
+    } else if (analysis_type == "Moderation") {
+      tagList(
+        div(class = "well", style = "padding: 10px; margin-bottom: 10px;",
+            h6("Node Labels (enter text to display on diagram):", style = "margin-top: 0;"),
+            textInput("node_x_label", "X Variable Label:", 
+                      placeholder = "Label for X variable",
+                      value = if(!is.null(selected_variables$X)) selected_variables$X else ""),
+            textInput("node_w_label", "W Variable Label:", 
+                      placeholder = "Label for Moderator (W)",
+                      value = if(!is.null(selected_variables$W)) selected_variables$W else ""),
+            textInput("node_y_label", "Y Variable Label:", 
+                      placeholder = "Label for Y variable",
+                      value = if(!is.null(selected_variables$Y)) selected_variables$Y else "")
+        )
+      )
+    } else {
+      # Default fallback
+      tagList(
+        div(class = "well", style = "padding: 10px; margin-bottom: 10px;",
+            h6("Node Labels (enter text to display on diagram):", style = "margin-top: 0;"),
+            textInput("node_x_label", "X Variable Label:", 
+                      placeholder = "Label for X variable"),
+            textInput("node_y_label", "Y Variable Label:", 
+                      placeholder = "Label for Y variable")
+        )
+      )
+    }
   })
   
   # Variable preview with instruction
@@ -3315,6 +3380,59 @@ Simple_Slope_High := b1 + b3*(1)"
       custom_edge_labels <- c(custom_edge_labels, label)
     }
     
+    # Get node names from the model
+    node_names <- lavNames(fit)
+    
+    # Create a named vector for node labels
+    node_label_vector <- character(length(node_names))
+    names(node_label_vector) <- node_names
+    
+    # Populate with user-provided labels or default to variable names
+    for(i in seq_along(node_names)) {
+      node_name <- node_names[i]
+      
+      # Check if we have a user-defined label for this node
+      if(node_name == "X" && !is.null(node_labels[["X"]]) && nchar(node_labels[["X"]]) > 0) {
+        node_label_vector[i] <- node_labels[["X"]]
+      } else if(node_name == "Y" && !is.null(node_labels[["Y"]]) && nchar(node_labels[["Y"]]) > 0) {
+        node_label_vector[i] <- node_labels[["Y"]]
+      } else if(node_name == "M" && !is.null(node_labels[["M"]]) && nchar(node_labels[["M"]]) > 0) {
+        node_label_vector[i] <- node_labels[["M"]]
+      } else if(node_name == "M1" && !is.null(node_labels[["M1"]]) && nchar(node_labels[["M1"]]) > 0) {
+        node_label_vector[i] <- node_labels[["M1"]]
+      } else if(node_name == "M2" && !is.null(node_labels[["M2"]]) && nchar(node_labels[["M2"]]) > 0) {
+        node_label_vector[i] <- node_labels[["M2"]]
+      } else if(node_name == "W" && !is.null(node_labels[["W"]]) && nchar(node_labels[["W"]]) > 0) {
+        node_label_vector[i] <- node_labels[["W"]]
+      } else {
+        # Use the actual variable name if no label provided
+        # Try to get the actual variable name from selected_variables
+        if(current_interface() == "interactive") {
+          if(input$analysis_type_interactive == "Simple Mediation") {
+            if(node_name == "X" && !is.null(selected_variables$X)) node_label_vector[i] <- selected_variables$X
+            else if(node_name == "M" && !is.null(selected_variables$M)) node_label_vector[i] <- selected_variables$M
+            else if(node_name == "Y" && !is.null(selected_variables$Y)) node_label_vector[i] <- selected_variables$Y
+            else node_label_vector[i] <- node_name
+          } else if(input$analysis_type_interactive == "Serial Mediation") {
+            if(node_name == "X" && !is.null(selected_variables$X)) node_label_vector[i] <- selected_variables$X
+            else if(node_name == "M1" && !is.null(selected_variables$M1)) node_label_vector[i] <- selected_variables$M1
+            else if(node_name == "M2" && !is.null(selected_variables$M2)) node_label_vector[i] <- selected_variables$M2
+            else if(node_name == "Y" && !is.null(selected_variables$Y)) node_label_vector[i] <- selected_variables$Y
+            else node_label_vector[i] <- node_name
+          } else if(input$analysis_type_interactive == "Moderation") {
+            if(node_name == "X" && !is.null(selected_variables$X)) node_label_vector[i] <- selected_variables$X
+            else if(node_name == "W" && !is.null(selected_variables$W)) node_label_vector[i] <- selected_variables$W
+            else if(node_name == "Y" && !is.null(selected_variables$Y)) node_label_vector[i] <- selected_variables$Y
+            else node_label_vector[i] <- node_name
+          } else {
+            node_label_vector[i] <- node_name
+          }
+        } else {
+          node_label_vector[i] <- node_name
+        }
+      }
+    }
+    
     p <- semPaths(fit, 
                   what = "std", 
                   layout = layout,
@@ -3333,7 +3451,7 @@ Simple_Slope_High := b1 + b3*(1)"
                   rotation = 2,
                   asize = arrow_size,
                   label.cex = text_size,
-                  nodeLabels = node_labels,
+                  nodeLabels = node_label_vector,
                   edgeLabels = custom_edge_labels)
     
     return(p)
@@ -3381,34 +3499,42 @@ Simple_Slope_High := b1 + b3*(1)"
       } else if (effect_name == "Total_Effect") {
         display_name <- "Total Effect"
       } else if (effect_name == "Simple_Slope_Low") {
-        display_name <- "Simple Slope (Low)"
+        display_name <- "Simple Slope (Low Moderator)"
       } else if (effect_name == "Simple_Slope_Avg") {
-        display_name <- "Simple Slope (Average)"
+        display_name <- "Simple Slope (Average Moderator)"
       } else if (effect_name == "Simple_Slope_High") {
-        display_name <- "Simple Slope (High)"
+        display_name <- "Simple Slope (High Moderator)"
       } else {
-        display_name <- effect_name
+        display_name <- gsub("_", " ", effect_name)
       }
       
-      effect_result <- sprintf("%s (β=%.3f, %s)", display_name, std_coef, p_display)
+      # Add significance stars
+      sig_star <- if(p_value < 0.001) "***" else if(p_value < 0.01) "**" else if(p_value < 0.05) "*" else ""
+      
+      effect_result <- sprintf("%s: β=%.3f, %s%s", display_name, std_coef, p_display, sig_star)
       effects_text <- c(effects_text, effect_result)
     }
     
-    full_text <- paste(effects_text, collapse = "\n")
-    title_text <- "Effect Estimates\n"
-    full_text_with_title <- paste0(title_text, full_text)
-    
-    base_font_size <- min(width, height) / 45
-    
-    img_with_text <- image_annotate(img, full_text_with_title,
-                                    location = "+20+20",
-                                    size = base_font_size,
-                                    color = "darkblue",
-                                    weight = 700,
-                                    boxcolor = "white",
-                                    degrees = 0)
-    
-    image_write(img_with_text, png_file)
+    if(length(effects_text) > 0) {
+      full_text <- paste(effects_text, collapse = "\n")
+      title_text <- "═══════════════ EFFECT ESTIMATES ═══════════════\n"
+      full_text_with_title <- paste0(title_text, full_text)
+      
+      # Calculate font size based on image dimensions
+      base_font_size <- min(width, height) / 35
+      
+      # Create a semi-transparent background for better readability
+      img_with_text <- image_annotate(img, full_text_with_title,
+                                      location = "+30+30",
+                                      size = base_font_size,
+                                      color = "darkblue",
+                                      weight = 700,
+                                      boxcolor = "rgba(255,255,255,0.85)",
+                                      degrees = 0,
+                                      gravity = "northwest")
+      
+      image_write(img_with_text, png_file)
+    }
     
     return(png_file)
   }
@@ -3425,17 +3551,30 @@ Simple_Slope_High := b1 + b3*(1)"
     tryCatch({
       node_labels <- list()
       
-      if(nchar(input$node_x_label) > 0) {
-        node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
-      }
-      if(nchar(input$node_y_label) > 0) {
-        node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
-      }
-      if(nchar(input$node_m_label) > 0) {
-        node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
-      }
-      if(nchar(input$node_m1_label) > 0) {
-        node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+      # Check for each label based on analysis type
+      if(current_interface() == "interactive") {
+        if(input$analysis_type_interactive == "Simple Mediation") {
+          if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+          if(nchar(input$node_m_label) > 0) node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
+          if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+        } else if(input$analysis_type_interactive == "Serial Mediation") {
+          if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+          if(nchar(input$node_m1_label) > 0) node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+          if(nchar(input$node_m2_label) > 0) node_labels[["M2"]] <- substr(input$node_m2_label, 1, 50)
+          if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+        } else if(input$analysis_type_interactive == "Moderation") {
+          if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+          if(nchar(input$node_w_label) > 0) node_labels[["W"]] <- substr(input$node_w_label, 1, 50)
+          if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+        }
+      } else {
+        # Syntax interface - use all labels if they exist
+        if(exists("input$node_x_label") && nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+        if(exists("input$node_y_label") && nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+        if(exists("input$node_m_label") && nchar(input$node_m_label) > 0) node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
+        if(exists("input$node_m1_label") && nchar(input$node_m1_label) > 0) node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+        if(exists("input$node_m2_label") && nchar(input$node_m2_label) > 0) node_labels[["M2"]] <- substr(input$node_m2_label, 1, 50)
+        if(exists("input$node_w_label") && nchar(input$node_w_label) > 0) node_labels[["W"]] <- substr(input$node_w_label, 1, 50)
       }
       
       createEnhancedDiagram(fit, 
@@ -3477,17 +3616,30 @@ Simple_Slope_High := b1 + b3*(1)"
       tryCatch({
         node_labels <- list()
         
-        if(nchar(input$node_x_label) > 0) {
-          node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
-        }
-        if(nchar(input$node_y_label) > 0) {
-          node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
-        }
-        if(nchar(input$node_m_label) > 0) {
-          node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
-        }
-        if(nchar(input$node_m1_label) > 0) {
-          node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+        # Check for each label based on analysis type
+        if(current_interface() == "interactive") {
+          if(input$analysis_type_interactive == "Simple Mediation") {
+            if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+            if(nchar(input$node_m_label) > 0) node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
+            if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+          } else if(input$analysis_type_interactive == "Serial Mediation") {
+            if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+            if(nchar(input$node_m1_label) > 0) node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+            if(nchar(input$node_m2_label) > 0) node_labels[["M2"]] <- substr(input$node_m2_label, 1, 50)
+            if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+          } else if(input$analysis_type_interactive == "Moderation") {
+            if(nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+            if(nchar(input$node_w_label) > 0) node_labels[["W"]] <- substr(input$node_w_label, 1, 50)
+            if(nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+          }
+        } else {
+          # Syntax interface - use all labels if they exist
+          if(exists("input$node_x_label") && nchar(input$node_x_label) > 0) node_labels[["X"]] <- substr(input$node_x_label, 1, 50)
+          if(exists("input$node_y_label") && nchar(input$node_y_label) > 0) node_labels[["Y"]] <- substr(input$node_y_label, 1, 50)
+          if(exists("input$node_m_label") && nchar(input$node_m_label) > 0) node_labels[["M"]] <- substr(input$node_m_label, 1, 50)
+          if(exists("input$node_m1_label") && nchar(input$node_m1_label) > 0) node_labels[["M1"]] <- substr(input$node_m1_label, 1, 50)
+          if(exists("input$node_m2_label") && nchar(input$node_m2_label) > 0) node_labels[["M2"]] <- substr(input$node_m2_label, 1, 50)
+          if(exists("input$node_w_label") && nchar(input$node_w_label) > 0) node_labels[["W"]] <- substr(input$node_w_label, 1, 50)
         }
         
         png(temp_png, width = input$diagram_width, height = input$diagram_height, res = 300)
