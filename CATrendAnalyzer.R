@@ -33,7 +33,7 @@ convert_labelled_to_factor <- function(df) {
 ui <- dashboardPage(
   skin = "blue",
   dashboardHeader(
-    title = "CATrend Analyzer - An Open Source Tool for Performing Cochran-Armitage Trend Test",
+    title = "CATrend Analyzer",
     titleWidth = 350
   ),
   
@@ -451,9 +451,8 @@ ui <- dashboardPage(
                 column(4,
                        div(class = "feature-card",
                            h3("Developer Information"),
-                           p("Developed by:"),
+                           p("Written by:"),
                            tags$h4("Mudasir Mohammed Ibrahim"),
-                           tags$p("Registered Nurse"),
                            
                            # Academic profile links with icons
                            div(style = "margin: 15px 0; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;",
