@@ -684,14 +684,13 @@ ui <- fluidPage(
           condition = "output.current_interface == 'interactive'",
           h4("Model Specification", icon("sliders")),
           selectInput("analysis_type_interactive", "Select Analysis Type:",
-                      choices = c("Simple Mediation", "Serial Mediation", "Moderation")),
+                      choices = c("Simple Mediation", "Serial Mediation", "Moderation", "Moderated Mediation")),
           
           # Variable Selection Boxes
           uiOutput("variable_selection_ui"),
           
           # Analysis Options
           h4("Analysis Options", icon("cogs")),
-          # Removed Use Constructs checkbox from interactive interface
           
           div(class = "analysis-options",
               h5("Output Options:"),
@@ -704,7 +703,27 @@ ui <- fluidPage(
                                    selected = c("interaction", "slopes", "fit"))
               ),
               conditionalPanel(
-                condition = "input.analysis_type_interactive != 'Moderation'",
+                condition = "input.analysis_type_interactive == 'Moderated Mediation'",
+                checkboxGroupInput("output_options_moderated_mediation", "Select output to include:",
+                                   choices = c("Conditional Indirect Effects" = "conditional_indirect",
+                                               "Index of Moderated Mediation" = "index",
+                                               "Path Coefficients" = "paths",
+                                               "Model Fit Indices" = "fit"),
+                                   selected = c("conditional_indirect", "index", "paths", "fit")),
+                br(),
+                selectInput("moderator_levels", "Moderator Levels for Conditional Effects:",
+                            choices = c("-1 SD, Mean, +1 SD" = "std",
+                                        "Percentiles (16th, 50th, 84th)" = "percentile",
+                                        "Custom Values" = "custom"),
+                            selected = "std"),
+                conditionalPanel(
+                  condition = "input.moderator_levels == 'custom'",
+                  textInput("custom_mod_values", "Enter custom moderator values (comma-separated):",
+                            placeholder = "e.g., -2, 0, 2")
+                )
+              ),
+              conditionalPanel(
+                condition = "input.analysis_type_interactive == 'Simple Mediation' || input.analysis_type_interactive == 'Serial Mediation'",
                 checkboxGroupInput("output_options", "Select output to include:",
                                    choices = c("Total Effects" = "total",
                                                "Direct Effects" = "direct",
@@ -1043,20 +1062,21 @@ ui <- fluidPage(
           tabPanel("About",
                    div(class = "well",
                        h4(app_name, "v", app_version),
-                       p("A user-friendly R Shiny application for simple mediation, serial mediation, and moderation analysis using the lavaan package for structural equation modeling (SEM)."),
+                       p("A user-friendly application written in R using the Shiny framework for mediation and moderation analysis."),
                        h5("Key Features:"),
                        tags$ul(
                          tags$li("Dual interface: Interactive point-and-click AND syntax-based"),
                          tags$li("Uses lavaan package for robust statistical analysis"),
-                         tags$li("Supports simple and serial mediation models"),
+                         tags$li("Supports simple mediation models, serial mediation models, moderation models, and moderated moderation models.
+"),
                          tags$li("Moderation analysis with interaction terms"),
                          tags$li("Interactive and customizable path diagrams"),
                          tags$li("Professional report generation"),
                          tags$li("Adjust for confounding variables")
                        ),
                        h5("Statistical Engine:"),
-                       p("This app uses the", tags$strong("lavaan"), "package (Latent Variable Analysis) for all structural equation modeling analyses."),
-                       h5("Developed by:", style = "margin-bottom: 5px;"),
+                       p("This statistical application uses the", tags$strong("lavaan"), "package (Latent Variable Analysis) for all structural equation modeling analyses."),
+                       h5("Written by:", style = "margin-bottom: 5px;"),
                        div(style = "display: flex; align-items: center; gap: 15px; margin-bottom: 15px;",
                            p("Mudasir Mohammed Ibrahim", style = "margin: 0; font-weight: 500;"),
                            a(href = "https://scholar.google.com/citations?user=xEFzAvgAAAAJ&hl=en", 
@@ -1243,7 +1263,6 @@ server <- function(input, output, session) {
     })
   })
   
-  # Variable selection UI for interactive interface
   output$variable_selection_ui <- renderUI({
     req(data())
     df <- data()
@@ -1348,6 +1367,51 @@ server <- function(input, output, session) {
             }
         ),
         div(class = "variable-selection-box", 
+            onclick = "Shiny.setInputValue('select_variable', 'Y', {priority: 'event'});",
+            div(class = "variable-label", "Dependent Variable (Y)"),
+            if(!is.null(selected_variables$Y)) {
+              div(class = "variable-name", selected_variables$Y)
+            } else {
+              div(class = "click-instruction", "Click to select variable")
+            }
+        )
+      ),
+      
+      # Moderated Mediation Variables
+      conditionalPanel(
+        condition = "input.analysis_type_interactive == 'Moderated Mediation'",
+        div(class = "variable-selection-box", 
+            id = "x_box",
+            onclick = "Shiny.setInputValue('select_variable', 'X', {priority: 'event'});",
+            div(class = "variable-label", "Independent Variable (X)"),
+            if(!is.null(selected_variables$X)) {
+              div(class = "variable-name", selected_variables$X)
+            } else {
+              div(class = "click-instruction", "Click to select variable")
+            }
+        ),
+        div(class = "variable-selection-box", 
+            id = "m_box",
+            onclick = "Shiny.setInputValue('select_variable', 'M', {priority: 'event'});",
+            div(class = "variable-label", "Mediator Variable (M)"),
+            if(!is.null(selected_variables$M)) {
+              div(class = "variable-name", selected_variables$M)
+            } else {
+              div(class = "click-instruction", "Click to select variable")
+            }
+        ),
+        div(class = "variable-selection-box", 
+            id = "w_box",
+            onclick = "Shiny.setInputValue('select_variable', 'W', {priority: 'event'});",
+            div(class = "variable-label", "Moderator Variable (W)"),
+            if(!is.null(selected_variables$W)) {
+              div(class = "variable-name", selected_variables$W)
+            } else {
+              div(class = "click-instruction", "Click to select variable")
+            }
+        ),
+        div(class = "variable-selection-box", 
+            id = "y_box",
             onclick = "Shiny.setInputValue('select_variable', 'Y', {priority: 'event'});",
             div(class = "variable-label", "Dependent Variable (Y)"),
             if(!is.null(selected_variables$Y)) {
@@ -1488,7 +1552,6 @@ server <- function(input, output, session) {
     return(list(data = data, covariate_terms = dummy_terms))
   }
   
-  # Generate model syntax from interactive selection - FIXED VERSION
   generate_model_syntax <- reactive({
     req(current_interface() == "interactive")
     
@@ -1558,6 +1621,41 @@ server <- function(input, output, session) {
         "Simple_Slope_Avg := b1 + b3*(0)\n",
         "Simple_Slope_High := b1 + b3*(1)"
       )
+      
+    } else if (input$analysis_type_interactive == "Moderated Mediation") {
+      req(selected_variables$X, selected_variables$M, selected_variables$W, selected_variables$Y)
+      
+      # Get the actual variable names
+      x_var <- selected_variables$X
+      m_var <- selected_variables$M
+      w_var <- selected_variables$W
+      y_var <- selected_variables$Y
+      
+      # Clean variable names
+      x_clean <- gsub("[^a-zA-Z0-9_]", "", x_var)
+      m_clean <- gsub("[^a-zA-Z0-9_]", "", m_var)
+      w_clean <- gsub("[^a-zA-Z0-9_]", "", w_var)
+      y_clean <- gsub("[^a-zA-Z0-9_]", "", y_var)
+      
+      # Create interaction term names
+      xw_interaction <- paste0(x_clean, "_", w_clean)
+      
+      syntax <- paste0(
+        "# Moderated Mediation Model (Conditional Process Model)\n",
+        "# Path a: X → M (moderated by W)\n",
+        m_clean, " ~ a1*", x_clean, " + a2*", w_clean, " + a3*", xw_interaction, "\n\n",
+        "# Path b and c': M → Y and X → Y (no moderation on these paths)\n",
+        y_clean, " ~ b*", m_clean, " + cp*", x_clean, "\n\n",
+        "# Conditional indirect effect at different values of W\n",
+        "Conditional_Indirect_Low := (a1 + a3*(-1)) * b\n",
+        "Conditional_Indirect_Avg := (a1 + a3*(0)) * b\n",
+        "Conditional_Indirect_High := (a1 + a3*(1)) * b\n\n",
+        "# Index of Moderated Mediation\n",
+        "Index_Moderated_Mediation := a3 * b\n\n",
+        "# Direct effect and total effect\n",
+        "Direct_Effect := cp\n",
+        "Total_Effect := cp + (a1 + a3*(0)) * b"
+      )
     }
     
     return(syntax)
@@ -1580,7 +1678,6 @@ server <- function(input, output, session) {
   })
   
   
-  # Interactive guide
   output$interactive_guide <- renderUI({
     guide_text <- switch(input$analysis_type_interactive,
                          "Simple Mediation" = tags$ul(
@@ -1604,6 +1701,14 @@ server <- function(input, output, session) {
                            tags$li("W = Moderator Variable"),
                            tags$li("Y = Dependent Variable"),
                            tags$li("Note: The app creates the interaction term in your data when you run the analysis")
+                         ),
+                         "Moderated Mediation" = tags$ul(
+                           tags$li("Click on each box to select your variables"),
+                           tags$li("X = Independent Variable"),
+                           tags$li("M = Mediator Variable"),
+                           tags$li("W = Moderator Variable (moderates the X → M path)"),
+                           tags$li("Y = Dependent Variable"),
+                           tags$li("Note: The app automatically creates the X×W interaction term (centered)")
                          )
     )
     return(guide_text)
@@ -1863,27 +1968,76 @@ Simple_Slope_High := b1 + b3*(1)"
     equations <- equations[nchar(trimws(equations)) > 0]
     
     all_vars <- character()
-    lavaan_keywords <- c("a", "b", "c", "cp", "d", "a1", "a2", "b1", "b2", "b3", 
-                         "indirect", "total", "std", "lowW", "avgW", "highW",
-                         "indirect1", "indirect2", "indirect3", "total_indirect", "total_effect",
-                         "Indirect_Effect_M", "Indirect_Effect_M1", "Indirect_Effect_M2", 
-                         "Indirect_Effect_Serial", "Total_Indirect_Effect", "Total_Effect",
-                         "Simple_Slope_Low", "Simple_Slope_Avg", "Simple_Slope_High")
+    
+    # Comprehensive list of lavaan keywords and defined parameters to exclude
+    lavaan_keywords <- c(
+      # Parameter labels
+      "a", "b", "c", "cp", "d", "a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2",
+      # Effect names
+      "indirect", "total", "std", "lowW", "avgW", "highW",
+      "indirect1", "indirect2", "indirect3", "total_indirect", "total_effect",
+      # Mediation effects
+      "Indirect_Effect_M", "Indirect_Effect_M1", "Indirect_Effect_M2", 
+      "Indirect_Effect_Serial", "Total_Indirect_Effect", "Total_Effect",
+      # Moderation effects
+      "Simple_Slope_Low", "Simple_Slope_Avg", "Simple_Slope_High",
+      # Moderated mediation effects
+      "Conditional_Indirect_Low", "Conditional_Indirect_Avg", "Conditional_Indirect_High",
+      "Index_Moderated_Mediation", "Direct_Effect",
+      # Common mathematical operators and numbers
+      "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+      "-1", "-2", "-3", "sd", "mean"
+    )
     
     for(eq in equations) {
+      # Check if this is a defined parameter (:=) - these are not data variables
+      if (grepl(":=", eq)) {
+        # Skip extracting variables from defined parameter lines entirely
+        next
+      }
+      
+      # Remove parameter labels (e.g., a*, b*, etc.)
       clean_eq <- gsub("\\b[a-zA-Z][a-zA-Z0-9_]*\\*", "", eq)
-      clean_eq <- gsub(":=", " ", clean_eq)
       clean_eq <- gsub("~", " ", clean_eq)
       clean_eq <- gsub("\\+", " ", clean_eq)
+      clean_eq <- gsub("\\*", " ", clean_eq)
+      clean_eq <- gsub("=", " ", clean_eq)
+      clean_eq <- gsub("\\(", " ", clean_eq)
+      clean_eq <- gsub("\\)", " ", clean_eq)
+      clean_eq <- gsub("\\[", " ", clean_eq)
+      clean_eq <- gsub("\\]", " ", clean_eq)
       
+      # Split into potential variable names
       vars_in_eq <- strsplit(clean_eq, "[^a-zA-Z0-9_.]")[[1]]
       vars_in_eq <- vars_in_eq[nchar(vars_in_eq) > 0]
+      
+      # Remove keywords and parameter labels
       vars_in_eq <- vars_in_eq[!vars_in_eq %in% lavaan_keywords]
+      # Remove anything that starts with a number (can't be variable names)
+      vars_in_eq <- vars_in_eq[!grepl("^[0-9]", vars_in_eq)]
+      # Remove anything that is all uppercase and long (likely effect names)
+      vars_in_eq <- vars_in_eq[!grepl("^[A-Z_]+$", vars_in_eq) | nchar(vars_in_eq) > 10]
       
       all_vars <- c(all_vars, vars_in_eq)
     }
     
+    # Also extract variables from the left-hand sides of equations (dependent variables)
+    for(eq in equations) {
+      if (grepl("~", eq) && !grepl(":=", eq)) {
+        # Extract the left-hand side variable (before ~)
+        lhs <- trimws(strsplit(eq, "~")[[1]][1])
+        lhs_vars <- strsplit(lhs, "[^a-zA-Z0-9_.]")[[1]]
+        lhs_vars <- lhs_vars[nchar(lhs_vars) > 0]
+        lhs_vars <- lhs_vars[!lhs_vars %in% lavaan_keywords]
+        lhs_vars <- lhs_vars[!grepl("^[0-9]", lhs_vars)]
+        all_vars <- c(all_vars, lhs_vars)
+      }
+    }
+    
+    # Remove duplicates
     unique_vars <- unique(all_vars)
+    
+    # Only keep variables that exist in the data
     unique_vars <- unique_vars[unique_vars %in% data_vars]
     
     return(unique_vars)
@@ -1986,7 +2140,6 @@ Simple_Slope_High := b1 + b3*(1)"
     compute_regression_results()
   })
   
-  # Enhanced model estimation with automatic interaction term creation for moderation
   model_fit <- eventReactive(input$run, {
     req(input$model_syntax, data())
     
@@ -2072,6 +2225,49 @@ Simple_Slope_High := b1 + b3*(1)"
       }
     }
     
+    # For moderated mediation analysis, automatically create interaction term
+    if (current_interface() == "interactive" && input$analysis_type_interactive == "Moderated Mediation") {
+      x_var <- selected_variables$X
+      m_var <- selected_variables$M
+      w_var <- selected_variables$W
+      y_var <- selected_variables$Y
+      
+      if (!is.null(x_var) && !is.null(m_var) && !is.null(w_var) && !is.null(y_var)) {
+        # Clean variable names
+        x_clean <- gsub("[^a-zA-Z0-9_]", "", x_var)
+        m_clean <- gsub("[^a-zA-Z0-9_]", "", m_var)
+        w_clean <- gsub("[^a-zA-Z0-9_]", "", w_var)
+        
+        # Create interaction term names
+        xw_interaction <- paste0(x_clean, "_", w_clean)
+        
+        # Center variables for better interpretation (except Y)
+        x_centered <- df[[x_var]] - mean(df[[x_var]], na.rm = TRUE)
+        w_centered <- df[[w_var]] - mean(df[[w_var]], na.rm = TRUE)
+        
+        # Create interaction term
+        if (!xw_interaction %in% names(df)) {
+          df[[xw_interaction]] <- x_centered * w_centered
+          showNotification(
+            paste("✓ Automatically created interaction term:", xw_interaction, 
+                  "(centered variables for better interpretation)"),
+            type = "message",
+            duration = 5
+          )
+          
+          # Add to selected variables for reference
+          selected_variables$xw_interaction <- xw_interaction
+        } else {
+          showNotification(
+            paste("Using existing interaction term:", xw_interaction),
+            type = "message",
+            duration = 3
+          )
+          selected_variables$xw_interaction <- xw_interaction
+        }
+      }
+    }
+    
     # Process covariates (categorical and numerical) to create dummy variables
     processed_data <- df
     covariate_terms <- NULL
@@ -2111,12 +2307,6 @@ Simple_Slope_High := b1 + b3*(1)"
     processed_data <- na.omit(processed_data)
     
     # Check if we have enough data after removing missing values
-    if(nrow(processed_data) < 10) {
-      removeNotification("analysis_progress")
-      showNotification("Error: Too few observations after removing missing values", type = "error", duration = 10)
-      return(NULL)
-    }
-    
     if(nrow(processed_data) < 10) {
       removeNotification("analysis_progress")
       showNotification("Error: Too few observations after removing missing values", type = "error", duration = 10)
@@ -2206,6 +2396,14 @@ Simple_Slope_High := b1 + b3*(1)"
         # Check if missing vars are from covariate dummies that weren't created
         missing_vars <- missing_vars[!missing_vars %in% covariate_terms]
       }
+      
+      # Also filter out any remaining effect names that might have slipped through
+      effect_names <- c("Conditional_Indirect_Low", "Conditional_Indirect_Avg", "Conditional_Indirect_High",
+                        "Index_Moderated_Mediation", "Direct_Effect", "a3", "a1", "a2", "b", "cp",
+                        "Simple_Slope_Low", "Simple_Slope_Avg", "Simple_Slope_High",
+                        "Indirect_Effect_M", "Indirect_Effect_M1", "Indirect_Effect_M2",
+                        "Indirect_Effect_Serial", "Total_Indirect_Effect", "Total_Effect")
+      missing_vars <- missing_vars[!missing_vars %in% effect_names]
       
       if(length(missing_vars) > 0) {
         removeNotification("analysis_progress")
@@ -2380,7 +2578,7 @@ Simple_Slope_High := b1 + b3*(1)"
     })
   })
   
-  # Create path estimates table (with bivariate associations for moderation)
+  # Create path estimates table (with bivariate associations for moderation and moderated mediation)
   output$mediationTable <- renderDT({
     req(model_fit())
     fit <- model_fit()
@@ -2534,6 +2732,39 @@ Simple_Slope_High := b1 + b3*(1)"
         # Remove duplicates (if any)
         relevant_paths <- unique(relevant_paths)
         
+      } else if(current_interface() == "interactive" && input$analysis_type_interactive == "Moderated Mediation") {
+        
+        # For moderated mediation, show both path coefficients and conditional indirect effects
+        mediation_paths <- pe[pe$op == "~", ]
+        defined_effects <- pe[pe$op == ":=", ]
+        
+        # Get variable names
+        x_var <- selected_variables$X
+        m_var <- selected_variables$M
+        w_var <- selected_variables$W
+        y_var <- selected_variables$Y
+        
+        # Clean variable names
+        x_clean <- gsub("[^a-zA-Z0-9_]", "", x_var)
+        w_clean <- gsub("[^a-zA-Z0-9_]", "", w_var)
+        xw_interaction <- paste0(x_clean, "_", w_clean)
+        
+        # Filter for relevant paths (only those involving our variables)
+        relevant_paths <- mediation_paths[
+          mediation_paths$lhs %in% c(m_var, y_var) | 
+            mediation_paths$rhs %in% c(x_var, m_var, w_var, xw_interaction), 
+        ]
+        
+        # Add defined effects (conditional indirect effects, index, etc.)
+        conditional_effects <- defined_effects[
+          grepl("Conditional_Indirect|Index_Moderated_Mediation|Direct_Effect|Total_Effect", defined_effects$lhs), 
+        ]
+        
+        # Combine paths and defined effects
+        if(nrow(conditional_effects) > 0) {
+          relevant_paths <- rbind(relevant_paths, conditional_effects)
+        }
+        
       } else {
         # For mediation analyses, keep original behavior
         mediation_paths <- pe[pe$op == "~", ]
@@ -2571,6 +2802,23 @@ Simple_Slope_High := b1 + b3*(1)"
         )
       }
       
+      # Add a note for moderated mediation
+      if(current_interface() == "interactive" && input$analysis_type_interactive == "Moderated Mediation") {
+        table_data <- rbind(
+          table_data,
+          data.frame(
+            Pathway = "Note: Conditional indirect effects show the indirect effect of X on Y through M at different levels of W (centered). Index of Moderated Mediation tests whether the indirect effect varies significantly across levels of W.",
+            Estimate = NA,
+            `Std. Estimate` = NA,
+            SE = NA,
+            `p-value` = NA,
+            `CI Lower` = NA,
+            `CI Upper` = NA,
+            check.names = FALSE
+          )
+        )
+      }
+      
       datatable(
         table_data,
         rownames = FALSE,
@@ -2578,11 +2826,11 @@ Simple_Slope_High := b1 + b3*(1)"
         options = list(
           dom = 'Bfrtip',
           buttons = c('copy', 'csv', 'excel', 'pdf'),
-          pageLength = 10,
+          pageLength = 15,
           scrollX = TRUE,
           autoWidth = TRUE,
           columnDefs = list(
-            list(width = '200px', targets = 0),
+            list(width = '250px', targets = 0),
             list(className = 'dt-center', targets = 1:6)
           )
         ),
@@ -3086,49 +3334,103 @@ Simple_Slope_High := b1 + b3*(1)"
       
       interpretations <- list()
       
-      # Simple Mediation Interpretation (using user-friendly names)
-      # Only show if using interactive interface OR if analysis_type is Simple Mediation
+      # Simple Mediation Interpretation - Enhanced with detailed interpretation
       if((current_interface() == "interactive" && input$analysis_type_interactive == "Simple Mediation") ||
          (current_interface() == "syntax" && input$analysis_type == "Simple Mediation")) {
         indirect_effect <- defined_effects[defined_effects$lhs == "Indirect_Effect_M", ]
         total_effect <- defined_effects[defined_effects$lhs == "Total_Effect", ]
         direct_effect <- pe[pe$op == "~" & pe$rhs == selected_variables$X & pe$lhs == selected_variables$Y, ]
         
-        if(nrow(indirect_effect) > 0) {
+        # Get path coefficients for a and b
+        a_path <- pe[pe$op == "~" & pe$rhs == selected_variables$X & pe$lhs == selected_variables$M, ]
+        b_path <- pe[pe$op == "~" & pe$rhs == selected_variables$M & pe$lhs == selected_variables$Y, ]
+        
+        if(nrow(indirect_effect) > 0 && nrow(a_path) > 0 && nrow(b_path) > 0) {
           indirect_sig <- indirect_effect$pvalue[1] < 0.05
           direct_sig <- if(nrow(direct_effect) > 0) direct_effect$pvalue[1] < 0.05 else FALSE
           
+          # Determine mediation type
           if(indirect_sig && !direct_sig) {
             mediation_type <- "Full Mediation"
-            interpretation_text <- "The indirect effect is significant while the direct effect is not, indicating complete mediation."
+            interpretation_text <- paste0(
+              "The indirect effect is statistically significant (p < .05) while the direct effect is not (p > .05), ",
+              "indicating complete mediation. This suggests that ", selected_variables$X, 
+              " exerts its influence on ", selected_variables$Y, " entirely through ", selected_variables$M, "."
+            )
           } else if(indirect_sig && direct_sig) {
             mediation_type <- "Partial Mediation"
-            interpretation_text <- "Both indirect and direct effects are significant, indicating partial mediation."
+            interpretation_text <- paste0(
+              "Both indirect and direct effects are statistically significant (p < .05), indicating partial mediation. ",
+              "This suggests that ", selected_variables$X, " influences ", selected_variables$Y, " both directly ",
+              "and indirectly through ", selected_variables$M, "."
+            )
           } else {
             mediation_type <- "No Mediation"
-            interpretation_text <- "The indirect effect is not statistically significant, indicating no mediation effect."
+            interpretation_text <- paste0(
+              "The indirect effect is not statistically significant (p > .05), indicating no mediation effect. ",
+              "This suggests that ", selected_variables$X, " does not exert a significant indirect influence on ",
+              selected_variables$Y, " through ", selected_variables$M, "."
+            )
           }
           
+          # Build detailed interpretation
           interpretations[["Simple Mediation"]] <- paste0(
+            "<strong>Simple Mediation Analysis:</strong><br>",
             "<strong>Mediation Type:</strong> ", mediation_type, "<br>",
-            "<strong>Interpretation:</strong> ", interpretation_text, "<br>",
+            "<strong>Interpretation:</strong> ", interpretation_text, "<br><br>",
+            
+            "<strong>Path Analysis:</strong><br>",
+            "<strong>a-path (", selected_variables$X, " → ", selected_variables$M, "):</strong> β = ", round(a_path$std.all[1], 3),
+            ", p = ", format.pval(a_path$pvalue[1], digits = 3),
+            if(a_path$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>",
+            "<strong>b-path (", selected_variables$M, " → ", selected_variables$Y, "):</strong> β = ", round(b_path$std.all[1], 3),
+            ", p = ", format.pval(b_path$pvalue[1], digits = 3),
+            if(b_path$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br><br>",
+            
+            "<strong>Effect Decomposition:</strong><br>",
             "<strong>Indirect Effect (", selected_variables$X, " → ", selected_variables$M, " → ", selected_variables$Y, "):</strong> β = ", round(indirect_effect$std.all[1], 3), 
             ", p = ", format.pval(indirect_effect$pvalue[1], digits = 3), 
             if(indirect_sig) " (significant)" else " (not significant)", "<br>"
           )
           
+          if(nrow(direct_effect) > 0) {
+            interpretations[["Simple Mediation"]] <- paste0(
+              interpretations[["Simple Mediation"]],
+              "<strong>Direct Effect (", selected_variables$X, " → ", selected_variables$Y, "):</strong> β = ", round(direct_effect$std.all[1], 3), 
+              ", p = ", format.pval(direct_effect$pvalue[1], digits = 3),
+              if(direct_sig) " (significant)" else " (not significant)", "<br>"
+            )
+          }
+          
           if(nrow(total_effect) > 0) {
+            total_sig <- total_effect$pvalue[1] < 0.05
             interpretations[["Simple Mediation"]] <- paste0(
               interpretations[["Simple Mediation"]],
               "<strong>Total Effect (", selected_variables$X, " → ", selected_variables$Y, "):</strong> β = ", round(total_effect$std.all[1], 3), 
-              ", p = ", format.pval(total_effect$pvalue[1], digits = 3), "<br>"
+              ", p = ", format.pval(total_effect$pvalue[1], digits = 3),
+              if(total_sig) " (significant)" else " (not significant)", "<br>"
             )
           }
+          
+          # Add proportion mediated if applicable
+          if(indirect_sig && nrow(total_effect) > 0 && total_effect$est[1] != 0) {
+            prop_mediated <- (indirect_effect$est[1] / total_effect$est[1]) * 100
+            interpretations[["Simple Mediation"]] <- paste0(
+              interpretations[["Simple Mediation"]],
+              "<br><strong>Proportion Mediated:</strong> ", round(prop_mediated, 1), "% of the total effect is mediated.<br>"
+            )
+          }
+          
+        } else if(nrow(indirect_effect) == 0) {
+          interpretations[["Simple Mediation"]] <- paste0(
+            "<strong>Simple Mediation Analysis:</strong><br>",
+            "<strong>Note:</strong> No indirect effect defined in the model. ",
+            "Please define 'Indirect_Effect_M' using := syntax to calculate mediation effects."
+          )
         }
       }
       
-      # Serial Mediation Interpretation - FIXED VERSION with user-friendly names
-      # Only show if using interactive interface OR if analysis_type is Serial Mediation
+      # Serial Mediation Interpretation - Enhanced with detailed interpretation
       if((current_interface() == "interactive" && input$analysis_type_interactive == "Serial Mediation") ||
          (current_interface() == "syntax" && input$analysis_type == "Serial Mediation")) {
         indirect1 <- defined_effects[defined_effects$lhs == "Indirect_Effect_M1", ]
@@ -3137,27 +3439,64 @@ Simple_Slope_High := b1 + b3*(1)"
         total_indirect <- defined_effects[defined_effects$lhs == "Total_Indirect_Effect", ]
         total_effect <- defined_effects[defined_effects$lhs == "Total_Effect", ]
         
+        # Get all path coefficients
+        a1_path <- pe[pe$op == "~" & pe$rhs == selected_variables$X & pe$lhs == selected_variables$M1, ]
+        a2_path <- pe[pe$op == "~" & pe$rhs == selected_variables$M1 & pe$lhs == selected_variables$M2, ]
+        d_path <- pe[pe$op == "~" & pe$rhs == selected_variables$X & pe$lhs == selected_variables$M2, ]
+        b1_path <- pe[pe$op == "~" & pe$rhs == selected_variables$M1 & pe$lhs == selected_variables$Y, ]
+        b2_path <- pe[pe$op == "~" & pe$rhs == selected_variables$M2 & pe$lhs == selected_variables$Y, ]
+        c_path <- pe[pe$op == "~" & pe$rhs == selected_variables$X & pe$lhs == selected_variables$Y, ]
+        
         if(nrow(indirect1) > 0 || nrow(indirect2) > 0 || nrow(indirect_serial) > 0) {
           interpretations[["Serial Mediation"]] <- "<strong>Serial Mediation Analysis:</strong><br>"
           
-          sig_count <- 0
-          if(nrow(indirect1) > 0 && indirect1$pvalue[1] < 0.05) sig_count <- sig_count + 1
-          if(nrow(indirect2) > 0 && indirect2$pvalue[1] < 0.05) sig_count <- sig_count + 1
-          if(nrow(indirect_serial) > 0 && indirect_serial$pvalue[1] < 0.05) sig_count <- sig_count + 1
+          # Determine significant pathways
+          sig_pathways <- character()
+          if(nrow(indirect1) > 0 && indirect1$pvalue[1] < 0.05) sig_pathways <- c(sig_pathways, "M1 pathway")
+          if(nrow(indirect2) > 0 && indirect2$pvalue[1] < 0.05) sig_pathways <- c(sig_pathways, "M2 pathway")
+          if(nrow(indirect_serial) > 0 && indirect_serial$pvalue[1] < 0.05) sig_pathways <- c(sig_pathways, "serial pathway")
           
-          if(sig_count > 0) {
+          # Provide overall interpretation
+          if(length(sig_pathways) > 0) {
             interpretations[["Serial Mediation"]] <- paste0(
               interpretations[["Serial Mediation"]],
-              "<strong>Conclusion:</strong> Serial mediation is present with ", sig_count, 
-              " significant indirect pathway(s).<br><br>"
+              "<strong>Conclusion:</strong> Serial mediation is present with ", length(sig_pathways), 
+              " significant indirect pathway(s) (", paste(sig_pathways, collapse = ", "), ").<br><br>"
             )
           } else {
             interpretations[["Serial Mediation"]] <- paste0(
               interpretations[["Serial Mediation"]],
-              "<strong>Conclusion:</strong> No significant serial mediation effects found.<br><br>"
+              "<strong>Conclusion:</strong> No significant serial mediation effects found. ",
+              "The indirect pathways are not statistically significant (p > .05).<br><br>"
             )
           }
           
+          # Path coefficients
+          interpretations[["Serial Mediation"]] <- paste0(
+            interpretations[["Serial Mediation"]],
+            "<strong>Path Coefficients:</strong><br>",
+            "<strong>a1 (", selected_variables$X, " → ", selected_variables$M1, "):</strong> β = ", 
+            if(nrow(a1_path) > 0) round(a1_path$std.all[1], 3) else "NA",
+            if(nrow(a1_path) > 0 && a1_path$pvalue[1] < 0.05) " (significant)" else if(nrow(a1_path) > 0) " (not significant)", "<br>",
+            
+            "<strong>a2 (", selected_variables$M1, " → ", selected_variables$M2, "):</strong> β = ", 
+            if(nrow(a2_path) > 0) round(a2_path$std.all[1], 3) else "NA",
+            if(nrow(a2_path) > 0 && a2_path$pvalue[1] < 0.05) " (significant)" else if(nrow(a2_path) > 0) " (not significant)", "<br>",
+            
+            "<strong>d (", selected_variables$X, " → ", selected_variables$M2, "):</strong> β = ", 
+            if(nrow(d_path) > 0) round(d_path$std.all[1], 3) else "NA",
+            if(nrow(d_path) > 0 && d_path$pvalue[1] < 0.05) " (significant)" else if(nrow(d_path) > 0) " (not significant)", "<br>",
+            
+            "<strong>b1 (", selected_variables$M1, " → ", selected_variables$Y, "):</strong> β = ", 
+            if(nrow(b1_path) > 0) round(b1_path$std.all[1], 3) else "NA",
+            if(nrow(b1_path) > 0 && b1_path$pvalue[1] < 0.05) " (significant)" else if(nrow(b1_path) > 0) " (not significant)", "<br>",
+            
+            "<strong>b2 (", selected_variables$M2, " → ", selected_variables$Y, "):</strong> β = ", 
+            if(nrow(b2_path) > 0) round(b2_path$std.all[1], 3) else "NA",
+            if(nrow(b2_path) > 0 && b2_path$pvalue[1] < 0.05) " (significant)" else if(nrow(b2_path) > 0) " (not significant)", "<br><br>"
+          )
+          
+          # Indirect Pathways
           interpretations[["Serial Mediation"]] <- paste0(
             interpretations[["Serial Mediation"]],
             "<strong>Indirect Pathways:</strong><br>"
@@ -3168,7 +3507,8 @@ Simple_Slope_High := b1 + b3*(1)"
               interpretations[["Serial Mediation"]],
               "<strong>Indirect Effect (", selected_variables$X, " → ", selected_variables$M1, " → ", selected_variables$Y, "):</strong> β = ", round(indirect1$std.all[1], 3), 
               ", p = ", format.pval(indirect1$pvalue[1], digits = 3), 
-              if(indirect1$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>"
+              if(indirect1$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>",
+              "<em>Interpretation: ", selected_variables$X, " influences ", selected_variables$Y, " through changes in ", selected_variables$M1, ".</em><br>"
             )
           }
           
@@ -3177,7 +3517,8 @@ Simple_Slope_High := b1 + b3*(1)"
               interpretations[["Serial Mediation"]],
               "<strong>Indirect Effect (", selected_variables$X, " → ", selected_variables$M2, " → ", selected_variables$Y, "):</strong> β = ", round(indirect2$std.all[1], 3), 
               ", p = ", format.pval(indirect2$pvalue[1], digits = 3), 
-              if(indirect2$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>"
+              if(indirect2$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>",
+              "<em>Interpretation: ", selected_variables$X, " directly influences ", selected_variables$Y, " through changes in ", selected_variables$M2, ".</em><br>"
             )
           }
           
@@ -3186,7 +3527,8 @@ Simple_Slope_High := b1 + b3*(1)"
               interpretations[["Serial Mediation"]],
               "<strong>Serial Mediation (", selected_variables$X, " → ", selected_variables$M1, " → ", selected_variables$M2, " → ", selected_variables$Y, "):</strong> β = ", round(indirect_serial$std.all[1], 3), 
               ", p = ", format.pval(indirect_serial$pvalue[1], digits = 3), 
-              if(indirect_serial$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>"
+              if(indirect_serial$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>",
+              "<em>Interpretation: ", selected_variables$X, " influences ", selected_variables$Y, " through a sequential process involving both ", selected_variables$M1, " and then ", selected_variables$M2, ".</em><br>"
             )
           }
           
@@ -3200,12 +3542,40 @@ Simple_Slope_High := b1 + b3*(1)"
           }
           
           if(nrow(total_effect) > 0) {
+            total_sig <- total_effect$pvalue[1] < 0.05
             interpretations[["Serial Mediation"]] <- paste0(
               interpretations[["Serial Mediation"]],
               "<strong>Total Effect (", selected_variables$X, " → ", selected_variables$Y, "):</strong> β = ", round(total_effect$std.all[1], 3), 
-              ", p = ", format.pval(total_effect$pvalue[1], digits = 3), "<br>"
+              ", p = ", format.pval(total_effect$pvalue[1], digits = 3),
+              if(total_sig) " (significant)" else " (not significant)", "<br>"
             )
           }
+          
+          if(nrow(c_path) > 0) {
+            interpretations[["Serial Mediation"]] <- paste0(
+              interpretations[["Serial Mediation"]],
+              "<strong>Direct Effect (", selected_variables$X, " → ", selected_variables$Y, "):</strong> β = ", round(c_path$std.all[1], 3), 
+              ", p = ", format.pval(c_path$pvalue[1], digits = 3),
+              if(c_path$pvalue[1] < 0.05) " (significant)" else " (not significant)", "<br>"
+            )
+          }
+          
+          # Add proportion of total effect mediated if applicable
+          if(nrow(total_indirect) > 0 && nrow(total_effect) > 0 && total_effect$est[1] != 0 && total_indirect$pvalue[1] < 0.05) {
+            prop_mediated <- (total_indirect$est[1] / total_effect$est[1]) * 100
+            interpretations[["Serial Mediation"]] <- paste0(
+              interpretations[["Serial Mediation"]],
+              "<br><strong>Proportion Mediated:</strong> ", round(prop_mediated, 1), 
+              "% of the total effect is mediated through the indirect pathways.<br>"
+            )
+          }
+          
+        } else {
+          interpretations[["Serial Mediation"]] <- paste0(
+            "<strong>Serial Mediation Analysis:</strong><br>",
+            "<strong>Note:</strong> No indirect effects defined in the model. ",
+            "Please define indirect effects using := syntax to calculate serial mediation effects."
+          )
         }
       }
       
@@ -4005,14 +4375,313 @@ Simple_Slope_High := b1 + b3*(1)"
           doc <- body_add_flextable(doc, ft)
         }
         
-        # Add Path Diagram
-        if(file.exists(plot_file) && file.info(plot_file)$size > 0) {
+        
+        # For Moderated Mediation Analysis
+        if (analysis_type == "Moderated Mediation") {
           doc <- doc %>%
-            body_add_par("Path Diagram", style = "heading 3") %>%
-            body_add_par("Note: Path coefficients show standardized estimates with p-values.", 
-                         style = "Normal") %>%
-            body_add_img(plot_file, width = 6, height = 4.5)
+            body_add_par("Moderated Mediation Results", style = "heading 3") %>%
+            body_add_par("Conditional Process Model", style = "Normal")
+          
+          # Get variable names with safe fallback
+          if (current_interface() == "interactive" && !is.null(selected_variables$X) && !is.null(selected_variables$M) && !is.null(selected_variables$W) && !is.null(selected_variables$Y)) {
+            x_var <- selected_variables$X
+            m_var <- selected_variables$M
+            w_var <- selected_variables$W
+            y_var <- selected_variables$Y
+          } else {
+            x_var <- "X"
+            m_var <- "M"
+            w_var <- "W"
+            y_var <- "Y"
+          }
+          
+          # Get all paths with safe handling
+          all_paths <- tryCatch(pe[pe$op == "~", ], error = function(e) data.frame())
+          defined_effects <- tryCatch(pe[pe$op == ":=", ], error = function(e) data.frame())
+          
+          # Clean variable names safely
+          x_clean <- gsub("[^a-zA-Z0-9_]", "", x_var)
+          w_clean <- gsub("[^a-zA-Z0-9_]", "", w_var)
+          xw_interaction <- paste0(x_clean, "_", w_clean)
+          
+          # Helper function to safely extract paths
+          get_path <- function(data, lhs, rhs) {
+            if (nrow(data) > 0) {
+              result <- data[data$lhs == lhs & data$rhs == rhs, ]
+              return(result)
+            }
+            return(data.frame())
+          }
+          
+          # Filter paths for moderated mediation model with safe extraction
+          a_path <- get_path(all_paths, m_var, x_var)
+          w_path <- get_path(all_paths, m_var, w_var)
+          xw_path <- get_path(all_paths, m_var, xw_interaction)
+          b_path <- get_path(all_paths, y_var, m_var)
+          cp_path <- get_path(all_paths, y_var, x_var)
+          
+          # Get defined effects with safe extraction
+          get_defined_effect <- function(data, effect_name) {
+            if (nrow(data) > 0) {
+              result <- data[data$lhs == effect_name, ]
+              return(result)
+            }
+            return(data.frame())
+          }
+          
+          cond_low <- get_defined_effect(defined_effects, "Conditional_Indirect_Low")
+          cond_avg <- get_defined_effect(defined_effects, "Conditional_Indirect_Avg")
+          cond_high <- get_defined_effect(defined_effects, "Conditional_Indirect_High")
+          index_mm <- get_defined_effect(defined_effects, "Index_Moderated_Mediation")
+          direct_effect <- get_defined_effect(defined_effects, "Direct_Effect")
+          total_effect <- get_defined_effect(defined_effects, "Total_Effect")
+          
+          # Table 1: Path Coefficients (only if there are valid rows)
+          path_coefs <- data.frame()
+          
+          add_to_path_coefs <- function(data, path_name, desc) {
+            if (!is.null(data) && nrow(data) > 0) {
+              # Check if required columns exist
+              required_cols <- c("est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")
+              if (all(required_cols %in% names(data))) {
+                path_coefs <<- rbind(path_coefs, data.frame(
+                  Path = path_name,
+                  Estimate = if(is.na(data$est[1])) NA else round(data$est[1], 3),
+                  Std.Estimate = if(is.na(data$std.all[1])) NA else round(data$std.all[1], 3),
+                  SE = if(is.na(data$se[1])) NA else round(data$se[1], 3),
+                  p_value = if(is.na(data$pvalue[1])) NA else format.pval(data$pvalue[1], digits = 3, eps = 0.001),
+                  CI_Lower = if(is.na(data$ci.lower[1])) NA else round(data$ci.lower[1], 3),
+                  CI_Upper = if(is.na(data$ci.upper[1])) NA else round(data$ci.upper[1], 3),
+                  stringsAsFactors = FALSE
+                ))
+              }
+            }
+          }
+          
+          add_to_path_coefs(a_path, paste(m_var, "←", x_var, "(a1)"), "a_path")
+          add_to_path_coefs(w_path, paste(m_var, "←", w_var, "(a2)"), "w_path")
+          add_to_path_coefs(xw_path, paste(m_var, "←", xw_interaction, "(a3)"), "xw_path")
+          add_to_path_coefs(b_path, paste(y_var, "←", m_var, "(b)"), "b_path")
+          add_to_path_coefs(cp_path, paste(y_var, "←", x_var, "(c')"), "cp_path")
+          
+          # Only add path coefficients table if there are any valid rows
+          if (nrow(path_coefs) > 0) {
+            doc <- doc %>%
+              body_add_par("Path Coefficients", style = "heading 3")
+            
+            # Ensure all numeric columns are properly formatted
+            path_coefs$Estimate <- as.numeric(path_coefs$Estimate)
+            path_coefs$Std.Estimate <- as.numeric(path_coefs$Std.Estimate)
+            path_coefs$SE <- as.numeric(path_coefs$SE)
+            path_coefs$CI_Lower <- as.numeric(path_coefs$CI_Lower)
+            path_coefs$CI_Upper <- as.numeric(path_coefs$CI_Upper)
+            
+            # Create flextable with robust error handling
+            ft <- tryCatch({
+              ft_temp <- flextable(path_coefs) %>%
+                theme_box() %>%
+                autofit()
+              
+              # Add column formatting if columns exist
+              if ("Estimate" %in% names(path_coefs)) {
+                ft_temp <- colformat_num(ft_temp, j = "Estimate", digits = 3, na_str = "NA")
+              }
+              if ("Std.Estimate" %in% names(path_coefs)) {
+                ft_temp <- colformat_num(ft_temp, j = "Std.Estimate", digits = 3, na_str = "NA")
+              }
+              if ("SE" %in% names(path_coefs)) {
+                ft_temp <- colformat_num(ft_temp, j = "SE", digits = 3, na_str = "NA")
+              }
+              if ("CI_Lower" %in% names(path_coefs)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Lower", digits = 3, na_str = "NA")
+              }
+              if ("CI_Upper" %in% names(path_coefs)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Upper", digits = 3, na_str = "NA")
+              }
+              
+              ft_temp
+            }, error = function(e) {
+              # Fallback to simple flextable without formatting
+              flextable(path_coefs) %>% theme_box() %>% autofit()
+            })
+            
+            doc <- body_add_flextable(doc, ft)
+          }
+          
+          # Table 2: Conditional Indirect Effects (only if there are valid rows)
+          cond_effects <- data.frame()
+          
+          add_to_cond_effects <- function(data, effect_name) {
+            if (!is.null(data) && nrow(data) > 0) {
+              required_cols <- c("est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")
+              if (all(required_cols %in% names(data))) {
+                cond_effects <<- rbind(cond_effects, data.frame(
+                  Effect = effect_name,
+                  Estimate = if(is.na(data$est[1])) NA else round(data$est[1], 3),
+                  Std.Estimate = if(is.na(data$std.all[1])) NA else round(data$std.all[1], 3),
+                  SE = if(is.na(data$se[1])) NA else round(data$se[1], 3),
+                  p_value = if(is.na(data$pvalue[1])) NA else format.pval(data$pvalue[1], digits = 3, eps = 0.001),
+                  CI_Lower = if(is.na(data$ci.lower[1])) NA else round(data$ci.lower[1], 3),
+                  CI_Upper = if(is.na(data$ci.upper[1])) NA else round(data$ci.upper[1], 3),
+                  stringsAsFactors = FALSE
+                ))
+              }
+            }
+          }
+          
+          add_to_cond_effects(cond_low, "Conditional Indirect Effect (Low Moderator: -1 SD)")
+          add_to_cond_effects(cond_avg, "Conditional Indirect Effect (Average Moderator: Mean)")
+          add_to_cond_effects(cond_high, "Conditional Indirect Effect (High Moderator: +1 SD)")
+          
+          if (nrow(cond_effects) > 0) {
+            doc <- doc %>%
+              body_add_par("Conditional Indirect Effects", style = "heading 3") %>%
+              body_add_par(paste("The indirect effect of", x_var, "on", y_var, "through", m_var, "at different levels of", w_var), style = "Normal")
+            
+            # Ensure all numeric columns are properly formatted
+            cond_effects$Estimate <- as.numeric(cond_effects$Estimate)
+            cond_effects$Std.Estimate <- as.numeric(cond_effects$Std.Estimate)
+            cond_effects$SE <- as.numeric(cond_effects$SE)
+            cond_effects$CI_Lower <- as.numeric(cond_effects$CI_Lower)
+            cond_effects$CI_Upper <- as.numeric(cond_effects$CI_Upper)
+            
+            ft <- tryCatch({
+              ft_temp <- flextable(cond_effects) %>%
+                theme_box() %>%
+                autofit()
+              
+              if ("Estimate" %in% names(cond_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "Estimate", digits = 3, na_str = "NA")
+              }
+              if ("Std.Estimate" %in% names(cond_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "Std.Estimate", digits = 3, na_str = "NA")
+              }
+              if ("SE" %in% names(cond_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "SE", digits = 3, na_str = "NA")
+              }
+              if ("CI_Lower" %in% names(cond_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Lower", digits = 3, na_str = "NA")
+              }
+              if ("CI_Upper" %in% names(cond_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Upper", digits = 3, na_str = "NA")
+              }
+              
+              ft_temp
+            }, error = function(e) {
+              flextable(cond_effects) %>% theme_box() %>% autofit()
+            })
+            
+            doc <- body_add_flextable(doc, ft)
+          }
+          
+          # Table 3: Index of Moderated Mediation and Other Effects
+          other_effects <- data.frame()
+          
+          add_to_other_effects <- function(data, effect_name) {
+            if (!is.null(data) && nrow(data) > 0) {
+              required_cols <- c("est", "std.all", "se", "pvalue", "ci.lower", "ci.upper")
+              if (all(required_cols %in% names(data))) {
+                other_effects <<- rbind(other_effects, data.frame(
+                  Effect = effect_name,
+                  Estimate = if(is.na(data$est[1])) NA else round(data$est[1], 3),
+                  Std.Estimate = if(is.na(data$std.all[1])) NA else round(data$std.all[1], 3),
+                  SE = if(is.na(data$se[1])) NA else round(data$se[1], 3),
+                  p_value = if(is.na(data$pvalue[1])) NA else format.pval(data$pvalue[1], digits = 3, eps = 0.001),
+                  CI_Lower = if(is.na(data$ci.lower[1])) NA else round(data$ci.lower[1], 3),
+                  CI_Upper = if(is.na(data$ci.upper[1])) NA else round(data$ci.upper[1], 3),
+                  stringsAsFactors = FALSE
+                ))
+              }
+            }
+          }
+          
+          add_to_other_effects(index_mm, "Index of Moderated Mediation")
+          add_to_other_effects(direct_effect, "Direct Effect (X → Y)")
+          add_to_other_effects(total_effect, "Total Effect (X → Y)")
+          
+          if (nrow(other_effects) > 0) {
+            doc <- doc %>%
+              body_add_par("Index of Moderated Mediation and Other Effects", style = "heading 3")
+            
+            # Ensure all numeric columns are properly formatted
+            other_effects$Estimate <- as.numeric(other_effects$Estimate)
+            other_effects$Std.Estimate <- as.numeric(other_effects$Std.Estimate)
+            other_effects$SE <- as.numeric(other_effects$SE)
+            other_effects$CI_Lower <- as.numeric(other_effects$CI_Lower)
+            other_effects$CI_Upper <- as.numeric(other_effects$CI_Upper)
+            
+            ft <- tryCatch({
+              ft_temp <- flextable(other_effects) %>%
+                theme_box() %>%
+                autofit()
+              
+              if ("Estimate" %in% names(other_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "Estimate", digits = 3, na_str = "NA")
+              }
+              if ("Std.Estimate" %in% names(other_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "Std.Estimate", digits = 3, na_str = "NA")
+              }
+              if ("SE" %in% names(other_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "SE", digits = 3, na_str = "NA")
+              }
+              if ("CI_Lower" %in% names(other_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Lower", digits = 3, na_str = "NA")
+              }
+              if ("CI_Upper" %in% names(other_effects)) {
+                ft_temp <- colformat_num(ft_temp, j = "CI_Upper", digits = 3, na_str = "NA")
+              }
+              
+              ft_temp
+            }, error = function(e) {
+              flextable(other_effects) %>% theme_box() %>% autofit()
+            })
+            
+            doc <- body_add_flextable(doc, ft)
+          }
+          
+          # Add interpretation of moderated mediation (with safe check)
+          if (!is.null(index_mm) && nrow(index_mm) > 0) {
+            index_sig <- !is.na(index_mm$pvalue[1]) && index_mm$pvalue[1] < 0.05
+            if (index_sig) {
+              doc <- doc %>%
+                body_add_par("Interpretation:", style = "heading 3") %>%
+                body_add_par(paste("The index of moderated mediation is statistically significant (p < .05), indicating that the indirect effect of", 
+                                   x_var, "on", y_var, "through", m_var, "varies significantly across levels of", w_var, 
+                                   ". This provides evidence of moderated mediation."), style = "Normal")
+            } else {
+              doc <- doc %>%
+                body_add_par("Interpretation:", style = "heading 3") %>%
+                body_add_par(paste("The index of moderated mediation is not statistically significant (p > .05), indicating that the indirect effect of", 
+                                   x_var, "on", y_var, "through", m_var, "does not vary significantly across levels of", w_var, 
+                                   ". This suggests no moderated mediation effect."), style = "Normal")
+            }
+          }
+          
+          # Add moderator statistics if available (with safe check)
+          if (!is.null(selected_variables$W) && !is.null(data())) {
+            df_data <- data()
+            if (!is.null(df_data) && selected_variables$W %in% names(df_data)) {
+              w_data <- df_data[[selected_variables$W]]
+              if (length(w_data) > 0 && any(!is.na(w_data))) {
+                w_mean <- mean(w_data, na.rm = TRUE)
+                w_sd <- sd(w_data, na.rm = TRUE)
+                
+                doc <- doc %>%
+                  body_add_par("Moderator Statistics", style = "heading 3") %>%
+                  body_add_par(paste("Mean of", selected_variables$W, ":", round(w_mean, 3)), style = "Normal") %>%
+                  body_add_par(paste("Standard Deviation of", selected_variables$W, ":", round(w_sd, 3)), style = "Normal") %>%
+                  body_add_par(paste("Low moderator level (-1 SD):", round(w_mean - w_sd, 3)), style = "Normal") %>%
+                  body_add_par(paste("High moderator level (+1 SD):", round(w_mean + w_sd, 3)), style = "Normal")
+              }
+            }
+          }
         }
+        
+        # Path Diagram Note (excluded from report)
+        doc <- doc %>%
+          body_add_par("Path Diagram", style = "heading 3") %>%
+          body_add_par("Note: Path diagrams are available in the 'Diagram' tab of the application and can be downloaded separately.", 
+                       style = "Normal")
         
         
         # Add Notes with Attribution
@@ -4026,7 +4695,7 @@ Simple_Slope_High := b1 + b3*(1)"
           body_add_par("4. For moderation analysis, simple slopes are calculated at -1 SD, mean, and +1 SD of the moderator.", 
                        style = "Normal") %>%
           body_add_par("", style = "Normal") %>%
-          body_add_par("DEVELOPED BY:", style = "heading 3") %>%
+          body_add_par("WRITTEN IN GHANA BY:", style = "heading 3") %>%
           body_add_par("Mudasir Mohammed Ibrahim", style = "Normal") %>%
           body_add_par("ResearchGate: https://www.researchgate.net/profile/Mudasir-Ibrahim", 
                        style = "Normal") %>%
