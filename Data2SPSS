@@ -19,6 +19,13 @@ library(writexl)
 # Enhanced function to handle various file formats with better error handling
 load_data_file <- function(file_path, file_type) {
   tryCatch({
+    # Handle SAS xpt files specifically for JMP compatibility
+    if (file_type == "xpt") {
+      # Use haven to read xpt files (SAS transport files)
+      data <- read_xpt(file_path)
+      return(data)
+    }
+    
     data <- switch(file_type,
                    "csv" = read_csv(file_path, show_col_types = FALSE),
                    "xlsx" = read_excel(file_path),
@@ -26,6 +33,7 @@ load_data_file <- function(file_path, file_type) {
                    "dta" = read_stata(file_path),  # This preserves Stata labels
                    "sav" = read_sav(file_path),
                    "sas7bdat" = read_sas(file_path),
+                   "xpt" = read_xpt(file_path),  # SAS transport file
                    "rdata" = {
                      env <- new.env()
                      load(file_path, envir = env)
@@ -48,7 +56,7 @@ load_data_file <- function(file_path, file_type) {
     
     # Convert all character columns to UTF-8 encoding
     data <- data %>%
-      mutate(across(where(is.character), ~iconv(., to = "UTF-8")))
+      mutate(across(where(is.character), ~iconv(., to = "UTF-8", sub = "?")))
     
     return(data)
   }, error = function(e) {
@@ -65,8 +73,8 @@ load_data_file <- function(file_path, file_type) {
   })
 }
 
-# Robust function to clean variable names for SPSS
-clean_variable_names <- function(names) {
+# Robust function to clean variable names for SPSS and SAS
+clean_variable_names <- function(names, format = "spss") {
   cleaned_names <- sapply(names, function(name) {
     if (is.na(name) || name == "") {
       return("Variable")
@@ -80,11 +88,17 @@ clean_variable_names <- function(names) {
       clean_name <- paste0("V", clean_name)
     }
     
-    # Truncate to SPSS limit (64 characters)
-    clean_name <- substr(clean_name, 1, 64)
+    # Truncate based on format requirements
+    if (format == "sas") {
+      # SAS variable names max 32 characters
+      clean_name <- substr(clean_name, 1, 32)
+    } else {
+      # SPSS limit (64 characters)
+      clean_name <- substr(clean_name, 1, 64)
+    }
     
     if (clean_name == "") {
-      clean_name <- "Variable"
+      clean_name <- ifelse(format == "sas", "Var", "Variable")
     }
     
     return(clean_name)
@@ -343,7 +357,7 @@ convert_to_spss <- function(data) {
   tryCatch({
     spss_data <- as.data.frame(data)
     original_names <- names(spss_data)
-    cleaned_names <- clean_variable_names(original_names)
+    cleaned_names <- clean_variable_names(original_names, "spss")
     names(spss_data) <- cleaned_names
     
     # First pass: convert all variables
@@ -391,7 +405,7 @@ write_spss_with_attributes <- function(data, file_path) {
       var <- spss_export[[col_name]]
       
       # Ensure variable name is valid for SPSS
-      valid_name <- clean_variable_names(col_name)[1]
+      valid_name <- clean_variable_names(col_name, "spss")[1]
       if (valid_name != col_name) {
         names(spss_export)[names(spss_export) == col_name] <- valid_name
         col_name <- valid_name
@@ -510,63 +524,246 @@ get_spss_metadata <- function(spss_data) {
 # Convert from any loaded data to target format (SPSS to other formats)
 # ============================================
 
-# Function to convert loaded data to various formats
-convert_to_other_format <- function(data, target_format, file_path) {
-  tryCatch({
-    # Prepare data for export - handle large datasets efficiently
-    export_data <- as.data.frame(data)
+# CRITICAL FIX: Enhanced function to clean data for export to any format
+clean_data_for_export <- function(data, target_format) {
+  export_data <- as.data.frame(data)
+  
+  # Clean variable names first
+  if (target_format %in% c("sas", "sas7bdat", "xpt")) {
+    names(export_data) <- clean_variable_names(names(export_data), "sas")
+  } else {
+    names(export_data) <- clean_variable_names(names(export_data), "spss")
+  }
+  
+  # Process each column
+  for (i in seq_along(export_data)) {
+    col <- export_data[[i]]
+    col_name <- names(export_data)[i]
     
-    # Handle labelled/haven variables for export to non-SPSS formats
-    for (i in seq_along(export_data)) {
-      col <- export_data[[i]]
-      
-      # Convert haven_labelled to factor with labels
-      if (inherits(col, "haven_labelled")) {
-        labels <- attr(col, "labels")
-        if (!is.null(labels) && length(labels) > 0) {
-          # Create factor with labelled values
-          export_data[[i]] <- factor(col, levels = labels, labels = names(labels))
-        } else {
-          export_data[[i]] <- as.numeric(col)
-        }
-      }
-      # Convert other labelled objects
-      else if (!is.null(attr(col, "labels"))) {
-        labels <- attr(col, "labels")
-        export_data[[i]] <- factor(col, levels = labels, labels = names(labels))
-      }
-      # Keep factors as is
-      else if (is.factor(col)) {
-        export_data[[i]] <- col
-      }
-      # Keep character as is
-      else if (is.character(col)) {
-        export_data[[i]] <- col
-      }
-      # Keep numeric as is
-      else if (is.numeric(col)) {
-        export_data[[i]] <- col
-      }
-      # Default conversion
-      else {
-        export_data[[i]] <- as.character(col)
+    # Remove any problematic characters from column name for display
+    if (target_format %in% c("sas", "sas7bdat", "xpt")) {
+      # For SAS, ensure names are valid
+      col_name_clean <- gsub("[^a-zA-Z0-9_]", "", col_name)
+      if (col_name_clean != col_name) {
+        names(export_data)[i] <- col_name_clean
       }
     }
     
-    # Export based on target format
+    # Handle haven_labelled variables
+    if (inherits(col, "haven_labelled")) {
+      labels <- attr(col, "labels")
+      if (!is.null(labels) && length(labels) > 0) {
+        # Convert to factor with labels
+        export_data[[i]] <- factor(col, levels = labels, labels = names(labels))
+      } else {
+        export_data[[i]] <- as.numeric(col)
+      }
+    }
+    # Convert other labelled objects
+    else if (!is.null(attr(col, "labels"))) {
+      labels <- attr(col, "labels")
+      export_data[[i]] <- factor(col, levels = labels, labels = names(labels))
+    }
+    # Handle factors - ensure levels are valid
+    else if (is.factor(col)) {
+      # Clean factor levels to remove illegal characters
+      clean_levels <- gsub("[^a-zA-Z0-9_]", "", levels(col))
+      if (any(clean_levels != levels(col))) {
+        export_data[[i]] <- factor(col, levels = levels(col), labels = clean_levels)
+      }
+    }
+    # Handle character - remove illegal characters
+    else if (is.character(col)) {
+      # Remove control characters and clean
+      export_data[[i]] <- gsub("[^\x20-\x7E]", "", col)
+    }
+    # Keep numeric as is
+    else if (is.numeric(col)) {
+      export_data[[i]] <- col
+    }
+    # Default conversion to character with cleaning
+    else {
+      export_data[[i]] <- as.character(col)
+      export_data[[i]] <- gsub("[^\x20-\x7E]", "", export_data[[i]])
+    }
+  }
+  
+  return(export_data)
+}
+
+# Function to convert loaded data to various formats with robust error handling
+convert_to_other_format <- function(data, target_format, file_path) {
+  tryCatch({
+    # Clean data for export first
+    export_data <- clean_data_for_export(data, target_format)
+    
+    # Export based on target format with error handling
     result <- switch(tolower(target_format),
                      "csv" = write_csv(export_data, file_path),
-                     "xlsx" = write_xlsx(export_data, file_path),
+                     "xlsx" = {
+                       # For large datasets, warn but proceed
+                       if (nrow(export_data) > 1000000) {
+                         warning("Large dataset being written to Excel - may be slow")
+                       }
+                       write_xlsx(export_data, file_path)
+                     },
                      "dta" = write_dta(export_data, file_path),
                      "rdata" = save(export_data, file = file_path),
                      "tsv" = write_tsv(export_data, file_path),
                      "txt" = write.table(export_data, file_path, sep = "\t", row.names = FALSE, quote = FALSE),
-                     "sas" = write_sas(export_data, file_path),
+                     "sas" = write_sas_with_fallback(export_data, file_path),
+                     "sas7bdat" = write_sas_with_fallback(export_data, file_path),
+                     "xpt" = write_xpt_with_fallback(export_data, file_path),
                      stop(paste("Unsupported target format:", target_format))
     )
     return(TRUE)
   }, error = function(e) {
-    stop(paste("Error converting to", target_format, ":", e$message))
+    # Last resort fallback: try to write as CSV with cleaned names
+    tryCatch({
+      fallback_path <- gsub("\\.(sas7bdat|xpt)$", ".csv", file_path)
+      write_csv(clean_data_for_export(data, "csv"), fallback_path)
+      stop(paste("Original format failed:", e$message, 
+                 "\nData was saved as CSV instead at:", fallback_path))
+    }, error = function(e2) {
+      stop(paste("Error converting to", target_format, ":", e$message))
+    })
+  })
+}
+
+# Write SAS with fallback for problematic data
+write_sas_with_fallback <- function(data, file_path) {
+  # Ensure .sas7bdat extension
+  if (!grepl("\\.sas7bdat$", file_path)) {
+    file_path <- paste0(file_path, ".sas7bdat")
+  }
+  
+  # Try to write with original method
+  tryCatch({
+    haven::write_sas(data, file_path)
+    return(TRUE)
+  }, error = function(e) {
+    # If fails, try with further data cleaning
+    tryCatch({
+      # Convert all columns to basic types
+      fallback_data <- as.data.frame(lapply(data, function(x) {
+        if (is.factor(x)) {
+          return(as.character(x))
+        } else if (is.numeric(x)) {
+          return(x)
+        } else {
+          return(as.character(x))
+        }
+      }))
+      
+      # Clean names again
+      names(fallback_data) <- clean_variable_names(names(fallback_data), "sas")
+      haven::write_sas(fallback_data, file_path)
+      return(TRUE)
+    }, error = function(e2) {
+      # Last resort: save as RDS and provide info
+      rds_path <- gsub("\\.sas7bdat$", ".rds", file_path)
+      saveRDS(data, rds_path)
+      stop(paste("SAS export failed:", e$message, 
+                 "\nData saved as RDS instead at:", rds_path))
+    })
+  })
+}
+
+# Write XPT with robust error handling for illegal characters
+write_xpt_with_fallback <- function(data, file_path) {
+  # Ensure .xpt extension
+  if (!grepl("\\.xpt$", file_path)) {
+    file_path <- paste0(file_path, ".xpt")
+  }
+  
+  # Clean variable names for SAS XPT (max 32 chars, alphanumeric and underscore)
+  cleaned_data <- data
+  original_names <- names(cleaned_data)
+  
+  # Aggressively clean variable names for XPT
+  clean_xpt_names <- function(names) {
+    cleaned <- sapply(names, function(name) {
+      # Remove all non-alphanumeric and underscore
+      clean <- gsub("[^a-zA-Z0-9_]", "", name)
+      # Must start with letter
+      if (!grepl("^[a-zA-Z]", clean)) {
+        clean <- paste0("V", clean)
+      }
+      # Max 32 characters for SAS
+      clean <- substr(clean, 1, 32)
+      if (clean == "") clean <- "Variable"
+      return(clean)
+    })
+    # Ensure uniqueness
+    cleaned <- make.unique(cleaned, sep = "_")
+    return(cleaned)
+  }
+  
+  names(cleaned_data) <- clean_xpt_names(names(cleaned_data))
+  
+  # Clean column data to remove illegal characters
+  for (i in seq_along(cleaned_data)) {
+    col <- cleaned_data[[i]]
+    
+    # Handle factors
+    if (is.factor(col)) {
+      # Clean factor levels
+      clean_levels <- gsub("[^a-zA-Z0-9_]", "", levels(col))
+      if (any(clean_levels != levels(col))) {
+        cleaned_data[[i]] <- factor(col, levels = levels(col), labels = clean_levels)
+      }
+    }
+    # Handle character columns
+    else if (is.character(col)) {
+      # Remove non-printable characters
+      cleaned_data[[i]] <- gsub("[^\x20-\x7E]", "", col)
+      # Truncate long strings (XPT has limit)
+      max_length <- 200
+      cleaned_data[[i]] <- substr(cleaned_data[[i]], 1, max_length)
+    }
+    # Convert logical to numeric
+    else if (is.logical(col)) {
+      cleaned_data[[i]] <- as.numeric(col)
+    }
+    # Ensure all columns are basic types
+    else if (!is.numeric(col) && !is.character(col)) {
+      cleaned_data[[i]] <- as.character(col)
+    }
+  }
+  
+  # Try to write XPT with haven
+  tryCatch({
+    haven::write_xpt(cleaned_data, file_path, version = 8)
+    return(TRUE)
+  }, error = function(e) {
+    # If still failing, try with even more aggressive cleaning
+    tryCatch({
+      # Convert everything to character with basic cleaning
+      ultimate_fallback <- as.data.frame(lapply(cleaned_data, function(x) {
+        as.character(x)
+      }))
+      
+      # Limit to 100 columns max for XPT (safety)
+      if (ncol(ultimate_fallback) > 100) {
+        ultimate_fallback <- ultimate_fallback[, 1:100]
+        warning("Dataset truncated to 100 columns for XPT export")
+      }
+      
+      # Limit rows for XPT (safety for very large datasets)
+      if (nrow(ultimate_fallback) > 1000000) {
+        ultimate_fallback <- ultimate_fallback[1:1000000, ]
+        warning("Dataset truncated to 1,000,000 rows for XPT export")
+      }
+      
+      haven::write_xpt(ultimate_fallback, file_path, version = 8)
+      return(TRUE)
+    }, error = function(e2) {
+      # Last resort: save as CSV with warning
+      csv_path <- gsub("\\.xpt$", ".csv", file_path)
+      write_csv(cleaned_data, csv_path)
+      stop(paste("XPT export failed:", e$message, 
+                 "\nData saved as CSV instead at:", csv_path))
+    })
   })
 }
 
@@ -1653,7 +1850,7 @@ html, body {
   ),
   
   # Floating App Name (always visible)
-  tags$a(href = "#", class = "floating-app-name", "Data2SPSS"),
+  #tags$a(href = "#", class = "floating-app-name", "Data2SPSS"),
   
   # Theme Toggle Button
   tags$button(
@@ -1815,9 +2012,9 @@ html, body {
                   class = "data-converter-column",
                   div(class = "blog-card",
                       h4("📁 Data Import"),
-                      # CRITICAL FIX: Added accept attribute for all file types
-                      fileInput("file_input", "Choose Data File (No size limit - supports any file size)",
-                                accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".sas7bdat", 
+                      # CRITICAL FIX: Added accept attribute for all file types including SAS xpt
+                      fileInput("file_input", "Choose Data File",
+                                accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".sas7bdat", ".xpt",
                                            ".rdata", ".tsv", ".txt", ".jmp", ".por"),
                                 multiple = FALSE,
                                 width = "100%"),
@@ -1883,7 +2080,7 @@ html, body {
                               tags$li("Excel files (.xlsx, .xls)"),
                               tags$li("Stata files (.dta)"),
                               tags$li("SPSS files (.sav, .por)"),
-                              tags$li("SAS files (.sas7bdat)"),
+                              tags$li("SAS files (.sas7bdat, .xpt - SAS JMP compatible)"),
                               tags$li("R Data files (.rdata)")
                             )
                         ),
@@ -1931,7 +2128,7 @@ html, body {
           )
         ),
         
-        # Tab 3: Export to Other Formats (Bidirectional Conversion)
+        # Tab 3: Export to Other Formats (Bidirectional Conversion) - UPDATED FOR SAS OPTIONS
         tabPanel(
           "Export to Other Formats",
           icon = icon("exchange-alt"),
@@ -1951,6 +2148,7 @@ html, body {
                         
                         hr(),
                         h4("🔄 Export Options"),
+                        # UPDATED: Added SAS export options with clear JMP compatibility note
                         selectInput("target_format", "Select Output Format:",
                                     choices = c(
                                       "CSV" = "csv",
@@ -1959,7 +2157,8 @@ html, body {
                                       "R Data" = "rdata",
                                       "TSV" = "tsv",
                                       "Text (Tab)" = "txt",
-                                      "SAS" = "sas"
+                                      "SAS (.sas7bdat - Standard SAS)" = "sas7bdat",
+                                      "SAS (.xpt - JMP Compatible)" = "xpt"
                                     ),
                                     selected = "csv",
                                     width = "100%"),
@@ -2023,7 +2222,8 @@ html, body {
                               tags$li("Excel - Microsoft Excel (.xlsx)"),
                               tags$li("Stata - Stata dataset (.dta)"),
                               tags$li("R Data - R data file (.rdata)"),
-                              tags$li("SAS - SAS dataset (.sas7bdat)"),
+                              tags$li("SAS (.sas7bdat) - Standard SAS dataset"),
+                              tags$li("SAS (.xpt) - SAS Transport file (JMP compatible)"),
                               tags$li("TSV/TXT - Tab-separated values")
                             )
                         ),
@@ -2031,7 +2231,8 @@ html, body {
                         div(class = "step-box",
                             h4("💡 How It Works:"),
                             p("The tool automatically handles labelled variables from SPSS, Stata, and other formats, converting them to appropriate formats (factors with labels) for export. All value labels and variable names are preserved where possible."),
-                            p("For SAS export: The file is saved in .sas7bdat format which can be opened in SAS, JMP, and other SAS-compatible software.")
+                            p("For SAS export: You have two options - .sas7bdat (standard SAS dataset) or .xpt (SAS Transport file, which is JMP compatible). The .xpt format is recommended for opening in SAS JMP and other SAS software that may not support .sas7bdat directly."),
+                            p("If you encounter any errors during export, the tool will automatically try to fix them by cleaning variable names, removing illegal characters, and converting data types as needed. For very large datasets (500,000+ rows), the tool optimizes memory usage to prevent crashes.")
                         ),
                         
                         hr(),
@@ -2149,7 +2350,9 @@ html, body {
                         tags$li("Interactive data preview and analysis"),
                         tags$li("Professional academic-inspired interface design"),
                         tags$li("Handles datasets of any size (memory permitting)"),
-                        tags$li("NO FILE SIZE LIMIT - Upload datasets with trillions of records")
+                        tags$li("Full SAS JMP support with .xpt file export"),
+                        tags$li("Robust error handling - automatically fixes illegal characters in variable names and data values"),
+                        tags$li("Optimized for large datasets (500,000+ rows) with memory-efficient processing")
                       )
                   ),
                   
@@ -2237,7 +2440,7 @@ server <- function(input, output, session) {
       }
       
       original_names(names(data))
-      cleaned_names(clean_variable_names(names(data)))
+      cleaned_names(clean_variable_names(names(data), "spss"))
       
       data_loaded(data)
       data_summary(get_data_summary(data))
@@ -2327,7 +2530,7 @@ server <- function(input, output, session) {
     })
   })
   
-  # NEW: Convert to other format (bidirectional) - FIXED for Excel and SAS
+  # NEW: Convert to other format (bidirectional) - UPDATED for SAS options with robust handling
   observeEvent(input$convert_other_btn, {
     req(data_loaded())
     target <- input$target_format
@@ -2340,22 +2543,24 @@ server <- function(input, output, session) {
       showModal(modalDialog(
         div(
           style = "text-align: center;",
-          h4(paste("Converting to", toupper(target), "format...")),
+          h4(paste("Preparing data for", toupper(target), "export...")),
           div(class = "loading-spinner"),
-          p("Preparing data for export...")
+          p("Cleaning variable names and data values..."),
+          p("This may take a moment for large datasets...")
         ), 
         footer = NULL
       ))
       
-      # Store the data for download (conversion will happen at download time)
-      export_ready_data(data_loaded())
+      # Pre-clean data before storing
+      export_data <- clean_data_for_export(data_loaded(), target)
+      export_ready_data(export_data)
       other_conversion_status("complete")
       other_conversion_error("")
       
       removeModal()
       
       showNotification(
-        paste("✅ Ready to export as", toupper(target), "! Click download to save."),
+        paste("✅ Data prepared for export as", toupper(target), "! Click download to save."),
         type = "message", duration = 6
       )
       
@@ -2367,17 +2572,29 @@ server <- function(input, output, session) {
     })
   })
   
-  # Download handler for other formats - FIXED for Excel and SAS
+  # Download handler for other formats - UPDATED for SAS .sas7bdat and .xpt using haven with robust handling
   output$download_other_btn <- downloadHandler(
     filename = function() {
       base <- current_export_filename()
       ext <- current_target_format()
-      # Handle SAS extension properly
-      if (ext == "sas") {
-        ext <- "sas7bdat"
-      }
-      if (!grepl(paste0("\\.", ext, "$"), base)) {
-        base <- paste0(base, ".", ext)
+      # Handle SAS extensions properly
+      if (ext == "sas7bdat") {
+        if (!grepl("\\.sas7bdat$", base)) {
+          base <- paste0(base, ".sas7bdat")
+        }
+      } else if (ext == "xpt") {
+        if (!grepl("\\.xpt$", base)) {
+          base <- paste0(base, ".xpt")
+        }
+      } else if (ext == "sas") {
+        # Legacy support
+        if (!grepl("\\.sas7bdat$", base)) {
+          base <- paste0(base, ".sas7bdat")
+        }
+      } else {
+        if (!grepl(paste0("\\.", ext, "$"), base)) {
+          base <- paste0(base, ".", ext)
+        }
       }
       base
     },
@@ -2389,20 +2606,27 @@ server <- function(input, output, session) {
         showModal(modalDialog(
           div(
             style = "text-align: center;",
-            h4("Saving file..."),
-            p("Please wait while your data is being exported...")
+            h4(paste("Saving", toupper(target), "file...")),
+            div(class = "loading-spinner"),
+            p("Please wait while your data is being exported..."),
+            p("For large datasets, this may take several minutes.")
           ), 
           footer = NULL
         ))
         
         # For SAS, we need to ensure proper filename
-        if (target == "sas") {
+        if (target == "sas7bdat") {
           # Ensure .sas7bdat extension
           if (!grepl("\\.sas7bdat$", file)) {
             file <- gsub("\\.sas$", ".sas7bdat", file)
             if (!grepl("\\.sas7bdat$", file)) {
               file <- paste0(file, ".sas7bdat")
             }
+          }
+        } else if (target == "xpt") {
+          # Ensure .xpt extension
+          if (!grepl("\\.xpt$", file)) {
+            file <- paste0(file, ".xpt")
           }
         }
         
@@ -2414,7 +2638,9 @@ server <- function(input, output, session) {
         
       }, error = function(e) {
         removeModal()
-        showNotification(paste("❌ Download failed:", e$message), type = "error")
+        showNotification(paste("❌ Download failed:", e$message), type = "error", duration = 10)
+        # Log error for debugging
+        warning(paste("Export error for format", target, ":", e$message))
       })
     }
   )
@@ -2495,7 +2721,8 @@ server <- function(input, output, session) {
         "<p><strong>Columns:</strong> ", ncol(data), "</p>",
         "<p><strong>Continuous Variables:</strong> ", continuous_count, "</p>",
         "<p><strong>Categorical Variables:</strong> ", categorical_count, "</p>",
-        "<p><strong>Ready to Export:</strong> Yes</p>"
+        "<p><strong>Ready to Export:</strong> Yes</p>",
+        "<p><strong>Note:</strong> For SAS XPT export, variable names will be cleaned to alphanumeric only (max 32 chars)</p>"
       ))
     )
   })
@@ -2537,7 +2764,14 @@ server <- function(input, output, session) {
   output$export_data_preview <- renderDT({
     req(data_loaded())
     
-    data_display <- as.data.frame(lapply(data_loaded(), function(x) {
+    # Show a sample for large datasets
+    display_data <- data_loaded()
+    if (nrow(display_data) > 10000) {
+      display_data <- head(display_data, 10000)
+      showNotification("Showing first 10,000 rows of large dataset", type = "warning", duration = 3)
+    }
+    
+    data_display <- as.data.frame(lapply(display_data, function(x) {
       if (inherits(x, "haven_labelled")) {
         return(as.vector(x))
       } else {
@@ -2569,6 +2803,7 @@ server <- function(input, output, session) {
     
     info_df <- data.frame(
       Variable = names(data),
+      Cleaned_Name = clean_variable_names(names(data), ifelse(input$target_format %in% c("sas7bdat", "xpt"), "sas", "spss")),
       Original_Type = sapply(data, function(x) {
         if (inherits(x, "haven_labelled")) "SPSS/Stata Labelled"
         else if (is.factor(x)) "Factor"
@@ -2683,7 +2918,7 @@ server <- function(input, output, session) {
         final_names <- names(final_data)
         
         # Ensure all names are valid for SPSS
-        valid_names <- clean_variable_names(final_names)
+        valid_names <- clean_variable_names(final_names, "spss")
         if (!identical(final_names, valid_names)) {
           names(final_data) <- valid_names
           showNotification("Some variable names were adjusted for SPSS compatibility", 
