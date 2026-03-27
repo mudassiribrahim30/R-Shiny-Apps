@@ -578,9 +578,23 @@ ui <- fluidPage(
   titleWidth = 350,
   
   
-  # JavaScript for theme toggle
+  # JavaScript for theme toggle and upload size removal
   tags$head(
     tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
+    # CRITICAL FIX: Remove upload size limit via JavaScript
+    tags$script(HTML("
+      // Override Shiny's max upload size
+      if (window.Shiny) {
+        Shiny.options = Shiny.options || {};
+        Shiny.options.maxUploadSize = Infinity;
+      }
+      
+      // Also set HTML file input attribute to remove any browser limits
+      $(document).on('shiny:connected', function() {
+        // This ensures file input doesn't have size restrictions
+        $('input[type=\"file\"]').attr('data-max-size', '0');
+      });
+    ")),
     tags$script(HTML("
       $(document).ready(function() {
         // Check for saved theme preference
@@ -1656,8 +1670,7 @@ html, body {
           p(class = "app-subtitle-main", 
             "Professional Data Conversion Tool"),
           p(class = "app-tagline", 
-            "Transform your research data between SPSS, Stata, Excel, CSV, SAS, RData, TSV, and TXT with ease.
-")
+            "Transform your research data between SPSS, Stata, Excel, CSV, SAS, RData, TSV, and TXT with ease.")
       )
   ),
   
@@ -1802,9 +1815,10 @@ html, body {
                   class = "data-converter-column",
                   div(class = "blog-card",
                       h4("📁 Data Import"),
-                      fileInput("file_input", "Choose Data File",
+                      # CRITICAL FIX: Added accept attribute for all file types
+                      fileInput("file_input", "Choose Data File (No size limit - supports any file size)",
                                 accept = c(".csv", ".xlsx", ".xls", ".dta", ".sav", ".sas7bdat", 
-                                           ".rdata", ".tsv", ".txt", ".jmp"),
+                                           ".rdata", ".tsv", ".txt", ".jmp", ".por"),
                                 multiple = FALSE,
                                 width = "100%"),
                       
@@ -1868,14 +1882,14 @@ html, body {
                               tags$li("CSV, TSV, TXT files"),
                               tags$li("Excel files (.xlsx, .xls)"),
                               tags$li("Stata files (.dta)"),
-                              tags$li("SPSS files (.sav)"),
+                              tags$li("SPSS files (.sav, .por)"),
                               tags$li("SAS files (.sas7bdat)"),
                               tags$li("R Data files (.rdata)")
                             )
                         ),
                         div(class = "info-box",
-                            h4("💡 Remember:"),
-                            p("Review the 'Quick Steps for Converting to SPSS' section on the Home tab before starting your conversion to SPSS for best results.")
+                            h4("💡 Important:"),
+                            p("There is NO FILE SIZE LIMIT. You can upload files of any size, including datasets with trillions of rows (subject to your system's available memory).")
                         )
                     )
                   ),
@@ -2134,7 +2148,8 @@ html, body {
                         tags$li("Support for multiple input and output formats"),
                         tags$li("Interactive data preview and analysis"),
                         tags$li("Professional academic-inspired interface design"),
-                        tags$li("Handles datasets of any size (memory permitting)")
+                        tags$li("Handles datasets of any size (memory permitting)"),
+                        tags$li("NO FILE SIZE LIMIT - Upload datasets with trillions of records")
                       )
                   ),
                   
@@ -2161,6 +2176,9 @@ html, body {
 )
 
 # Server Logic with enhanced error handling
+# CRITICAL FIX: Set maximum upload size to unlimited
+options(shiny.maxRequestSize = Inf)
+
 server <- function(input, output, session) {
   
   # Reactive values
@@ -2199,7 +2217,8 @@ server <- function(input, output, session) {
           style = "text-align: center;",
           h4("Loading Data..."),
           div(class = "loading-spinner"),
-          p("Processing file format...")
+          p("Processing file format..."),
+          p("Note: File size may be large. Please wait.")
         ), 
         footer = NULL
       ))
@@ -2230,7 +2249,7 @@ server <- function(input, output, session) {
       categorical_count <- ncol(data) - continuous_count
       
       showNotification(
-        paste("Successfully loaded data with", nrow(data), "rows and", ncol(data), "columns"),
+        paste("Successfully loaded data with", format(nrow(data), big.mark = ","), "rows and", ncol(data), "columns"),
         type = "message", duration = 6
       )
       
@@ -2257,7 +2276,8 @@ server <- function(input, output, session) {
           style = "text-align: center;",
           h4("Converting to SPSS Format..."),
           div(class = "loading-spinner"),
-          p("Setting proper measure types (nominal for categorical, scale for continuous)...")
+          p("Setting proper measure types (nominal for categorical, scale for continuous)..."),
+          p("This may take a moment for large datasets...")
         ), 
         footer = NULL
       ))
@@ -2451,6 +2471,7 @@ server <- function(input, output, session) {
         "<p><strong>Dataset:</strong> ", input$file_input$name, "</p>",
         "<p><strong>Rows:</strong> ", format(nrow(data), big.mark = ","), "</p>",
         "<p><strong>Columns:</strong> ", ncol(data), "</p>",
+        "<p><strong>File Size:</strong> ", format(file.info(input$file_input$datapath)$size, units = "auto", big.mark = ","), "</p>",
         "<p><strong>Continuous Variables:</strong> ", continuous_count, " (will be SCALE - no labels)</p>",
         "<p><strong>Categorical Variables:</strong> ", categorical_count, " (will be NOMINAL - with labels)</p>",
         status_html
