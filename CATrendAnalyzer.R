@@ -29,6 +29,27 @@ convert_labelled_to_factor <- function(df) {
   return(df)
 }
 
+# Helper function to format p-values
+format_p_value <- function(p_value) {
+  if (is.na(p_value)) return("NA")
+  if (p_value < 0.001) {
+    return("p < 0.001")
+  } else {
+    return(paste0("p = ", format(round(p_value, 3), nsmall = 3)))
+  }
+}
+
+# Helper function to perform Pearson's Chi-square test
+perform_pearson_chisquare <- function(cont_table) {
+  # Perform standard Pearson's Chi-square test
+  chisq_result <- chisq.test(cont_table, correct = FALSE)
+  return(list(
+    statistic = chisq_result$statistic,
+    p.value = chisq_result$p.value,
+    parameter = chisq_result$parameter
+  ))
+}
+
 # Define UI
 ui <- dashboardPage(
   skin = "blue",
@@ -424,7 +445,7 @@ ui <- dashboardPage(
                            ),
                            
                            h3("Statistical Methodology"),
-                           p("The application implements the exact Cochran-Armitage test formula:"),
+                           p("The application uses this formula to compute the Cochran–Armitage test for trend:"),
                            withMathJax(),
                            helpText("$$Z = \\frac{\\sum_{j=1}^k y_j(x_j - \\bar{x})}{\\sqrt{\\bar{p}(1-\\bar{p})\\sum_{j=1}^k n_j(x_j - \\bar{x})^2}}$$"),
                            p("Where:"),
@@ -717,15 +738,10 @@ ui <- dashboardPage(
                 box(
                   title = "Analysis Controls", status = "primary", solidHeader = TRUE, width = 12,
                   div(class = "analysis-controls",
-                      radioButtons("test_type", "Test Type:",
-                                   choices = c("Two-sided" = "two.sided", 
-                                               "One-sided (increasing)" = "one.sided.increasing",
-                                               "One-sided (decreasing)" = "one.sided.decreasing"),
-                                   selected = "two.sided", inline = TRUE),
                       checkboxInput("continuity_correction", "Apply Continuity Correction", value = FALSE),
                       actionButton("analyze", "Run Cochran-Armitage Test", 
                                    class = "btn-primary", icon = icon("play")),
-                      helpText("Note: Analysis will use the cleaned data from the Data Cleaning tab")
+                      helpText("Note: Analysis will use the cleaned data from the Data Cleaning tab. The test type (increasing or decreasing) is automatically determined based on the sign of the Z-statistic.")
                   )
                 )
               ),
@@ -1283,7 +1299,7 @@ server <- function(input, output, session) {
   
   # ACCURATE Cochran-Armitage test implementation using the provided formula
   perform_cochran_armitage_accurate <- function(cont_table, test_type = "two.sided", continuity_correction = FALSE) {
-    # Implementation following the exact theoretical background provided
+    # Implementation following the theoretical background provided
     # Let xj be the numeric labels of the columns (j = 1, 2, …k)
     # nj = the number of elements in the jth column
     # yj = the value in the cell in the first row and jth column
@@ -1355,12 +1371,9 @@ server <- function(input, output, session) {
       p_value <- pnorm(z)
     }
     
-    # Calculate chi-square statistic (z^2)
-    chi_square <- z^2
-    
     # Create comprehensive result object
     result <- list(
-      statistic = c("Z" = z, "Chi-square" = chi_square),
+      statistic = c("Z" = z),
       p.value = p_value,
       method = "Cochran-Armitage Trend Test (Accurate Implementation)",
       data.name = "Contingency table",
@@ -1506,12 +1519,44 @@ server <- function(input, output, session) {
         warning("Some cells have counts less than 5. Results should be interpreted with caution.")
       }
       
-      # Perform accurate Cochran-Armitage test
-      ca_test <- perform_cochran_armitage_accurate(
+      # --- PERFORM PEARSON'S CHI-SQUARE TEST ---
+      pearson_chisq <- perform_pearson_chisquare(cont_table)
+      
+      # --- FIRST RUN TWO-SIDED TEST TO GET Z-STATISTIC SIGN ---
+      # Run a two-sided test first to determine the direction
+      two_sided_test <- perform_cochran_armitage_accurate(
         cont_table, 
-        test_type = input$test_type,
+        test_type = "two.sided",
         continuity_correction = input$continuity_correction
       )
+      
+      z_stat <- two_sided_test$statistic["Z"]
+      
+      # Determine the appropriate one-sided test type based on Z-statistic sign
+      if (z_stat > 0) {
+        test_type <- "one.sided.increasing"
+      } else if (z_stat < 0) {
+        test_type <- "one.sided.decreasing"
+      } else {
+        test_type <- "two.sided"
+      }
+      
+      # Perform the actual test with the determined test type
+      ca_test <- perform_cochran_armitage_accurate(
+        cont_table, 
+        test_type = test_type,
+        continuity_correction = input$continuity_correction
+      )
+      
+      # Calculate proportions for display
+      first_dep_level <- rownames(cont_table)[1]
+      first_dep_counts <- cont_table[first_dep_level, ]
+      row_totals_first <- rowSums(cont_table)[first_dep_level]
+      proportions <- first_dep_counts / row_totals_first
+      
+      # Determine trend direction for interpretation based on Z-statistic
+      is_increasing <- z_stat > 0
+      is_decreasing <- z_stat < 0
       
       # Create enhanced plot data
       plot_data <- df_processed %>%
@@ -1531,6 +1576,8 @@ server <- function(input, output, session) {
       list(
         contingency_table = cont_table,
         test_results = ca_test,
+        two_sided_test = two_sided_test,
+        pearson_chisq = pearson_chisq,
         plot_data = plot_data,
         data = df_processed,
         dep_var = dep_var,
@@ -1538,7 +1585,13 @@ server <- function(input, output, session) {
         dep_levels = levels(df_processed[[dep_var]]),
         ind_levels = levels(df_processed[[ind_var]]),
         sample_size = nrow(df_processed),
-        original_sample_size = nrow(df)
+        original_sample_size = nrow(df),
+        proportions = proportions,
+        is_increasing = is_increasing,
+        is_decreasing = is_decreasing,
+        test_type_used = test_type,
+        first_dep_level = first_dep_level,
+        z_stat = z_stat
       )
     }, error = function(e) {
       showNotification(paste("Analysis error:", e$message), type = "error")
@@ -1641,7 +1694,7 @@ server <- function(input, output, session) {
     
     return(p)
   })
-  # Test results - FIXED WITH PROFESSIONAL FORMATTING
+  # Test results - CONSISTENT OUTPUT WITH FORMATTED P-VALUES AND CORRECT CHI-SQUARE
   output$test_results <- renderPrint({
     req(analysis_results())
     results <- analysis_results()
@@ -1657,7 +1710,6 @@ server <- function(input, output, session) {
     cat("VARIABLES:\n")
     cat("- Dependent:", results$dep_var, "\n")
     cat("- Independent:", results$ind_var, "\n")
-    cat("- Test type:", results$test_results$test_type, "\n")
     cat("- Continuity correction:", ifelse(results$test_results$continuity_correction, "Yes", "No"), "\n\n")
     
     cat("LEVEL ORDERING:\n")
@@ -1666,6 +1718,17 @@ server <- function(input, output, session) {
     
     cat("CONTINGENCY TABLE:\n")
     print(results$contingency_table)
+    cat("\n")
+    
+    cat("PROPORTION ANALYSIS:\n")
+    # Get the first level of dependent var for proportion calculation
+    first_dep_level <- results$first_dep_level
+    first_dep_counts <- results$contingency_table[first_dep_level, ]
+    row_totals_first <- rowSums(results$contingency_table)[first_dep_level]
+    proportions <- first_dep_counts / row_totals_first
+    
+    cat("- First dependent level selected for proportion calculation:", first_dep_level, "\n")
+    cat("- Proportions across independent levels:", paste(format(round(proportions, 4), nsmall = 4), collapse = " -> "), "\n")
     cat("\n")
     
     cat("TEST CALCULATIONS (Accurate Formula):\n")
@@ -1686,43 +1749,64 @@ server <- function(input, output, session) {
     
     cat("TEST RESULTS:\n")
     cat("Method:", results$test_results$method, "\n")
-    cat("Z-statistic:", format(results$test_results$statistic["Z"], digits = 4), "\n")
-    cat("Chi-square statistic:", format(results$test_results$statistic["Chi-square"], digits = 4), "\n")
-    cat("Degrees of freedom: 1\n")
-    cat("p-value:", format(results$test_results$p.value, digits = 3), "\n\n")
+    
+    # Extract statistics
+    z_stat <- results$test_results$statistic["Z"]
+    one_sided_p <- results$test_results$p.value
+    two_sided_p <- results$two_sided_test$p.value
+    
+    # Pearson's Chi-square test results
+    pearson_chi_sq <- results$pearson_chisq$statistic
+    pearson_df <- results$pearson_chisq$parameter
+    pearson_p <- results$pearson_chisq$p.value
+    
+    # Display Cochran-Armitage results
+    cat("\nCochran-Armitage Trend Test:\n")
+    cat("Z-statistic:", format(z_stat, digits = 4), "\n\n")
+    
+    # Display Pearson's Chi-square test results
+    cat("Pearson's Chi-square Test of Independence:\n")
+    cat("Chi-square statistic:", format(pearson_chi_sq, digits = 4), "\n")
+    cat("Degrees of freedom:", pearson_df, "\n")
+    cat("p-value:", format_p_value(pearson_p), "\n\n")
+    
+    # Display appropriate p-values based on Z-statistic sign
+    if (results$is_increasing) {
+      cat("Cochran-Armitage One-sided Test (Increasing Trend):", format_p_value(one_sided_p), "\n")
+      cat("Cochran-Armitage Two-sided p-value:", format_p_value(two_sided_p), "\n")
+    } else if (results$is_decreasing) {
+      cat("Cochran-Armitage One-sided Test (Decreasing Trend):", format_p_value(one_sided_p), "\n")
+      cat("Cochran-Armitage Two-sided p-value:", format_p_value(two_sided_p), "\n")
+    } else {
+      cat("Cochran-Armitage Two-sided p-value:", format_p_value(two_sided_p), "\n")
+    }
+    cat("\n")
     
     cat("INTERPRETATION:\n")
-    p_val <- results$test_results$p.value
+    # Use one-sided p for trend interpretation when direction is clear
+    p_val_interpret <- if (results$is_increasing || results$is_decreasing) one_sided_p else two_sided_p
     
-    if (p_val < 0.05) {
-      cat("✓ Statistically significant trend detected (p =", 
-          format(p_val, digits = 3), ")\n")
-      if (input$test_type == "one.sided.increasing") {
-        cat("  Evidence supports an INCREASING trend in", results$dep_var, "across", results$ind_var, "\n")
-      } else if (input$test_type == "one.sided.decreasing") {
-        cat("  Evidence supports a DECREASING trend in", results$dep_var, "across", results$ind_var, "\n")
+    if (p_val_interpret < 0.05) {
+      cat("✓ Statistically significant trend detected (", format_p_value(p_val_interpret), ")\n")
+      if (results$is_increasing) {
+        cat("  Evidence supports an INCREASING trend in the proportion of '", 
+            first_dep_level, "' across the ordered levels of ", 
+            results$ind_var, " (Z = ", format(z_stat, digits = 3), ").\n", sep = "")
+        cat("  As ", results$ind_var, " increases, the probability of '", 
+            first_dep_level, "' significantly increases.\n", sep = "")
+      } else if (results$is_decreasing) {
+        cat("  Evidence supports a DECREASING trend in the proportion of '", 
+            first_dep_level, "' across the ordered levels of ", 
+            results$ind_var, " (Z = ", format(z_stat, digits = 3), ").\n", sep = "")
+        cat("  As ", results$ind_var, " increases, the probability of '", 
+            first_dep_level, "' significantly decreases.\n", sep = "")
       } else {
         cat("  Evidence suggests a systematic relationship between", results$dep_var, "and", results$ind_var, "\n")
       }
     } else {
-      cat("✗ No statistically significant trend detected (p =", 
-          format(p_val, digits = 3), ")\n")
+      cat("✗ No statistically significant trend detected (", format_p_value(p_val_interpret), ")\n")
       cat("  No evidence of systematic relationship between", results$dep_var, 
           "and", results$ind_var, "\n")
-    }
-    
-    # Statistical significance interpretation
-    cat("\nSTATISTICAL SIGNIFICANCE:\n")
-    if (p_val < 0.001) {
-      cat("*** p < 0.001 (Highly significant)\n")
-    } else if (p_val < 0.01) {
-      cat("** p < 0.01 (Very significant)\n")
-    } else if (p_val < 0.05) {
-      cat("* p < 0.05 (Significant)\n")
-    } else if (p_val < 0.1) {
-      cat("~ p < 0.1 (Marginally significant)\n")
-    } else {
-      cat("p ≥ 0.05 (Not significant)\n")
     }
     
     # Data quality notes
@@ -1743,7 +1827,13 @@ server <- function(input, output, session) {
     req(analysis_results())
     
     results <- analysis_results()
-    p_val <- results$test_results$p.value
+    z_stat <- results$test_results$statistic["Z"]
+    one_sided_p <- results$test_results$p.value
+    two_sided_p <- results$two_sided_test$p.value
+    pearson_chi_sq <- results$pearson_chisq$statistic
+    pearson_df <- results$pearson_chisq$parameter
+    pearson_p <- results$pearson_chisq$p.value
+    first_dep_level <- results$first_dep_level
     
     HTML(paste(
       "<h4>Report Preview</h4>",
@@ -1751,13 +1841,22 @@ server <- function(input, output, session) {
       "<p><strong>Dependent Variable:</strong>", results$dep_var, "</p>",
       "<p><strong>Independent Variable:</strong>", results$ind_var, "</p>",
       "<p><strong>Sample Size:</strong>", results$sample_size, "</p>",
-      "<p><strong>Test Type:</strong>", results$test_results$test_type, "</p>",
+      "<p><strong>Trend Detected:</strong>", 
+      if (results$is_increasing) "Increasing" else if (results$is_decreasing) "Decreasing" else "No clear monotonic trend", "</p>",
       "<p><strong>Continuity Correction:</strong>", ifelse(results$test_results$continuity_correction, "Yes", "No"), "</p>",
-      "<p><strong>Z-statistic:</strong>", format(results$test_results$statistic["Z"], digits = 4), "</p>",
-      "<p><strong>P-value:</strong>", format(p_val, digits = 3), "</p>",
+      "<p><strong>Cochran-Armitage Z-statistic:</strong>", format(z_stat, digits = 4), "</p>",
+      "<p><strong>Pearson's Chi-square:</strong> χ² = ", format(pearson_chi_sq, digits = 4), ", df = ", pearson_df, ", ", format_p_value(pearson_p), "</p>",
+      if (results$is_increasing) {
+        paste0("<p><strong>One-sided p-value (increasing):</strong> ", format_p_value(one_sided_p), "</p>")
+      } else if (results$is_decreasing) {
+        paste0("<p><strong>One-sided p-value (decreasing):</strong> ", format_p_value(one_sided_p), "</p>")
+      } else {
+        ""
+      },
+      "<p><strong>Two-sided p-value:</strong> ", format_p_value(two_sided_p), "</p>",
       "<p><strong>Significance:</strong> <span style='color:", 
-      if (p_val < 0.05) "#28a745" else "#dc3545", "'>",
-      if (p_val < 0.05) "Statistically Significant" else "Not Significant",
+      if (one_sided_p < 0.05) "#28a745" else "#dc3545", "'>",
+      if (one_sided_p < 0.05) "Statistically Significant" else "Not Significant",
       "</span></p>",
       if (results$sample_size < 30) "<p style='color: #856404;'>⚠️ Note: Small sample size</p>" else "",
       "</div>"
@@ -1783,15 +1882,24 @@ server <- function(input, output, session) {
         temp_report <- file.path(tempdir(), "report.Rmd")
         
         # Extract values for the report
-        p_val <- results$test_results$p.value
         z_stat <- results$test_results$statistic["Z"]
-        chi_sq <- results$test_results$statistic["Chi-square"]
+        one_sided_p <- results$test_results$p.value
+        two_sided_p <- results$two_sided_test$p.value
+        pearson_chi_sq <- results$pearson_chisq$statistic
+        pearson_df <- results$pearson_chisq$parameter
+        pearson_p <- results$pearson_chisq$p.value
         cont_table <- results$contingency_table
         dep_var <- results$dep_var
         ind_var <- results$ind_var
         sample_size <- results$sample_size
-        test_type <- results$test_results$test_type
         continuity_correction <- results$test_results$continuity_correction
+        first_dep_level <- results$first_dep_level
+        
+        # Format p-values for report
+        format_p_val <- function(p) {
+          if (p < 0.001) return("p < 0.001")
+          return(paste0("p = ", format(round(p, 3), nsmall = 3)))
+        }
         
         # Calculate enhanced crosstabulation for report
         row_pct <- prop.table(cont_table, 1) * 100
@@ -1891,7 +1999,8 @@ server <- function(input, output, session) {
           "- **Dependent Variable:** ", dep_var, "\n",
           "- **Independent Variable:** ", ind_var, "\n", 
           "- **Sample Size:** ", sample_size, "\n",
-          "- **Test Type:** ", test_type, "\n",
+          "- **Trend Detected:** ", 
+          if (results$is_increasing) "Increasing" else if (results$is_decreasing) "Decreasing" else "No clear monotonic trend", "\n",
           "- **Continuity Correction:** ", ifelse(continuity_correction, "Yes", "No"), "\n",
           "- **Plot Type:** ", switch(current_plot_type,
                                       "counts" = "Counts",
@@ -1908,16 +2017,16 @@ server <- function(input, output, session) {
           "knitr::kable(cont_table, caption = 'Contingency Table - Counts')\n",
           "```\n\n",
           
-          "### Column Percentages\n",
+          "### Row Percentages\n",
           "```{r, echo=FALSE}\n",
           "row_pct_table <- prop.table(cont_table, 1) * 100\n",
-          "knitr::kable(round(row_pct_table, 1), caption = 'Column Percentages (%)')\n",
+          "knitr::kable(round(row_pct_table, 1), caption = 'Row Percentages (%)')\n",
           "```\n\n",
           
-          "### Row Percentages\n", 
+          "### Column Percentages\n", 
           "```{r, echo=FALSE}\n",
           "col_pct_table <- prop.table(cont_table, 2) * 100\n",
-          "knitr::kable(round(col_pct_table, 1), caption = 'Row Percentages (%)')\n",
+          "knitr::kable(round(col_pct_table, 1), caption = 'Column Percentages (%)')\n",
           "```\n\n",
           
           "### Total Percentages\n",
@@ -1927,9 +2036,21 @@ server <- function(input, output, session) {
           "```\n\n",
           
           "## Statistical Results\n\n",
+          "### Cochran-Armitage Trend Test\n",
           "- **Z-statistic:** ", format(z_stat, digits = 4), "\n",
-          "- **Chi-square statistic:** ", format(chi_sq, digits = 4), "\n", 
-          "- **P-value:** ", format(p_val, digits = 4), "\n\n",
+          if (results$is_increasing) {
+            paste0("- **One-sided p-value (increasing):** ", format_p_val(one_sided_p), "\n")
+          } else if (results$is_decreasing) {
+            paste0("- **One-sided p-value (decreasing):** ", format_p_val(one_sided_p), "\n")
+          } else {
+            ""
+          },
+          "- **Two-sided p-value:** ", format_p_val(two_sided_p), "\n\n",
+          
+          "### Pearson's Chi-square Test of Independence\n",
+          "- **Chi-square statistic:** ", format(pearson_chi_sq, digits = 4), "\n",
+          "- **Degrees of freedom:** ", pearson_df, "\n",
+          "- **p-value:** ", format_p_val(pearson_p), "\n\n",
           
           "## Visualization\n\n",
           "**Plot Type: ", switch(current_plot_type,
@@ -1939,17 +2060,26 @@ server <- function(input, output, session) {
           "![](", temp_plot, "){width=100%}\n\n",
           
           "## Interpretation\n\n",
-          if (p_val < 0.05) {
-            paste0("There is a statistically significant trend in the proportion of **", 
-                   dep_var, "** across the ordered levels of **", 
-                   ind_var, "** (Z = ", format(z_stat, digits = 4), 
-                   ", p = ", format(p_val, digits = 4), "). ",
+          if (results$is_increasing && one_sided_p < 0.05) {
+            paste0("There is a statistically significant **INCREASING** trend in the proportion of **'", 
+                   first_dep_level, "'** across the ordered levels of **", 
+                   ind_var, "** (Z = ", format(z_stat, digits = 3), ", ", format_p_val(one_sided_p), "). ",
+                   "As ", ind_var, " increases, the probability of '", first_dep_level, "' significantly increases.")
+          } else if (results$is_decreasing && one_sided_p < 0.05) {
+            paste0("There is a statistically significant **DECREASING** trend in the proportion of **'", 
+                   first_dep_level, "'** across the ordered levels of **", 
+                   ind_var, "** (Z = ", format(z_stat, digits = 3), ", ", format_p_val(one_sided_p), "). ",
+                   "As ", ind_var, " increases, the probability of '", first_dep_level, "' significantly decreases.")
+          } else if (pearson_p < 0.05) {
+            paste0("There is a statistically significant relationship between **", 
+                   dep_var, "** and **", ind_var, "** (χ² = ", format(pearson_chi_sq, digits = 3), 
+                   ", df = ", pearson_df, ", ", format_p_val(pearson_p), "). ",
                    "This suggests a systematic relationship between the variables.")
           } else {
             paste0("No statistically significant trend was detected in the proportion of **",
                    dep_var, "** across the ordered levels of **",
-                   ind_var, "** (Z = ", format(z_stat, digits = 4),
-                   ", p = ", format(p_val, digits = 4), "). ",
+                   ind_var, "** (χ² = ", format(pearson_chi_sq, digits = 3), ", df = ", pearson_df, 
+                   ", ", format_p_val(pearson_p), "). ",
                    "This suggests no systematic relationship between the variables.")
           },
           "\n\n",
@@ -1963,6 +2093,7 @@ server <- function(input, output, session) {
           "- n_j are the total counts in each group\n",
           "- x̄ is the weighted mean of scores\n",
           "- p̄ is the overall proportion of successes\n\n",
+          "The Pearson's Chi-square test of independence was also performed to assess the overall association between the variables.\n\n",
           
           "---\n",
           "*Report generated using CATrend Analyzer*"
