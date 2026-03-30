@@ -2727,17 +2727,16 @@ server <- function(input, output, session) {
     )
   })
   
-  # Data preview - FIXED VERSION
+  # Data preview - Shows value labels instead of numeric codes
   output$data_preview <- renderDT({
     req(data_loaded())
     
-    # Convert haven_labelled variables to simple vectors for display
+    # Convert labelled variables to show labels
     data_display <- as.data.frame(lapply(data_loaded(), function(x) {
       if (inherits(x, "haven_labelled")) {
-        # For labelled variables, show the underlying values
-        return(as.vector(x))
+        haven::as_factor(x)
       } else {
-        return(x)
+        x
       }
     }))
     
@@ -2747,20 +2746,18 @@ server <- function(input, output, session) {
         scrollX = TRUE, 
         pageLength = 10, 
         dom = 'tip',
-        # Additional error handling
         language = list(
           emptyTable = "No data available",
           zeroRecords = "No matching records found"
         )
       ),
       rownames = FALSE,
-      # Error handling for DataTables
       escape = FALSE,
       selection = 'none'
     )
   })
   
-  # Export data preview
+  # Export data preview - Shows value labels instead of numeric codes
   output$export_data_preview <- renderDT({
     req(data_loaded())
     
@@ -2771,11 +2768,12 @@ server <- function(input, output, session) {
       showNotification("Showing first 10,000 rows of large dataset", type = "warning", duration = 3)
     }
     
+    # Convert labelled variables to show labels
     data_display <- as.data.frame(lapply(display_data, function(x) {
       if (inherits(x, "haven_labelled")) {
-        return(as.vector(x))
+        haven::as_factor(x)
       } else {
-        return(x)
+        x
       }
     }))
     
